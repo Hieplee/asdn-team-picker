@@ -1,17 +1,29 @@
 import members from './members.json' with { type: 'json' };
+import { firebaseConfig, organizerUid } from './cloud-config.js';
 
 const STORAGE_KEY = 'asdn-team-picker-v1';
 const $ = (selector) => document.querySelector(selector);
 const MODES = ['cqb', 'outdoor'];
 const STYLES = { push: 'Đẩy mục tiêu', hold: 'Giữ vị trí', mobile: 'Cơ động' };
 const initial = { selected: [], guests: [], teamCount: 2, mode: 'cqb', assignments: {}, ratings: { cqb: {}, outdoor: {} }, styles: { cqb: {}, outdoor: {} } };
-let state = loadState();
+const cloudEnabled = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId);
+let state = cloudEnabled ? structuredClone(initial) : loadState();
+let canEdit = !cloudEnabled;
+let cloudReady = !cloudEnabled;
+let cloudAuth, cloudSignIn, cloudSignOut, cloudProvider, cloudDocument, cloudSetDocument;
+let writeQueue = Promise.resolve();
+let pendingWrites = 0;
 let search = '';
 let toastTimer;
 
 function loadState() {
   try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+    return normalizeState(JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'));
+  } catch { return structuredClone(initial); }
+}
+
+function normalizeState(saved) {
+  try {
     const guests = Array.isArray(saved.guests) ? saved.guests.filter(g => typeof g?.id === 'string' && typeof g?.name === 'string') : [];
     const ids = new Set([...members, ...guests].map(m => m.id));
     const selected = Array.isArray(saved.selected) ? [...new Set(saved.selected.filter(id => ids.has(id)))] : [];
@@ -43,7 +55,72 @@ function loadState() {
   } catch { return structuredClone(initial); }
 }
 
-function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function setSyncStatus(message, error = false) {
+  const status = $('#sync-status');
+  status.textContent = message;
+  status.classList.toggle('sync-error', error);
+}
+
+function save() {
+  if (!cloudEnabled) { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); return; }
+  if (!canEdit || !cloudReady) return;
+  const snapshot = structuredClone(state);
+  pendingWrites++;
+  setSyncStatus('Đang lưu…');
+  writeQueue = writeQueue.catch(() => {}).then(() => cloudSetDocument(cloudDocument, snapshot));
+  writeQueue.then(() => {
+    pendingWrites--;
+    if (pendingWrites === 0) setSyncStatus('Đã đồng bộ');
+  }).catch(error => {
+    pendingWrites--;
+    setSyncStatus('Lưu thất bại', true);
+    showToast(`Không lưu được: ${error.message}`);
+  });
+}
+
+async function initCloud() {
+  if (!cloudEnabled) {
+    setSyncStatus('Bản demo trên thiết bị này');
+    $('#auth-button').hidden = true;
+    return;
+  }
+  try {
+    const [{ initializeApp }, { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }, { getFirestore, doc, onSnapshot, setDoc }] = await Promise.all([
+      import('https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js'),
+      import('https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js'),
+      import('https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js'),
+    ]);
+    const app = initializeApp(firebaseConfig);
+    cloudAuth = getAuth(app);
+    cloudSignIn = signInWithPopup;
+    cloudSignOut = signOut;
+    cloudProvider = new GoogleAuthProvider();
+    cloudSetDocument = setDoc;
+    cloudDocument = doc(getFirestore(app), 'public', 'current');
+    onAuthStateChanged(cloudAuth, user => {
+      canEdit = Boolean(organizerUid && user?.uid === organizerUid);
+      const button = $('#auth-button');
+      button.hidden = false;
+      button.textContent = user ? (canEdit ? 'Tổ chức · Đăng xuất' : 'Đổi tài khoản') : 'Đăng nhập tổ chức';
+      render();
+    });
+    onSnapshot(cloudDocument, snapshot => {
+      cloudReady = true;
+      if (pendingWrites === 0) {
+        state = normalizeState(snapshot.exists() ? snapshot.data() : {});
+        render();
+      }
+      setSyncStatus(pendingWrites ? 'Đang lưu…' : 'Đã đồng bộ');
+    }, error => {
+      cloudReady = false;
+      setSyncStatus('Không tải được dữ liệu chung', true);
+      showToast(error.message);
+    });
+  } catch (error) {
+    setSyncStatus('Không kết nối được dữ liệu chung', true);
+    showToast(error.message);
+  }
+}
 function allMembers() { return [...members, ...state.guests]; }
 function findMember(id) { return allMembers().find(m => m.id === id); }
 function initials(name) { return [...name.trim()][0]?.toUpperCase() || '?'; }
@@ -75,6 +152,7 @@ function renderRoster() {
     const card = document.createElement('article');
     card.className = `member-card${selected ? ' selected' : ''}`;
     const pick = document.createElement('button'); pick.type = 'button'; pick.className = 'card-pick';
+    pick.disabled = !canEdit || !cloudReady;
     pick.setAttribute('aria-pressed', String(selected));
     pick.setAttribute('aria-label', `${selected ? 'Bỏ chọn' : 'Chọn'} ${member.name}`);
     const portrait = document.createElement('span'); portrait.className = 'card-portrait';
@@ -97,6 +175,7 @@ function renderRoster() {
     rating.add(new Option('— Chưa đánh giá', ''));
     for (let value = 1; value <= 5; value++) rating.add(new Option(`${value} / 5`, String(value)));
     rating.value = ratingFor(member.id) ? String(ratingFor(member.id)) : '';
+    rating.disabled = !canEdit || !cloudReady;
     rating.addEventListener('change', () => {
       if (rating.value) state.ratings[state.mode][member.id] = Number(rating.value); else delete state.ratings[state.mode][member.id];
       skillBadge.firstChild.textContent = rating.value || '—';
@@ -110,6 +189,7 @@ function renderRoster() {
     styleSelect.add(new Option('— Chưa chọn', ''));
     for (const [value, label] of Object.entries(STYLES)) styleSelect.add(new Option(label, value));
     styleSelect.value = styleFor(member.id) || '';
+    styleSelect.disabled = !canEdit || !cloudReady;
     styleSelect.addEventListener('change', () => {
       if (styleSelect.value) state.styles[state.mode][member.id] = styleSelect.value; else delete state.styles[state.mode][member.id];
       save(); renderTeams();
@@ -227,6 +307,7 @@ function renderTeams() {
       const select = document.createElement('select'); select.setAttribute('aria-label', `Đổi đội cho ${member.name}`);
       teams.forEach((_, teamIndex) => { const option = new Option(`Đội ${teamIndex + 1}`, String(teamIndex)); select.add(option); });
       select.value = String(index);
+      select.disabled = !canEdit || !cloudReady;
       select.addEventListener('change', () => { state.assignments[member.id] = Number(select.value); save(); renderTeams(); });
       row.append(select); list.append(row);
     });
@@ -236,6 +317,7 @@ function renderTeams() {
 }
 
 function render() {
+  document.querySelectorAll('.mode-button, .team-count, #select-all, #clear-all, #guest-name, #guest-form button, #reshuffle').forEach(control => { control.disabled = !canEdit || !cloudReady; });
   $('#roster-total').textContent = allMembers().length;
   $('#selected-total').textContent = state.selected.length;
   $('#selected-count').textContent = state.selected.length;
@@ -249,8 +331,8 @@ function render() {
     button.classList.toggle('active', active); button.setAttribute('aria-pressed', String(active));
   });
   const ready = state.selected.length >= state.teamCount;
-  $('#split-button').disabled = !ready;
-  $('#setup-message').textContent = ready ? `${state.selected.length} người sẽ được chia vào ${state.teamCount} đội.` : `Chọn ít nhất ${state.teamCount} người để tạo ${state.teamCount} đội.`;
+  $('#split-button').disabled = !ready || !canEdit || !cloudReady;
+  $('#setup-message').textContent = !cloudReady ? 'Đang tải dữ liệu chung…' : !canEdit ? 'Bạn đang xem đội hình chung. Đăng nhập tài khoản tổ chức để chỉnh sửa.' : ready ? `${state.selected.length} người sẽ được chia vào ${state.teamCount} đội.` : `Chọn ít nhất ${state.teamCount} người để tạo ${state.teamCount} đội.`;
   renderRoster(); renderTeams();
 }
 
@@ -293,4 +375,21 @@ $('#copy-result').addEventListener('click', async () => {
   catch { showToast('Không sao chép được. Hãy dùng HTTPS hoặc localhost.'); }
 });
 
+$('#auth-button').addEventListener('click', async () => {
+  if (!cloudAuth) return;
+  try {
+    if (canEdit) {
+      await cloudSignOut(cloudAuth);
+      showToast('Đã đăng xuất tài khoản tổ chức.');
+    } else {
+      if (cloudAuth.currentUser) await cloudSignOut(cloudAuth);
+      await cloudSignIn(cloudAuth, cloudProvider);
+      if (cloudAuth.currentUser?.uid !== organizerUid) showToast('Tài khoản này chỉ có quyền xem.');
+    }
+  } catch (error) {
+    if (error.code !== 'auth/popup-closed-by-user') showToast(`Đăng nhập thất bại: ${error.message}`);
+  }
+});
+
 render();
+initCloud();
