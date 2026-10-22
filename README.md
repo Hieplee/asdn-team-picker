@@ -10,7 +10,7 @@ Từ thư mục này, chạy `python3 -m http.server 8000` rồi mở `http://lo
 
 - Tìm và chọn thành viên qua thẻ avatar, chọn tất cả hoặc bỏ chọn.
 - Chọn CQB hoặc sân ngoài trời. Skill 1–5 và lối chơi của từng người được lưu riêng cho mỗi kiểu trận.
-- Lối chơi gồm **Đẩy mục tiêu**, **Giữ vị trí**, **Cơ động**. Skill là trung bình 5 tiêu chí (Bắn trúng, Di chuyển, Quan sát, Phối hợp, Thể lực) trong `skills.json`, không sửa tay; người chưa có dữ liệu được tính tạm là 3; lối chơi chưa chọn không ảnh hưởng cách chia.
+- Lối chơi gồm **Đẩy mục tiêu**, **Giữ vị trí**, **Cơ động**. Skill là trung bình 5 tiêu chí (Aim, Di chuyển, Quan sát, Phối hợp, Thể lực) trong `skills.json`, không sửa tay; người chưa có dữ liệu được tính tạm là 3; lối chơi chưa chọn không ảnh hưởng cách chia.
 - Thêm khách mời, chọn 2–6 đội, chia quân số chênh tối đa 1 và giảm chênh lệch skill trung bình lẫn phân bố lối chơi bằng các lượt hoán đổi.
 - Đổi đội thủ công cho từng người, chia lại, sao chép đội hình.
 - Đồng bộ lựa chọn và đội hình qua Firestore để mọi người thấy cùng kết quả và đều có thể chia đội. Chỉ tài khoản tổ chức được chọn người, chia đội và chọn lối chơi.
