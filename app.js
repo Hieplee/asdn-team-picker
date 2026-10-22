@@ -345,6 +345,12 @@ function render() {
   const ready = state.selected.length >= state.teamCount;
   $('#split-button').disabled = !ready || !cloudReady || !canEdit;
   $('#setup-message').textContent = !cloudReady ? 'Đang tải dữ liệu chung…' : !canEdit ? 'Chỉ người tổ chức được chọn người và chia đội. Bạn đang ở chế độ xem.' : ready ? `${state.selected.length} người sẽ được chia vào ${state.teamCount} đội.` : `Chọn ít nhất ${state.teamCount} người để tạo ${state.teamCount} đội.`;
+  const viewer = cloudEnabled && !canEdit;
+  document.body.classList.toggle('viewer', viewer);
+  $('#mobile-bar').hidden = viewer;
+  $('#bar-count').textContent = state.selected.length;
+  $('#bar-teams').textContent = state.teamCount;
+  $('#bar-split').disabled = !ready || !cloudReady || !canEdit;
   renderRoster(); renderTeams();
 }
 
@@ -376,6 +382,7 @@ document.querySelectorAll('.mode-button').forEach(button => button.addEventListe
   state.mode = button.dataset.mode; state.assignments = {}; save(); render();
 }));
 $('#split-button').addEventListener('click', splitTeams);
+$('#bar-split').addEventListener('click', splitTeams);
 $('#reshuffle').addEventListener('click', splitTeams);
 $('#copy-result').addEventListener('click', async () => {
   const lines = [`ASDN · ${state.mode === 'cqb' ? 'CQB' : 'SÂN NGOÀI TRỜI'} · ĐỘI HÌNH (${state.selected.length} người)`];

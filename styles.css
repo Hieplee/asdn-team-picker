@@ -37,3 +37,30 @@
 .team-style{color:#a7bea6;font-size:10px;white-space:nowrap}
 @media(max-width:700px){.mode-control{gap:12px;padding:14px}.mode-control>.field-label{width:100%}.mode-note{font-size:11px}.member-card{min-height:0}.card-footer{padding:0 7px}.rating-select,.style-select{max-width:105px}.team-style{display:none}}
 .topbar-account{display:flex;align-items:center;gap:14px;font:700 11px 'DM Sans',sans-serif;letter-spacing:.2px}.sync-status{color:#b0c7af}.sync-status.sync-error{color:#f4a45f}.auth-button{padding:9px 12px;border:1px solid #6c895f;background:#253829;color:var(--lime);font:700 11px 'DM Sans',sans-serif}.auth-button:hover{background:#304c32}button:disabled,select:disabled{cursor:default;opacity:.62}.card-pick:disabled{opacity:1;cursor:default}.card-pick:disabled:hover{transform:none}@media(max-width:700px){.topbar-account{gap:7px;flex-direction:column;align-items:flex-end}.sync-status{font-size:9px}.auth-button{font-size:9px;padding:6px}.brand-sub{display:none}}
+
+.mobile-bar{display:none}
+@media(max-width:700px){
+body{padding-bottom:78px}
+.mobile-bar{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 17px calc(10px + env(safe-area-inset-bottom));background:#0e1611f2;border-top:1px solid var(--lime);font:700 13px 'DM Sans',sans-serif;color:var(--text)}
+.mobile-bar[hidden]{display:none}
+.mobile-bar strong{color:var(--lime);font-size:20px}
+.mobile-bar .primary-button{height:46px;width:auto;gap:18px}
+.toast{left:17px;right:17px;bottom:90px;text-align:center}
+.card-portrait{height:118px}
+.member-card{min-height:0}
+.member-info{min-height:0;padding:8px 9px 7px}
+.member-name{font-size:15px}
+.card-skill{min-width:36px;height:40px;font-size:24px;right:6px;bottom:6px}
+.card-footer{height:46px}
+.rating-select,.style-select{min-height:36px;font-size:12px;max-width:none;flex:1}
+.mode-button,.team-count,.secondary-button,.text-button,.guest-input button,.segmented button{min-height:44px}
+.topbar{height:auto;min-height:65px;padding:8px 0}.topbar-account{gap:4px}.auth-button{min-height:36px;padding:6px 10px}
+.mode-buttons{width:100%}.mode-button{flex:1;padding:0 8px}
+.segmented{width:100%}.segmented button{flex:1;width:auto}
+.team-person select{min-height:40px;max-width:84px;font-size:12px}
+.search-box,.guest-input input{height:48px}
+.search-box input,.guest-input input{font-size:16px}
+.setup-panel .primary-button,#split-button{height:52px}
+body.viewer .card-footer{display:none}
+body.viewer .member-card{min-height:0}
+}
