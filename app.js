@@ -359,16 +359,88 @@ function renderTeams() {
       select.addEventListener('change', () => { state.assignments[member.id] = Number(select.value); save(); renderTeams(); });
       row.append(select); list.append(row);
     });
-    card.append(head, list); container.append(card);
+    const average = teamAverage(people);
+    if (Object.keys(average).length) {
+      const radar = document.createElement('div'); radar.className = 'team-radar';
+      radar.append(radarChart(average, `Biểu đồ trung bình Đội ${index + 1}`));
+      card.append(head, radar, list);
+    } else card.append(head, list);
+    container.append(card);
   });
   $('#result-summary').textContent = `${state.mode === 'cqb' ? 'CQB' : 'Sân ngoài trời'} · ${state.selected.length} người · ${state.teamCount} đội · ${state.selected.filter(hasSkill).length} người đã có skill`;
+}
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+function svgEl(name, attrs = {}, text) {
+  const node = document.createElementNS(SVG_NS, name);
+  for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, String(value));
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+function gradeOf(value) { return value >= 4.8 ? 'S' : value >= 4.2 ? 'A' : value >= 3.5 ? 'B' : value >= 2.5 ? 'C' : 'D'; }
+const GRADE_COLORS = { S: '#f4d35e', A: '#c8f36b', B: '#6fd3ff', C: '#7be0a0', D: '#f4a45f' };
+function radarChart(values, label) {
+  const cx = 130, cy = 140, radius = 72, step = (Math.PI * 2) / CRITERIA.length;
+  const point = (index, scale, extra = 0) => {
+    const angle = -Math.PI / 2 + index * step, length = radius * scale + extra;
+    return [cx + length * Math.cos(angle), cy + length * Math.sin(angle)];
+  };
+  const polygon = scale => CRITERIA.map((_, index) => point(index, scale).map(n => n.toFixed(1)).join(',')).join(' ');
+  const svg = svgEl('svg', { viewBox: '-40 0 340 275', class: 'skill-radar', role: 'img', 'aria-label': label });
+  svg.append(svgEl('rect', { x: -40, y: 0, width: 340, height: 275, rx: 14, class: 'radar-bg' }));
+  for (let level = 5; level >= 1; level--) svg.append(svgEl('polygon', { points: polygon(level / 5), class: level === 5 ? 'radar-ring outer' : 'radar-ring' }));
+  CRITERIA.forEach((_, index) => { const [x, y] = point(index, 1); svg.append(svgEl('line', { x1: cx, y1: cy, x2: x.toFixed(1), y2: y.toFixed(1), class: 'radar-axis' })); });
+  const shape = CRITERIA.map(([key], index) => point(index, Math.max(values[key] ?? 0, 0.3) / 5).map(n => n.toFixed(1)).join(',')).join(' ');
+  svg.append(svgEl('polygon', { points: shape, class: 'radar-shape' }));
+  CRITERIA.forEach(([key, name], index) => {
+    const value = values[key];
+    const [px, py] = point(index, Math.max(value ?? 0, 0.3) / 5);
+    svg.append(svgEl('circle', { cx: px.toFixed(1), cy: py.toFixed(1), r: 2.6, class: 'radar-dot' }));
+    const [lx, ly] = point(index, 1, 30);
+    const anchor = Math.abs(lx - cx) < 4 ? 'middle' : lx > cx ? 'start' : 'end';
+    const dx = anchor === 'start' ? -8 : anchor === 'end' ? 8 : 0;
+    svg.append(svgEl('text', { x: (lx + dx).toFixed(1), y: (ly + (index === 0 ? -10 : 18)).toFixed(1), 'text-anchor': anchor, class: 'radar-label' }, name));
+    if (Number.isFinite(value)) {
+      const grade = gradeOf(value), color = GRADE_COLORS[grade];
+      const [gx, gy] = point(index, 1, 15);
+      svg.append(svgEl('circle', { cx: gx.toFixed(1), cy: gy.toFixed(1), r: 9, fill: '#101714', stroke: color, 'stroke-width': 1.6 }));
+      svg.append(svgEl('text', { x: gx.toFixed(1), y: (gy + 3.6).toFixed(1), 'text-anchor': 'middle', class: 'radar-grade', fill: color }, grade));
+    }
+  });
+  return svg;
+}
+function teamAverage(people) {
+  const result = {};
+  for (const [key] of CRITERIA) {
+    const values = people.map(person => skills[person.id]?.[key]).filter(Number.isFinite);
+    if (values.length) result[key] = values.reduce((sum, value) => sum + value, 0) / values.length;
+  }
+  return result;
+}
+let selectedSkillId = null;
+function showSkillDetail(id) {
+  selectedSkillId = id;
+  const member = members.find(m => m.id === id);
+  const box = $('#skill-detail'); box.replaceChildren();
+  if (!member || !skills[id]) return;
+  const total = detailTotal(id);
+  const info = document.createElement('div'); info.className = 'skill-detail-info';
+  info.append(makeAvatar(member, 'skill-detail-avatar'));
+  const name = document.createElement('strong'); name.textContent = member.name;
+  const tag = document.createElement('span'); tag.className = 'skill-detail-tag'; tag.textContent = member.tag || 'ASDN OPERATIVE';
+  const score = document.createElement('span'); score.className = 'skill-detail-total'; score.textContent = `${total.toFixed(1)} / 5 · hạng ${gradeOf(total)}`;
+  info.append(name, tag, score);
+  box.append(radarChart(skills[id], `Biểu đồ kỹ năng của ${member.name}`), info);
+  document.querySelectorAll('#skill-body tr').forEach(row => row.classList.toggle('selected', row.dataset.id === id));
 }
 
 function renderSkillTable() {
   const body = $('#skill-body'); body.replaceChildren();
   const rows = members.filter(m => skills[m.id]).map(m => ({ member: m, total: detailTotal(m.id) })).sort((a, b) => b.total - a.total || a.member.name.localeCompare(b.member.name, 'vi'));
   for (const { member, total } of rows) {
-    const tr = document.createElement('tr');
+    const tr = document.createElement('tr'); tr.dataset.id = member.id; tr.tabIndex = 0;
+    tr.addEventListener('click', () => showSkillDetail(member.id));
+    tr.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); showSkillDetail(member.id); } });
     const nameCell = document.createElement('th'); nameCell.scope = 'row';
     nameCell.append(makeAvatar(member, 'skill-avatar'));
     const name = document.createElement('span'); name.textContent = member.name; nameCell.append(name);
@@ -382,6 +454,7 @@ function renderSkillTable() {
     const totalCell = document.createElement('td'); totalCell.className = 'skill-total'; totalCell.textContent = total.toFixed(1);
     tr.append(totalCell); body.append(tr);
   }
+  if (rows.length) showSkillDetail(selectedSkillId && skills[selectedSkillId] ? selectedSkillId : rows[0].member.id);
 }
 
 function render() {

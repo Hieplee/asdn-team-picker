@@ -91,3 +91,24 @@ body.viewer .results-section{padding-top:38px}
 .skill-table td[data-level="1"]{background:#41251f;color:#f4a58f}
 .skill-table .skill-total{color:var(--lime);font:800 18px 'Barlow Condensed',Impact,sans-serif}
 @media(max-width:700px){.skill-table{font-size:12px;min-width:520px}.skill-table th,.skill-table td{padding:7px 6px}.skill-table tbody th{min-width:150px}}
+
+.skill-radar{display:block;width:100%;height:auto}
+.radar-bg{fill:#13203a}
+.radar-ring{fill:none;stroke:#5a6f8d;stroke-opacity:.55;stroke-width:1}
+.radar-ring.outer{stroke-opacity:.9;fill:#1a2c4a55}
+.radar-axis{stroke:#5a6f8d;stroke-opacity:.45;stroke-width:1}
+.radar-shape{fill:#4fe0b055;stroke:#6df0c4;stroke-width:2;stroke-linejoin:round}
+.radar-dot{fill:#6df0c4}
+.radar-label{fill:#e8f1ff;font:700 11px 'DM Sans',sans-serif}
+.radar-grade{font:800 11px 'DM Sans',sans-serif}
+.skill-detail{display:grid;grid-template-columns:minmax(0,320px) 1fr;gap:24px;align-items:center;margin-top:22px;padding:18px;border:1px solid #2b3b31;background:#142019}
+.skill-detail-info{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.skill-detail-avatar{width:88px;height:88px;object-fit:cover;border-radius:2px;background:#425447}
+.skill-detail-info strong{font:700 30px/1 'Barlow Condensed',Impact,sans-serif;text-transform:uppercase}
+.skill-detail-tag{color:var(--lime);font-size:12px;letter-spacing:1px;font-weight:700}
+.skill-detail-total{color:#b4c1b6;font-size:13px}
+.skill-table tbody tr{cursor:pointer}
+.skill-table tbody tr:hover th,.skill-table tbody tr.selected th{background:#233428}
+.skill-table tbody tr.selected th{box-shadow:inset 3px 0 0 var(--lime)}
+.team-radar{padding:14px 16px 4px;border-bottom:1px solid #354438;max-width:340px;margin:0 auto}
+@media(max-width:700px){.skill-detail{grid-template-columns:1fr;gap:14px;padding:12px}.skill-detail-avatar{width:64px;height:64px}.skill-detail-info strong{font-size:26px}}
