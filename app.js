@@ -163,6 +163,18 @@ function makeAvatar(member, className) {
   return avatar;
 }
 
+const expandedCards = new Set();
+let rosterTouched = false;
+const mobileQuery = window.matchMedia('(max-width: 700px)');
+function applyRosterOpen() {
+  const viewer = cloudEnabled && !canEdit;
+  const open = rosterTouched ? !$('.roster-panel').classList.contains('roster-collapsed') : !(viewer && mobileQuery.matches);
+  $('.roster-panel').classList.toggle('roster-collapsed', !open);
+  const toggle = $('#roster-toggle');
+  toggle.setAttribute('aria-expanded', String(open));
+  toggle.textContent = open ? 'THU GỌN DANH SÁCH ▴' : 'MỞ DANH SÁCH ▾';
+}
+
 function renderRoster() {
   const container = $('#roster');
   container.replaceChildren();
@@ -206,7 +218,19 @@ function renderRoster() {
     if (skills[member.id]) {
       const chart = document.createElement('div'); chart.className = 'card-radar';
       chart.append(radarChart(skills[member.id], `Biểu đồ kỹ năng của ${member.name}`));
-      card.append(pick, chart, styleRow);
+      const expand = document.createElement('button'); expand.type = 'button'; expand.className = 'card-expand';
+      const open = expandedCards.has(member.id);
+      card.classList.toggle('expanded', open);
+      expand.setAttribute('aria-expanded', String(open));
+      expand.innerHTML = '<b></b><span></span>'; expand.firstChild.textContent = skillText(member.id); expand.lastChild.textContent = open ? 'ẨN BIỂU ĐỒ ▴' : 'XEM BIỂU ĐỒ ▾';
+      expand.addEventListener('click', () => {
+        const next = !expandedCards.has(member.id);
+        if (next) expandedCards.add(member.id); else expandedCards.delete(member.id);
+        card.classList.toggle('expanded', next);
+        expand.setAttribute('aria-expanded', String(next));
+        expand.lastChild.textContent = next ? 'ẨN BIỂU ĐỒ ▴' : 'XEM BIỂU ĐỒ ▾';
+      });
+      card.append(pick, expand, chart, styleRow);
     } else card.append(pick, styleRow);
     if (member.id.startsWith('guest-') && canEdit && cloudReady) {
       const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'guest-remove';
@@ -431,6 +455,7 @@ function render() {
   $('#bar-count').textContent = state.selected.length;
   $('#bar-teams').textContent = state.teamCount;
   $('#bar-split').disabled = !ready || !cloudReady || !canEdit;
+  applyRosterOpen();
   renderRoster(); renderTeams();
 }
 
@@ -461,6 +486,13 @@ document.querySelectorAll('.mode-button').forEach(button => button.addEventListe
   if (button.dataset.mode === state.mode) return;
   state.mode = button.dataset.mode; state.assignments = {}; save(); render();
 }));
+$('#roster-toggle').addEventListener('click', () => {
+  rosterTouched = true;
+  const panel = $('.roster-panel');
+  panel.classList.toggle('roster-collapsed', !panel.classList.contains('roster-collapsed'));
+  applyRosterOpen();
+});
+mobileQuery.addEventListener('change', () => { if (!rosterTouched) render(); });
 $('#split-button').addEventListener('click', splitTeams);
 $('#bar-split').addEventListener('click', splitTeams);
 $('#reshuffle').addEventListener('click', splitTeams);

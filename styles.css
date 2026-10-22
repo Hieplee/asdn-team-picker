@@ -100,3 +100,29 @@ body.viewer .results-section{padding-top:38px}
 .card-number{padding:2px 6px;font-size:12px}
 .member-check{width:22px;height:22px}
 @media(max-width:700px){.card-portrait{height:230px}.member-info{padding-right:62px}.card-skill{min-width:42px;height:38px;font-size:22px;right:8px;top:50%;bottom:auto}.member-check{width:24px;height:24px}}
+
+main#top{display:flex;flex-direction:column}
+main#top>*{min-width:0}
+body.viewer .roster-panel{order:5}
+.roster-head-actions{display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+.roster-toggle,.card-expand{display:none}
+@media(max-width:700px){
+.roster-head-actions{flex-direction:row;align-items:center;flex-wrap:wrap;margin-top:14px;justify-content:flex-start}
+.roster-head-actions .selection-pill{margin-top:0}
+.roster-toggle{display:inline-block;min-height:44px}
+.roster-collapsed .mode-control,.roster-collapsed .roster-toolbar,.roster-collapsed .roster-grid,.roster-collapsed .empty-search,.roster-collapsed .guest-form{display:none!important}
+.roster-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+.member-card.expanded{grid-column:1/-1}
+.card-portrait{height:118px!important}
+.member-info{padding:7px 8px 6px!important}
+.member-name{font-size:14px}
+.card-skill{display:none!important}
+.card-expand{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;min-height:40px;padding:0 8px;background:#1b2a20;border:0;border-top:1px solid #344737;color:var(--lime);font:700 10px 'DM Sans',sans-serif;letter-spacing:.6px}
+.card-expand b{font:800 20px 'Barlow Condensed',Impact,sans-serif;color:var(--text)}
+.card-radar{display:none}
+.member-card.expanded .card-radar{display:block}
+.style-footer{height:auto;min-height:40px;flex-wrap:wrap;padding:5px 7px;gap:4px}
+.style-footer label{font-size:9px}
+.style-footer .style-select{min-height:32px;font-size:11px}
+.member-card.expanded .style-footer{flex-wrap:nowrap}
+}
