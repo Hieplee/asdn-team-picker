@@ -13,6 +13,7 @@ let cloudReady = !cloudEnabled;
 let cloudAuth, cloudSignIn, cloudSignOut, cloudProvider, cloudDocument, cloudSetDocument;
 let writeQueue = Promise.resolve();
 let pendingWrites = 0;
+let authBusy = false;
 let search = '';
 let toastTimer;
 
@@ -102,6 +103,7 @@ async function initCloud() {
       const button = $('#auth-button');
       button.hidden = false;
       button.textContent = user ? (canEdit ? 'Tổ chức · Đăng xuất' : 'Đổi tài khoản') : 'Đăng nhập tổ chức';
+      button.title = user?.uid || '';
       render();
     });
     onSnapshot(cloudDocument, snapshot => {
@@ -376,7 +378,9 @@ $('#copy-result').addEventListener('click', async () => {
 });
 
 $('#auth-button').addEventListener('click', async () => {
-  if (!cloudAuth) return;
+  if (!cloudAuth || authBusy) return;
+  authBusy = true;
+  $('#auth-button').disabled = true;
   try {
     if (canEdit) {
       await cloudSignOut(cloudAuth);
@@ -384,10 +388,12 @@ $('#auth-button').addEventListener('click', async () => {
     } else {
       if (cloudAuth.currentUser) await cloudSignOut(cloudAuth);
       await cloudSignIn(cloudAuth, cloudProvider);
-      if (cloudAuth.currentUser?.uid !== organizerUid) showToast('Tài khoản này chỉ có quyền xem.');
     }
   } catch (error) {
-    if (error.code !== 'auth/popup-closed-by-user') showToast(`Đăng nhập thất bại: ${error.message}`);
+    showToast(`Đăng nhập thất bại: ${error.message}`);
+  } finally {
+    authBusy = false;
+    $('#auth-button').disabled = false;
   }
 });
 

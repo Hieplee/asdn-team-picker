@@ -4,7 +4,7 @@ service cloud.firestore {
     match /public/current {
       allow read: if true;
       allow create, update, delete: if request.auth != null
-        && request.auth.uid == 'REPLACE_WITH_ORGANIZER_UID';
+        && request.auth.uid == '57BKTGPZoDaIc2wChRWut3NBf6E3';
     }
   }
 }
