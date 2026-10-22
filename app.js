@@ -341,6 +341,7 @@ function renderTeams() {
       teams.forEach((_, teamIndex) => { const option = new Option(`Đội ${teamIndex + 1}`, String(teamIndex)); select.add(option); });
       select.value = String(index);
       select.disabled = !cloudReady || !canEdit;
+      select.hidden = !canEdit;
       select.addEventListener('change', () => { state.assignments[member.id] = Number(select.value); save(); renderTeams(); });
       row.append(select); list.append(row);
     });
@@ -368,6 +369,7 @@ function render() {
   $('#setup-message').textContent = !cloudReady ? 'Đang tải dữ liệu chung…' : !canEdit ? 'Chỉ người tổ chức được chọn người và chia đội. Bạn đang ở chế độ xem.' : ready ? `${state.selected.length} người sẽ được chia vào ${state.teamCount} đội.` : `Chọn ít nhất ${state.teamCount} người để tạo ${state.teamCount} đội.`;
   const viewer = cloudEnabled && !canEdit;
   document.body.classList.toggle('viewer', viewer);
+  $('#viewer-empty').hidden = !viewer || !cloudReady || state.selected.length > 0 && state.selected.every(id => Number.isInteger(state.assignments[id]));
   $('#mobile-bar').hidden = viewer;
   $('#bar-count').textContent = state.selected.length;
   $('#bar-teams').textContent = state.teamCount;

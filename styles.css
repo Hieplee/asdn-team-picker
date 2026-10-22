@@ -68,3 +68,7 @@ body.viewer .member-card{min-height:0}
 .guest-remove{position:absolute;top:42px;left:10px;z-index:2;min-width:32px;height:32px;padding:0 8px;background:#121b16e6;border:1px solid #f4a45f;color:#f4a45f;font:700 12px 'DM Sans',sans-serif;letter-spacing:.5px}
 .guest-remove.armed{background:#f4a45f;color:#1a1208}
 @media(max-width:700px){.guest-remove{min-width:44px;height:44px;top:38px;left:6px}}
+
+.viewer-empty{margin:38px 0;padding:36px 20px;border:1px dashed #405442;background:#142019;color:#a6b7a8;text-align:center;font-size:15px}
+body.viewer .workflow,body.viewer .roster-panel,body.viewer .setup-panel,body.viewer #reshuffle{display:none}
+body.viewer .results-section{padding-top:38px}
