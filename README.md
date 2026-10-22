@@ -13,15 +13,15 @@ Từ thư mục này, chạy `python3 -m http.server 8000` rồi mở `http://lo
 - Lối chơi gồm **Đẩy mục tiêu**, **Giữ vị trí**, **Cơ động**. Người chưa được đánh giá skill được tính tạm là 3; lối chơi chưa chọn không ảnh hưởng cách chia.
 - Thêm khách mời, chọn 2–6 đội, chia quân số chênh tối đa 1 và giảm chênh lệch skill trung bình lẫn phân bố lối chơi bằng các lượt hoán đổi.
 - Đổi đội thủ công cho từng người, chia lại, sao chép đội hình.
-- Đồng bộ lựa chọn, thuộc tính và đội hình qua Firestore để mọi người thấy cùng dữ liệu. Chỉ tài khoản tổ chức được ghi; khách xem được và sao chép đội hình.
+- Đồng bộ lựa chọn và đội hình qua Firestore để mọi người thấy cùng kết quả và đều có thể chia đội. Chỉ tài khoản tổ chức được sửa skill và lối chơi.
 
 ## Firebase
 
 1. Tạo Firebase project và web app, rồi chép web config vào `cloud-config.js`. Các giá trị này là mã định danh công khai, không phải khoá bí mật.
 2. Bật **Authentication → Sign-in method → Google**. Thêm `hieplee.github.io` vào **Authentication → Settings → Authorised domains**; thêm `localhost` nếu thử đăng nhập trên máy.
-3. Đăng nhập tài khoản tổ chức một lần để lấy Firebase UID trong **Authentication → Users**. Ghi UID vào `cloud-config.js` và thay `REPLACE_WITH_ORGANIZER_UID` trong `firestore.rules`.
-4. Tạo **Cloud Firestore** và phát hành nội dung `firestore.rules` trong tab **Rules**. Quy tắc cho phép mọi người đọc duy nhất `public/current`; chỉ UID của người tổ chức được ghi.
-5. Mở web và đăng nhập tài khoản tổ chức. Lần chỉnh sửa đầu tiên sẽ tạo tài liệu `public/current`; các thiết bị khác nhận cập nhật theo thời gian thực.
+3. Đăng nhập tài khoản tổ chức một lần để lấy Firebase UID trong **Authentication → Users**. Ghi UID đó vào `cloud-config.js` và `firestore.rules`.
+4. Tạo **Cloud Firestore** và phát hành nội dung `firestore.rules` trong tab **Rules**. Mọi người được đọc và sửa đội hình ở `public/current`; chỉ UID của người tổ chức được ghi skill và lối chơi ở `public/attributes`.
+5. Mở web, chọn người và chia đội. Các thiết bị khác nhận cập nhật theo thời gian thực. Người tổ chức đăng nhập Google để sửa thuộc tính.
 
 Khi `cloud-config.js` chưa có thông số Firebase, app chạy bản demo và chỉ lưu trong `localStorage` của trình duyệt đó. Không phát hành bản demo này như một app dùng chung.
 

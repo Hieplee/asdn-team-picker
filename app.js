@@ -10,9 +10,10 @@ const cloudEnabled = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId);
 let state = cloudEnabled ? structuredClone(initial) : loadState();
 let canEdit = !cloudEnabled;
 let cloudReady = !cloudEnabled;
-let cloudAuth, cloudSignIn, cloudSignOut, cloudProvider, cloudDocument, cloudSetDocument;
-let writeQueue = Promise.resolve();
-let pendingWrites = 0;
+let cloudAuth, cloudSignIn, cloudSignOut, cloudProvider, cloudSession, cloudAttributes, cloudSetDocument;
+const ready = { session: false, attributes: false };
+const writeQueue = { session: Promise.resolve(), attributes: Promise.resolve() };
+const pendingWrites = { session: 0, attributes: 0 };
 let authBusy = false;
 let search = '';
 let toastTimer;
@@ -62,18 +63,20 @@ function setSyncStatus(message, error = false) {
   status.classList.toggle('sync-error', error);
 }
 
-function save() {
+function save(kind = 'session') {
   if (!cloudEnabled) { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); return; }
-  if (!canEdit || !cloudReady) return;
-  const snapshot = structuredClone(state);
-  pendingWrites++;
+  if (!cloudReady || (kind === 'attributes' && !canEdit)) return;
+  const snapshot = kind === 'attributes'
+    ? { ratings: structuredClone(state.ratings), styles: structuredClone(state.styles) }
+    : { selected: [...state.selected], guests: structuredClone(state.guests), teamCount: state.teamCount, mode: state.mode, assignments: structuredClone(state.assignments) };
+  pendingWrites[kind]++;
   setSyncStatus('Đang lưu…');
-  writeQueue = writeQueue.catch(() => {}).then(() => cloudSetDocument(cloudDocument, snapshot));
-  writeQueue.then(() => {
-    pendingWrites--;
-    if (pendingWrites === 0) setSyncStatus('Đã đồng bộ');
+  writeQueue[kind] = writeQueue[kind].catch(() => {}).then(() => cloudSetDocument(kind === 'attributes' ? cloudAttributes : cloudSession, snapshot));
+  writeQueue[kind].then(() => {
+    pendingWrites[kind]--;
+    if (!pendingWrites.session && !pendingWrites.attributes) setSyncStatus('Đã đồng bộ');
   }).catch(error => {
-    pendingWrites--;
+    pendingWrites[kind]--;
     setSyncStatus('Lưu thất bại', true);
     showToast(`Không lưu được: ${error.message}`);
   });
@@ -97,7 +100,9 @@ async function initCloud() {
     cloudSignOut = signOut;
     cloudProvider = new GoogleAuthProvider();
     cloudSetDocument = setDoc;
-    cloudDocument = doc(getFirestore(app), 'public', 'current');
+    const db = getFirestore(app);
+    cloudSession = doc(db, 'public', 'current');
+    cloudAttributes = doc(db, 'public', 'attributes');
     onAuthStateChanged(cloudAuth, user => {
       canEdit = Boolean(organizerUid && user?.uid === organizerUid);
       const button = $('#auth-button');
@@ -106,18 +111,23 @@ async function initCloud() {
       button.title = user?.uid || '';
       render();
     });
-    onSnapshot(cloudDocument, snapshot => {
-      cloudReady = true;
-      if (pendingWrites === 0) {
-        state = normalizeState(snapshot.exists() ? snapshot.data() : {});
-        render();
+    const handleSnapshot = (kind, snapshot) => {
+      ready[kind] = true;
+      if (!pendingWrites[kind]) {
+        const data = snapshot.exists() ? snapshot.data() : {};
+        state = normalizeState({ ...state, ...data });
       }
-      setSyncStatus(pendingWrites ? 'Đang lưu…' : 'Đã đồng bộ');
-    }, error => {
+      cloudReady = ready.session && ready.attributes;
+      render();
+      setSyncStatus(pendingWrites.session || pendingWrites.attributes ? 'Đang lưu…' : 'Đã đồng bộ');
+    };
+    const handleError = error => {
       cloudReady = false;
       setSyncStatus('Không tải được dữ liệu chung', true);
       showToast(error.message);
-    });
+    };
+    onSnapshot(cloudSession, snapshot => handleSnapshot('session', snapshot), handleError);
+    onSnapshot(cloudAttributes, snapshot => handleSnapshot('attributes', snapshot), handleError);
   } catch (error) {
     setSyncStatus('Không kết nối được dữ liệu chung', true);
     showToast(error.message);
@@ -154,7 +164,7 @@ function renderRoster() {
     const card = document.createElement('article');
     card.className = `member-card${selected ? ' selected' : ''}`;
     const pick = document.createElement('button'); pick.type = 'button'; pick.className = 'card-pick';
-    pick.disabled = !canEdit || !cloudReady;
+    pick.disabled = !cloudReady;
     pick.setAttribute('aria-pressed', String(selected));
     pick.setAttribute('aria-label', `${selected ? 'Bỏ chọn' : 'Chọn'} ${member.name}`);
     const portrait = document.createElement('span'); portrait.className = 'card-portrait';
@@ -181,7 +191,7 @@ function renderRoster() {
     rating.addEventListener('change', () => {
       if (rating.value) state.ratings[state.mode][member.id] = Number(rating.value); else delete state.ratings[state.mode][member.id];
       skillBadge.firstChild.textContent = rating.value || '—';
-      save(); renderTeams();
+      save('attributes'); renderTeams();
     });
     footer.append(label, rating);
     const styleRow = document.createElement('div'); styleRow.className = 'card-footer style-footer';
@@ -194,7 +204,7 @@ function renderRoster() {
     styleSelect.disabled = !canEdit || !cloudReady;
     styleSelect.addEventListener('change', () => {
       if (styleSelect.value) state.styles[state.mode][member.id] = styleSelect.value; else delete state.styles[state.mode][member.id];
-      save(); renderTeams();
+      save('attributes'); renderTeams();
     });
     styleRow.append(styleLabel, styleSelect); card.append(pick, footer, styleRow);
     container.append(card);
@@ -309,7 +319,7 @@ function renderTeams() {
       const select = document.createElement('select'); select.setAttribute('aria-label', `Đổi đội cho ${member.name}`);
       teams.forEach((_, teamIndex) => { const option = new Option(`Đội ${teamIndex + 1}`, String(teamIndex)); select.add(option); });
       select.value = String(index);
-      select.disabled = !canEdit || !cloudReady;
+      select.disabled = !cloudReady;
       select.addEventListener('change', () => { state.assignments[member.id] = Number(select.value); save(); renderTeams(); });
       row.append(select); list.append(row);
     });
@@ -319,7 +329,7 @@ function renderTeams() {
 }
 
 function render() {
-  document.querySelectorAll('.mode-button, .team-count, #select-all, #clear-all, #guest-name, #guest-form button, #reshuffle').forEach(control => { control.disabled = !canEdit || !cloudReady; });
+  document.querySelectorAll('.mode-button, .team-count, #select-all, #clear-all, #guest-name, #guest-form button, #reshuffle').forEach(control => { control.disabled = !cloudReady; });
   $('#roster-total').textContent = allMembers().length;
   $('#selected-total').textContent = state.selected.length;
   $('#selected-count').textContent = state.selected.length;
@@ -333,8 +343,8 @@ function render() {
     button.classList.toggle('active', active); button.setAttribute('aria-pressed', String(active));
   });
   const ready = state.selected.length >= state.teamCount;
-  $('#split-button').disabled = !ready || !canEdit || !cloudReady;
-  $('#setup-message').textContent = !cloudReady ? 'Đang tải dữ liệu chung…' : !canEdit ? 'Bạn đang xem đội hình chung. Đăng nhập tài khoản tổ chức để chỉnh sửa.' : ready ? `${state.selected.length} người sẽ được chia vào ${state.teamCount} đội.` : `Chọn ít nhất ${state.teamCount} người để tạo ${state.teamCount} đội.`;
+  $('#split-button').disabled = !ready || !cloudReady;
+  $('#setup-message').textContent = !cloudReady ? 'Đang tải dữ liệu chung…' : ready ? `${state.selected.length} người sẽ được chia vào ${state.teamCount} đội.` : `Chọn ít nhất ${state.teamCount} người để tạo ${state.teamCount} đội.`;
   renderRoster(); renderTeams();
 }
 
