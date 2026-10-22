@@ -207,9 +207,30 @@ function renderRoster() {
       save('attributes'); renderTeams();
     });
     styleRow.append(styleLabel, styleSelect); card.append(pick, footer, styleRow);
+    if (member.id.startsWith('guest-') && canEdit && cloudReady) {
+      const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'guest-remove';
+      remove.textContent = '✕'; remove.setAttribute('aria-label', `Xóa khách mời ${member.name}`); remove.title = 'Xóa khách mời';
+      let armed = null;
+      remove.addEventListener('click', () => {
+        if (armed) { clearTimeout(armed); removeGuest(member.id); return; }
+        remove.textContent = 'XÓA?'; remove.classList.add('armed');
+        armed = setTimeout(() => { armed = null; remove.textContent = '✕'; remove.classList.remove('armed'); }, 3000);
+      });
+      card.append(remove);
+    }
     container.append(card);
   }
   $('#empty-search').hidden = filtered.length > 0;
+}
+
+function removeGuest(id) {
+  const guest = state.guests.find(g => g.id === id);
+  state.guests = state.guests.filter(g => g.id !== id);
+  state.selected = state.selected.filter(value => value !== id);
+  delete state.assignments[id];
+  for (const mode of ['cqb', 'outdoor']) { delete state.ratings[mode][id]; delete state.styles[mode][id]; }
+  save(); save('attributes'); render();
+  if (guest) showToast(`Đã xóa ${guest.name}.`);
 }
 
 function toggleMember(id) {
