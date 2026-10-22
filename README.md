@@ -19,7 +19,7 @@ Từ thư mục này, chạy `python3 -m http.server 8000` rồi mở `http://lo
 
 1. Tạo Firebase project và web app, rồi chép web config vào `cloud-config.js`. Các giá trị này là mã định danh công khai, không phải khoá bí mật.
 2. Bật **Authentication → Sign-in method → Google**. Thêm `hieplee.github.io` vào **Authentication → Settings → Authorised domains**; thêm `localhost` nếu thử đăng nhập trên máy.
-3. Đăng nhập tài khoản tổ chức một lần để lấy Firebase UID trong **Authentication → Users**. Ghi UID đó vào `cloud-config.js` và `firestore.rules`.
+3. Đăng nhập tài khoản tổ chức một lần để lấy Firebase UID trong **Authentication → Users**. Ghi UID đó vào danh sách `organizerUids` trong `cloud-config.js` và `firestore.rules` (có thể nhiều người).
 4. Tạo **Cloud Firestore** và phát hành nội dung `firestore.rules` trong tab **Rules**. Mọi người được đọc `public/current` và `public/attributes`; chỉ UID của người tổ chức được ghi đội hình, skill và lối chơi.
 5. Mở web: ai cũng xem được. Người tổ chức đăng nhập Google để chọn người, chia đội, sửa skill và lối chơi; các thiết bị khác nhận cập nhật theo thời gian thực.
 

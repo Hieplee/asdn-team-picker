@@ -1,5 +1,5 @@
 import members from './members.json' with { type: 'json' };
-import { firebaseConfig, organizerUid } from './cloud-config.js';
+import { firebaseConfig, organizerUids } from './cloud-config.js';
 
 const STORAGE_KEY = 'asdn-team-picker-v1';
 const $ = (selector) => document.querySelector(selector);
@@ -104,7 +104,7 @@ async function initCloud() {
     cloudSession = doc(db, 'public', 'current');
     cloudAttributes = doc(db, 'public', 'attributes');
     onAuthStateChanged(cloudAuth, user => {
-      canEdit = Boolean(organizerUid && user?.uid === organizerUid);
+      canEdit = Boolean(user && organizerUids.includes(user.uid));
       const button = $('#auth-button');
       button.hidden = false;
       button.textContent = user ? (canEdit ? 'Tổ chức · Đăng xuất' : 'Đổi tài khoản') : 'Đăng nhập tổ chức';

@@ -7,4 +7,6 @@ export const firebaseConfig = {
   appId: '1:975616668410:web:b34db5b094f888f2ae0f43',
 };
 
-export const organizerUid = '57BKTGPZoDaIc2wChRWut3NBf6E3';
+// Organizers who may edit. Keep in sync with firestore.rules.
+// 57BKT... = hiepbrse@gmail.com, kEkdL... = khanhtrandhp@gmail.com
+export const organizerUids = ['57BKTGPZoDaIc2wChRWut3NBf6E3', 'kEkdLPY3kLWPCVBJG8112W1yDlB3'];

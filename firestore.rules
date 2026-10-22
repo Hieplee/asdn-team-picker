@@ -4,7 +4,7 @@ service cloud.firestore {
     match /public/current {
       allow read: if true;
       allow create, update: if request.auth != null
-        && request.auth.uid == '57BKTGPZoDaIc2wChRWut3NBf6E3'
+        && request.auth.uid in ['57BKTGPZoDaIc2wChRWut3NBf6E3', 'kEkdLPY3kLWPCVBJG8112W1yDlB3']
         && request.resource.data.keys().hasOnly(['selected', 'guests', 'teamCount', 'mode', 'assignments'])
         && request.resource.data.selected is list
         && request.resource.data.selected.size() <= 100
@@ -19,7 +19,7 @@ service cloud.firestore {
     match /public/attributes {
       allow read: if true;
       allow create, update: if request.auth != null
-        && request.auth.uid == '57BKTGPZoDaIc2wChRWut3NBf6E3'
+        && request.auth.uid in ['57BKTGPZoDaIc2wChRWut3NBf6E3', 'kEkdLPY3kLWPCVBJG8112W1yDlB3']
         && request.resource.data.keys().hasOnly(['ratings', 'styles']);
     }
   }
