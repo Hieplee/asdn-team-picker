@@ -60,8 +60,7 @@ body{padding-bottom:78px}
 .search-box,.guest-input input{height:48px}
 .search-box input,.guest-input input{font-size:16px}
 .setup-panel .primary-button,#split-button{height:52px}
-body.viewer .card-footer{display:none}
-body.viewer .member-card{min-height:0}
+body.viewer #select-all,body.viewer #clear-all,body.viewer .toolbar-divider,body.viewer #guest-form{display:none}
 }
 
 .guest-remove{position:absolute;top:42px;left:10px;z-index:2;min-width:32px;height:32px;padding:0 8px;background:#121b16e6;border:1px solid #f4a45f;color:#f4a45f;font:700 12px 'DM Sans',sans-serif;letter-spacing:.5px}
@@ -69,13 +68,12 @@ body.viewer .member-card{min-height:0}
 @media(max-width:700px){.guest-remove{min-width:44px;height:44px;top:38px;left:6px}}
 
 .viewer-empty{margin:38px 0;padding:36px 20px;border:1px dashed #405442;background:#142019;color:#a6b7a8;text-align:center;font-size:15px}
-body.viewer .workflow,body.viewer .roster-panel,body.viewer .setup-panel,body.viewer #reshuffle{display:none}
+body.viewer .workflow,body.viewer .setup-panel,body.viewer #reshuffle{display:none}
 body.viewer .results-section{padding-top:38px}
 
 .member-id.has-tag{color:var(--lime);letter-spacing:.8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .team-person-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.team-person-text .team-person-name{flex:none}.team-tag{color:var(--lime);font-size:10px;letter-spacing:.6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-.skills-panel{margin-top:22px}
 
 .skill-radar{display:block;width:100%;height:auto}
 .radar-bg{fill:#13203a}
@@ -88,14 +86,10 @@ body.viewer .results-section{padding-top:38px}
 .radar-grade{font:800 11px 'DM Sans',sans-serif}
 .team-radar{padding:14px 16px 4px;border-bottom:1px solid #354438;max-width:340px;margin:0 auto}
 
-.skill-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;margin-top:22px}
-.skill-card{border:1px solid #344339;background:#17241a;padding:12px;min-width:0}
-.skill-card-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
-.skill-card-avatar{width:46px;height:46px;object-fit:cover;border-radius:2px;flex-shrink:0;background:#425447}
-.skill-card-text{min-width:0;flex:1;display:flex;flex-direction:column;gap:3px}
-.skill-card-text strong{font:700 19px/1 'Barlow Condensed',Impact,sans-serif;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.skill-card-text span{color:var(--lime);font-size:10px;letter-spacing:.8px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.skill-card-score{display:flex;flex-direction:column;align-items:center;min-width:52px;padding:5px 8px;border:1px solid var(--grade,#c8f36b);color:var(--grade,#c8f36b)}
-.skill-card-score b{font:800 22px/1 'Barlow Condensed',Impact,sans-serif}
-.skill-card-score small{font:700 8px 'DM Sans',sans-serif;letter-spacing:.8px;margin-top:2px}
-@media(max-width:700px){.skill-grid{grid-template-columns:1fr}}
+
+.roster-grid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))!important}
+.card-radar{padding:6px 8px 8px;background:#17241a;border-top:1px solid #344737}
+.card-radar .radar-label{font-size:13px}
+.card-radar .radar-grade{font-size:12px}
+.card-portrait{height:140px}
+@media(max-width:700px){.roster-grid{grid-template-columns:1fr!important}.card-portrait{height:120px}}

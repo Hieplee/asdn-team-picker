@@ -147,7 +147,7 @@ function detailTotal(id) {
 }
 function skill(id) { return detailTotal(id) ?? 3; }
 function hasSkill(id) { return detailTotal(id) !== undefined; }
-function skillText(id) { return hasSkill(id) ? Number(skill(id).toFixed(1)).toString() : '—'; }
+function skillText(id) { return hasSkill(id) ? skill(id).toFixed(1) : '—'; }
 function makeAvatar(member, className) {
   if (!member.avatar) {
     const avatar = document.createElement('span');
@@ -202,7 +202,12 @@ function renderRoster() {
       if (styleSelect.value) state.styles[state.mode][member.id] = styleSelect.value; else delete state.styles[state.mode][member.id];
       save('attributes'); renderTeams();
     });
-    styleRow.append(styleLabel, styleSelect); card.append(pick, styleRow);
+    styleRow.append(styleLabel, styleSelect);
+    if (skills[member.id]) {
+      const chart = document.createElement('div'); chart.className = 'card-radar';
+      chart.append(radarChart(skills[member.id], `Biểu đồ kỹ năng của ${member.name}`));
+      card.append(pick, chart, styleRow);
+    } else card.append(pick, styleRow);
     if (member.id.startsWith('guest-') && canEdit && cloudReady) {
       const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'guest-remove';
       remove.textContent = '✕'; remove.setAttribute('aria-label', `Xóa khách mời ${member.name}`); remove.title = 'Xóa khách mời';
@@ -402,28 +407,6 @@ function teamAverage(people) {
   }
   return result;
 }
-function renderSkillCards() {
-  const grid = $('#skill-grid'); grid.replaceChildren();
-  const rows = members.filter(m => skills[m.id]).map(m => ({ member: m, total: detailTotal(m.id) })).sort((a, b) => b.total - a.total || a.member.name.localeCompare(b.member.name, 'vi'));
-  for (const { member, total } of rows) {
-    const card = document.createElement('article'); card.className = 'skill-card';
-    const head = document.createElement('div'); head.className = 'skill-card-head';
-    head.append(makeAvatar(member, 'skill-card-avatar'));
-    const text = document.createElement('div'); text.className = 'skill-card-text';
-    const name = document.createElement('strong'); name.textContent = member.name; name.title = member.name;
-    const tag = document.createElement('span'); tag.textContent = member.tag || 'ASDN OPERATIVE';
-    text.append(name, tag);
-    const grade = gradeOf(total);
-    const badge = document.createElement('div'); badge.className = 'skill-card-score'; badge.style.setProperty('--grade', GRADE_COLORS[grade]);
-    const number = document.createElement('b'); number.textContent = total.toFixed(1);
-    const letter = document.createElement('small'); letter.textContent = `HẠNG ${grade}`;
-    badge.append(number, letter);
-    head.append(text, badge);
-    card.append(head, radarChart(skills[member.id], `Biểu đồ kỹ năng của ${member.name}`));
-    grid.append(card);
-  }
-}
-
 function render() {
   document.querySelectorAll('.mode-button, .team-count, #select-all, #clear-all, #guest-name, #guest-form button, #reshuffle').forEach(control => { control.disabled = !cloudReady || !canEdit; });
   $('#roster-total').textContent = allMembers().length;
@@ -511,6 +494,5 @@ $('#auth-button').addEventListener('click', async () => {
   }
 });
 
-renderSkillCards();
 render();
 initCloud();
