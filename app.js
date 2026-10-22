@@ -149,9 +149,9 @@ function skill(id) { return detailTotal(id) ?? 3; }
 function hasSkill(id) { return detailTotal(id) !== undefined; }
 function skillText(id) { return hasSkill(id) ? skill(id).toFixed(1) : '—'; }
 const ROLE_LABELS = { admin: 'Ban Quản Trị', elder: 'Người Già', newbie: 'NewBie' };
-function makeRoleIcons(member) {
+function makeRoleIcons(member, withLabel = false) {
   const wrap = document.createElement('span'); wrap.className = 'role-icons';
-  (member.roles || []).forEach((role) => { if (!ROLE_LABELS[role]) return; const img = document.createElement('img'); img.src = `icons/role-${role}.png`; img.alt = ROLE_LABELS[role]; img.title = ROLE_LABELS[role]; wrap.append(img); });
+  (member.roles || []).forEach((role) => { if (!ROLE_LABELS[role]) return; const img = document.createElement('img'); img.src = `icons/role-${role}.png`; img.alt = ROLE_LABELS[role]; img.title = ROLE_LABELS[role]; if (!withLabel) { wrap.append(img); return; } const chip = document.createElement('span'); chip.className = 'role-chip'; chip.append(img, ROLE_LABELS[role]); wrap.append(chip); });
   return wrap;
 }
 function makeAvatar(member, className) {
@@ -368,7 +368,7 @@ function renderTeams() {
       row.append(makeAvatar(member, 'team-avatar'));
       const text = document.createElement('div'); text.className = 'team-person-text';
       const name = document.createElement('span'); name.className = 'team-person-name'; name.textContent = member.name; name.title = member.name; text.append(name);
-      if (member.roles && member.roles.length) { const roleLine = document.createElement('span'); roleLine.className = 'team-tag'; roleLine.append(makeRoleIcons(member)); if (member.tag) roleLine.append(member.tag); text.append(roleLine); }
+      if (member.roles && member.roles.length) { const roleLine = document.createElement('span'); roleLine.className = 'team-tag'; roleLine.append(makeRoleIcons(member, true)); if (member.tag) roleLine.append(member.tag); text.append(roleLine); }
       else if (member.tag) { const tag = document.createElement('span'); tag.className = 'team-tag'; tag.textContent = member.tag; text.append(tag); }
       row.append(text);
       const style = document.createElement('span'); style.className = 'team-style'; style.textContent = styleFor(member.id) ? STYLES[styleFor(member.id)] : '—'; style.title = styleFor(member.id) ? 'Lối chơi' : 'Chưa chọn lối chơi'; row.append(style);

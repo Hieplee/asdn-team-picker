@@ -128,3 +128,4 @@ body.viewer .roster-panel{order:5}
 }
 
 .role-icons{display:inline-flex;gap:3px;vertical-align:middle;margin-right:5px}.role-icons img{width:14px;height:14px;display:block}
+.role-chip{display:inline-flex;align-items:center;gap:4px}.role-icons:has(.role-chip){gap:10px;margin-right:8px}.team-tag .role-icons{flex-wrap:wrap}
