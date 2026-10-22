@@ -17,7 +17,8 @@
   {
     "id": "004",
     "name": "Doan Nam Long",
-    "avatar": "avatars/004_doan-nam-long.jpg"
+    "avatar": "avatars/004_doan-nam-long.jpg",
+    "tag": "Đi cho vui"
   },
   {
     "id": "005",
@@ -72,7 +73,8 @@
   {
     "id": "015",
     "name": "Nguyễn Highland",
-    "avatar": "avatars/015_nguyen-highland.jpg"
+    "avatar": "avatars/015_nguyen-highland.jpg",
+    "tag": "Khán giả trung lập"
   },
   {
     "id": "016",
@@ -92,12 +94,14 @@
   {
     "id": "019",
     "name": "Nguyen Thanh Tuan",
-    "avatar": "avatars/019_nguyen-thanh-tuan.jpg"
+    "avatar": "avatars/019_nguyen-thanh-tuan.jpg",
+    "tag": "Núp bụi 20p"
   },
   {
     "id": "020",
     "name": "Nguyễn Viết Thắng",
-    "avatar": "avatars/020_nguyen-viet-thang.jpg"
+    "avatar": "avatars/020_nguyen-viet-thang.jpg",
+    "tag": "Lớp khiên của team"
   },
   {
     "id": "021",
@@ -142,7 +146,8 @@
   {
     "id": "029",
     "name": "Vũ Sơn",
-    "avatar": "avatars/029_vu-son.jpg"
+    "avatar": "avatars/029_vu-son.jpg",
+    "tag": "Đùa dai chính hiệu"
   },
   {
     "id": "030",

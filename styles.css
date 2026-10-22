@@ -72,3 +72,6 @@ body.viewer .member-card{min-height:0}
 .viewer-empty{margin:38px 0;padding:36px 20px;border:1px dashed #405442;background:#142019;color:#a6b7a8;text-align:center;font-size:15px}
 body.viewer .workflow,body.viewer .roster-panel,body.viewer .setup-panel,body.viewer #reshuffle{display:none}
 body.viewer .results-section{padding-top:38px}
+
+.member-id.has-tag{color:var(--lime);letter-spacing:.8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.team-person-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.team-person-text .team-person-name{flex:none}.team-tag{color:var(--lime);font-size:10px;letter-spacing:.6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

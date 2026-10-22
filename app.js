@@ -177,7 +177,8 @@ function renderRoster() {
     const info = document.createElement('span');
     info.className = 'member-info';
     const name = document.createElement('span'); name.className = 'member-name'; name.textContent = member.name; name.title = member.name;
-    const id = document.createElement('span'); id.className = 'member-id'; id.textContent = member.id.startsWith('guest-') ? 'GUEST PLAYER' : 'ASDN OPERATIVE';
+    const id = document.createElement('span'); id.className = 'member-id'; id.textContent = member.id.startsWith('guest-') ? 'GUEST PLAYER' : (member.tag || 'ASDN OPERATIVE');
+    if (member.tag) id.classList.add('has-tag');
     info.append(name, id); pick.append(info);
     pick.addEventListener('click', () => toggleMember(member.id));
     const footer = document.createElement('div'); footer.className = 'card-footer';
@@ -334,7 +335,10 @@ function renderTeams() {
     people.forEach(member => {
       const row = document.createElement('div'); row.className = 'team-person';
       row.append(makeAvatar(member, 'team-avatar'));
-      const name = document.createElement('span'); name.className = 'team-person-name'; name.textContent = member.name; name.title = member.name; row.append(name);
+      const text = document.createElement('div'); text.className = 'team-person-text';
+      const name = document.createElement('span'); name.className = 'team-person-name'; name.textContent = member.name; name.title = member.name; text.append(name);
+      if (member.tag) { const tag = document.createElement('span'); tag.className = 'team-tag'; tag.textContent = member.tag; text.append(tag); }
+      row.append(text);
       const style = document.createElement('span'); style.className = 'team-style'; style.textContent = styleFor(member.id) ? STYLES[styleFor(member.id)] : '—'; style.title = styleFor(member.id) ? 'Lối chơi' : 'Chưa chọn lối chơi'; row.append(style);
       const badge = document.createElement('span'); badge.className = 'team-skill'; badge.textContent = ratingFor(member.id) ? `★ ${ratingFor(member.id)}` : '★ —'; badge.title = ratingFor(member.id) ? 'Skill đã nhập' : 'Chưa đánh giá, tính tạm là 3'; row.append(badge);
       const select = document.createElement('select'); select.setAttribute('aria-label', `Đổi đội cho ${member.name}`);
