@@ -65,7 +65,7 @@ function setSyncStatus(message, error = false) {
 
 function save(kind = 'session') {
   if (!cloudEnabled) { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); return; }
-  if (!cloudReady || (kind === 'attributes' && !canEdit)) return;
+  if (!cloudReady || !canEdit) return;
   const snapshot = kind === 'attributes'
     ? { ratings: structuredClone(state.ratings), styles: structuredClone(state.styles) }
     : { selected: [...state.selected], guests: structuredClone(state.guests), teamCount: state.teamCount, mode: state.mode, assignments: structuredClone(state.assignments) };
@@ -164,7 +164,7 @@ function renderRoster() {
     const card = document.createElement('article');
     card.className = `member-card${selected ? ' selected' : ''}`;
     const pick = document.createElement('button'); pick.type = 'button'; pick.className = 'card-pick';
-    pick.disabled = !cloudReady;
+    pick.disabled = !cloudReady || !canEdit;
     pick.setAttribute('aria-pressed', String(selected));
     pick.setAttribute('aria-label', `${selected ? 'Bỏ chọn' : 'Chọn'} ${member.name}`);
     const portrait = document.createElement('span'); portrait.className = 'card-portrait';
@@ -319,7 +319,7 @@ function renderTeams() {
       const select = document.createElement('select'); select.setAttribute('aria-label', `Đổi đội cho ${member.name}`);
       teams.forEach((_, teamIndex) => { const option = new Option(`Đội ${teamIndex + 1}`, String(teamIndex)); select.add(option); });
       select.value = String(index);
-      select.disabled = !cloudReady;
+      select.disabled = !cloudReady || !canEdit;
       select.addEventListener('change', () => { state.assignments[member.id] = Number(select.value); save(); renderTeams(); });
       row.append(select); list.append(row);
     });
@@ -329,7 +329,7 @@ function renderTeams() {
 }
 
 function render() {
-  document.querySelectorAll('.mode-button, .team-count, #select-all, #clear-all, #guest-name, #guest-form button, #reshuffle').forEach(control => { control.disabled = !cloudReady; });
+  document.querySelectorAll('.mode-button, .team-count, #select-all, #clear-all, #guest-name, #guest-form button, #reshuffle').forEach(control => { control.disabled = !cloudReady || !canEdit; });
   $('#roster-total').textContent = allMembers().length;
   $('#selected-total').textContent = state.selected.length;
   $('#selected-count').textContent = state.selected.length;
@@ -343,8 +343,8 @@ function render() {
     button.classList.toggle('active', active); button.setAttribute('aria-pressed', String(active));
   });
   const ready = state.selected.length >= state.teamCount;
-  $('#split-button').disabled = !ready || !cloudReady;
-  $('#setup-message').textContent = !cloudReady ? 'Đang tải dữ liệu chung…' : ready ? `${state.selected.length} người sẽ được chia vào ${state.teamCount} đội.` : `Chọn ít nhất ${state.teamCount} người để tạo ${state.teamCount} đội.`;
+  $('#split-button').disabled = !ready || !cloudReady || !canEdit;
+  $('#setup-message').textContent = !cloudReady ? 'Đang tải dữ liệu chung…' : !canEdit ? 'Chỉ người tổ chức được chọn người và chia đội. Bạn đang ở chế độ xem.' : ready ? `${state.selected.length} người sẽ được chia vào ${state.teamCount} đội.` : `Chọn ít nhất ${state.teamCount} người để tạo ${state.teamCount} đội.`;
   renderRoster(); renderTeams();
 }
 
