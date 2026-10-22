@@ -93,3 +93,10 @@ body.viewer .results-section{padding-top:38px}
 .card-radar .radar-grade{font-size:12px}
 .card-portrait{height:140px}
 @media(max-width:700px){.roster-grid{grid-template-columns:1fr!important}.card-portrait{height:120px}}
+
+.card-portrait{height:200px}
+.member-info{position:relative;padding-right:66px}
+.card-skill{right:9px;bottom:auto;top:50%;transform:translateY(-50%);min-width:46px;height:42px;font-size:25px;box-shadow:none}
+.card-number{padding:2px 6px;font-size:12px}
+.member-check{width:22px;height:22px}
+@media(max-width:700px){.card-portrait{height:230px}.member-info{padding-right:62px}.card-skill{min-width:42px;height:38px;font-size:22px;right:8px;top:50%;bottom:auto}.member-check{width:24px;height:24px}}

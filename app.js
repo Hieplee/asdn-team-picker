@@ -182,13 +182,13 @@ function renderRoster() {
     const check = document.createElement('span'); check.className = 'member-check'; check.setAttribute('aria-hidden', 'true'); check.textContent = selected ? '✓' : '+';
     const skillBadge = document.createElement('span'); skillBadge.className = 'card-skill'; skillBadge.textContent = skillText(member.id);
     const skillCaption = document.createElement('span'); skillCaption.textContent = 'SKILL'; skillBadge.append(skillCaption);
-    portrait.append(number, check, skillBadge); pick.append(portrait);
+    portrait.append(number, check); pick.append(portrait);
     const info = document.createElement('span');
     info.className = 'member-info';
     const name = document.createElement('span'); name.className = 'member-name'; name.textContent = member.name; name.title = member.name;
     const id = document.createElement('span'); id.className = 'member-id'; id.textContent = member.id.startsWith('guest-') ? 'GUEST PLAYER' : (member.tag || 'ASDN OPERATIVE');
     if (member.tag) id.classList.add('has-tag');
-    info.append(name, id); pick.append(info);
+    info.append(name, id, skillBadge); pick.append(info);
     pick.addEventListener('click', () => toggleMember(member.id));
     const styleRow = document.createElement('div'); styleRow.className = 'card-footer style-footer';
     const styleLabel = document.createElement('label'); styleLabel.textContent = 'LỐI CHƠI'; styleLabel.htmlFor = `style-${member.id}`;
