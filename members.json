@@ -23,7 +23,8 @@
   {
     "id": "005",
     "name": "Hoàng Nguyễn",
-    "avatar": "avatars/005_hoang-nguyen.jpg"
+    "avatar": "avatars/005_hoang-nguyen.jpg",
+    "tag": "Thiên Lôi ta đây"
   },
   {
     "id": "006",
@@ -43,7 +44,8 @@
   {
     "id": "009",
     "name": "Khánh Trần",
-    "avatar": "avatars/009_khanh-tran.jpg"
+    "avatar": "avatars/009_khanh-tran.jpg",
+    "tag": "Thanh niên chuyên cần"
   },
   {
     "id": "010",
