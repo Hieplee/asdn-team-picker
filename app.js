@@ -138,7 +138,6 @@ async function initCloud() {
 function allMembers() { return [...members, ...state.guests]; }
 function findMember(id) { return allMembers().find(m => m.id === id); }
 function initials(name) { return [...name.trim()][0]?.toUpperCase() || '?'; }
-function ratingFor(id) { return state.ratings[state.mode][id]; }
 function styleFor(id) { return state.styles[state.mode][id]; }
 function detailTotal(id) {
   const detail = skills[id];
@@ -146,8 +145,8 @@ function detailTotal(id) {
   const values = CRITERIA.map(([key]) => detail[key]).filter(Number.isFinite);
   return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : undefined;
 }
-function skill(id) { return ratingFor(id) ?? detailTotal(id) ?? 3; }
-function hasSkill(id) { return ratingFor(id) !== undefined || detailTotal(id) !== undefined; }
+function skill(id) { return detailTotal(id) ?? 3; }
+function hasSkill(id) { return detailTotal(id) !== undefined; }
 function skillText(id) { return hasSkill(id) ? Number(skill(id).toFixed(1)).toString() : '—'; }
 function makeAvatar(member, className) {
   if (!member.avatar) {
@@ -191,20 +190,6 @@ function renderRoster() {
     if (member.tag) id.classList.add('has-tag');
     info.append(name, id); pick.append(info);
     pick.addEventListener('click', () => toggleMember(member.id));
-    const footer = document.createElement('div'); footer.className = 'card-footer';
-    const label = document.createElement('label'); label.textContent = 'SKILL'; label.htmlFor = `rating-${member.id}`;
-    const rating = document.createElement('select'); rating.id = `rating-${member.id}`; rating.className = 'rating-select';
-    rating.setAttribute('aria-label', `Skill của ${member.name}`);
-    rating.add(new Option('— Chưa đánh giá', ''));
-    for (let value = 1; value <= 5; value++) rating.add(new Option(`${value} / 5`, String(value)));
-    rating.value = ratingFor(member.id) ? String(ratingFor(member.id)) : '';
-    rating.disabled = !canEdit || !cloudReady;
-    rating.addEventListener('change', () => {
-      if (rating.value) state.ratings[state.mode][member.id] = Number(rating.value); else delete state.ratings[state.mode][member.id];
-      skillBadge.firstChild.textContent = rating.value || '—';
-      save('attributes'); renderTeams();
-    });
-    footer.append(label, rating);
     const styleRow = document.createElement('div'); styleRow.className = 'card-footer style-footer';
     const styleLabel = document.createElement('label'); styleLabel.textContent = 'LỐI CHƠI'; styleLabel.htmlFor = `style-${member.id}`;
     const styleSelect = document.createElement('select'); styleSelect.id = `style-${member.id}`; styleSelect.className = 'style-select';
@@ -217,7 +202,7 @@ function renderRoster() {
       if (styleSelect.value) state.styles[state.mode][member.id] = styleSelect.value; else delete state.styles[state.mode][member.id];
       save('attributes'); renderTeams();
     });
-    styleRow.append(styleLabel, styleSelect); card.append(pick, footer, styleRow);
+    styleRow.append(styleLabel, styleSelect); card.append(pick, styleRow);
     if (member.id.startsWith('guest-') && canEdit && cloudReady) {
       const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'guest-remove';
       remove.textContent = '✕'; remove.setAttribute('aria-label', `Xóa khách mời ${member.name}`); remove.title = 'Xóa khách mời';

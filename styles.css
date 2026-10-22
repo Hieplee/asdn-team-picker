@@ -19,7 +19,6 @@
 .member-id{display:block;margin-top:5px;font-size:9px;letter-spacing:1.2px;color:#9bb09a}
 .card-footer{height:42px;border-top:1px solid #415241;display:flex;align-items:center;justify-content:space-between;padding:0 10px;background:#17241a;gap:7px}
 .card-footer label{font:700 11px 'DM Sans',sans-serif;letter-spacing:1px;color:var(--lime)}
-.rating-select{max-width:113px;background:#2a3d2b;color:#e6f4df;border:1px solid #567452;padding:5px 2px;font-size:10px;cursor:pointer}
 .team-skill{padding:5px 7px;background:#30452d;color:var(--lime);font:700 12px 'Barlow Condensed',Impact,sans-serif;white-space:nowrap}
 @media(max-width:1200px){.roster-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
 @media(max-width:950px){.roster-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
@@ -52,7 +51,7 @@ body{padding-bottom:78px}
 .member-name{font-size:15px}
 .card-skill{min-width:36px;height:40px;font-size:24px;right:6px;bottom:6px}
 .card-footer{height:46px}
-.rating-select,.style-select{min-height:36px;font-size:12px;max-width:none;flex:1}
+.style-select{min-height:36px;font-size:12px;max-width:none;flex:1}
 .mode-button,.team-count,.secondary-button,.text-button,.guest-input button,.segmented button{min-height:44px}
 .topbar{height:auto;min-height:65px;padding:8px 0}.topbar-account{gap:4px}.auth-button{min-height:36px;padding:6px 10px}
 .mode-buttons{width:100%}.mode-button{flex:1;padding:0 8px}
