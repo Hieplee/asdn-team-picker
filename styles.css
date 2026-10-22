@@ -75,3 +75,19 @@ body.viewer .results-section{padding-top:38px}
 
 .member-id.has-tag{color:var(--lime);letter-spacing:.8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .team-person-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.team-person-text .team-person-name{flex:none}.team-tag{color:var(--lime);font-size:10px;letter-spacing:.6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.skills-panel{margin-top:22px}
+.skill-table-wrap{margin-top:22px;overflow-x:auto;border:1px solid #2b3b31}
+.skill-table{width:100%;border-collapse:collapse;min-width:560px;font-size:13px}
+.skill-table th,.skill-table td{padding:8px 10px;text-align:center;border-bottom:1px solid #26342b}
+.skill-table thead th{position:sticky;top:0;background:#223128;color:var(--lime);font:700 11px 'DM Sans',sans-serif;letter-spacing:1px;text-transform:uppercase}
+.skill-table tbody th{text-align:left;display:flex;align-items:center;gap:10px;font-weight:700;border-bottom:1px solid #26342b;min-width:190px}
+.skill-table thead th:first-child{text-align:left}
+.skill-avatar{width:30px;height:30px;object-fit:cover;border-radius:2px;flex-shrink:0;background:#425447}
+.skill-table td[data-level="5"]{background:#35542f;color:#e9ffc8;font-weight:700}
+.skill-table td[data-level="4"]{background:#2a3f2b;color:#cfe8bd}
+.skill-table td[data-level="3"]{background:#2d3322;color:#d8d9a8}
+.skill-table td[data-level="2"]{background:#3b2f22;color:#f1c9a0}
+.skill-table td[data-level="1"]{background:#41251f;color:#f4a58f}
+.skill-table .skill-total{color:var(--lime);font:800 18px 'Barlow Condensed',Impact,sans-serif}
+@media(max-width:700px){.skill-table{font-size:12px;min-width:520px}.skill-table th,.skill-table td{padding:7px 6px}.skill-table tbody th{min-width:150px}}

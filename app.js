@@ -1,9 +1,11 @@
 import members from './members.json' with { type: 'json' };
+import skills from './skills.json' with { type: 'json' };
 import { firebaseConfig, organizerUids } from './cloud-config.js';
 
 const STORAGE_KEY = 'asdn-team-picker-v1';
 const $ = (selector) => document.querySelector(selector);
 const MODES = ['cqb', 'outdoor'];
+const CRITERIA = [['aim', 'Bắn trúng'], ['move', 'Di chuyển'], ['aware', 'Quan sát'], ['team', 'Phối hợp'], ['stamina', 'Thể lực']];
 const STYLES = { push: 'Đẩy mục tiêu', hold: 'Giữ vị trí', mobile: 'Cơ động' };
 const initial = { selected: [], guests: [], teamCount: 2, mode: 'cqb', assignments: {}, ratings: { cqb: {}, outdoor: {} }, styles: { cqb: {}, outdoor: {} } };
 const cloudEnabled = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId);
@@ -138,7 +140,15 @@ function findMember(id) { return allMembers().find(m => m.id === id); }
 function initials(name) { return [...name.trim()][0]?.toUpperCase() || '?'; }
 function ratingFor(id) { return state.ratings[state.mode][id]; }
 function styleFor(id) { return state.styles[state.mode][id]; }
-function skill(id) { return ratingFor(id) ?? 3; }
+function detailTotal(id) {
+  const detail = skills[id];
+  if (!detail) return undefined;
+  const values = CRITERIA.map(([key]) => detail[key]).filter(Number.isFinite);
+  return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : undefined;
+}
+function skill(id) { return ratingFor(id) ?? detailTotal(id) ?? 3; }
+function hasSkill(id) { return ratingFor(id) !== undefined || detailTotal(id) !== undefined; }
+function skillText(id) { return hasSkill(id) ? Number(skill(id).toFixed(1)).toString() : '—'; }
 function makeAvatar(member, className) {
   if (!member.avatar) {
     const avatar = document.createElement('span');
@@ -171,7 +181,7 @@ function renderRoster() {
     portrait.append(makeAvatar(member, 'member-avatar'));
     const number = document.createElement('span'); number.className = 'card-number'; number.textContent = member.id.startsWith('guest-') ? 'GUEST' : `#${member.id}`;
     const check = document.createElement('span'); check.className = 'member-check'; check.setAttribute('aria-hidden', 'true'); check.textContent = selected ? '✓' : '+';
-    const skillBadge = document.createElement('span'); skillBadge.className = 'card-skill'; skillBadge.textContent = ratingFor(member.id) ? String(ratingFor(member.id)) : '—';
+    const skillBadge = document.createElement('span'); skillBadge.className = 'card-skill'; skillBadge.textContent = skillText(member.id);
     const skillCaption = document.createElement('span'); skillCaption.textContent = 'SKILL'; skillBadge.append(skillCaption);
     portrait.append(number, check, skillBadge); pick.append(portrait);
     const info = document.createElement('span');
@@ -340,7 +350,7 @@ function renderTeams() {
       if (member.tag) { const tag = document.createElement('span'); tag.className = 'team-tag'; tag.textContent = member.tag; text.append(tag); }
       row.append(text);
       const style = document.createElement('span'); style.className = 'team-style'; style.textContent = styleFor(member.id) ? STYLES[styleFor(member.id)] : '—'; style.title = styleFor(member.id) ? 'Lối chơi' : 'Chưa chọn lối chơi'; row.append(style);
-      const badge = document.createElement('span'); badge.className = 'team-skill'; badge.textContent = ratingFor(member.id) ? `★ ${ratingFor(member.id)}` : '★ —'; badge.title = ratingFor(member.id) ? 'Skill đã nhập' : 'Chưa đánh giá, tính tạm là 3'; row.append(badge);
+      const badge = document.createElement('span'); badge.className = 'team-skill'; badge.textContent = `★ ${skillText(member.id)}`; badge.title = hasSkill(member.id) ? 'Điểm tổng' : 'Chưa đánh giá, tính tạm là 3'; row.append(badge);
       const select = document.createElement('select'); select.setAttribute('aria-label', `Đổi đội cho ${member.name}`);
       teams.forEach((_, teamIndex) => { const option = new Option(`Đội ${teamIndex + 1}`, String(teamIndex)); select.add(option); });
       select.value = String(index);
@@ -351,7 +361,27 @@ function renderTeams() {
     });
     card.append(head, list); container.append(card);
   });
-  $('#result-summary').textContent = `${state.mode === 'cqb' ? 'CQB' : 'Sân ngoài trời'} · ${state.selected.length} người · ${state.teamCount} đội · ${state.selected.filter(id => ratingFor(id)).length} người đã có skill`;
+  $('#result-summary').textContent = `${state.mode === 'cqb' ? 'CQB' : 'Sân ngoài trời'} · ${state.selected.length} người · ${state.teamCount} đội · ${state.selected.filter(hasSkill).length} người đã có skill`;
+}
+
+function renderSkillTable() {
+  const body = $('#skill-body'); body.replaceChildren();
+  const rows = members.filter(m => skills[m.id]).map(m => ({ member: m, total: detailTotal(m.id) })).sort((a, b) => b.total - a.total || a.member.name.localeCompare(b.member.name, 'vi'));
+  for (const { member, total } of rows) {
+    const tr = document.createElement('tr');
+    const nameCell = document.createElement('th'); nameCell.scope = 'row';
+    nameCell.append(makeAvatar(member, 'skill-avatar'));
+    const name = document.createElement('span'); name.textContent = member.name; nameCell.append(name);
+    tr.append(nameCell);
+    for (const [key] of CRITERIA) {
+      const value = skills[member.id][key];
+      const td = document.createElement('td'); td.textContent = Number.isFinite(value) ? String(value) : '—';
+      if (Number.isFinite(value)) td.dataset.level = String(Math.round(value));
+      tr.append(td);
+    }
+    const totalCell = document.createElement('td'); totalCell.className = 'skill-total'; totalCell.textContent = total.toFixed(1);
+    tr.append(totalCell); body.append(tr);
+  }
 }
 
 function render() {
@@ -441,5 +471,6 @@ $('#auth-button').addEventListener('click', async () => {
   }
 });
 
+renderSkillTable();
 render();
 initCloud();
