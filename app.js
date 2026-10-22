@@ -417,44 +417,26 @@ function teamAverage(people) {
   }
   return result;
 }
-let selectedSkillId = null;
-function showSkillDetail(id) {
-  selectedSkillId = id;
-  const member = members.find(m => m.id === id);
-  const box = $('#skill-detail'); box.replaceChildren();
-  if (!member || !skills[id]) return;
-  const total = detailTotal(id);
-  const info = document.createElement('div'); info.className = 'skill-detail-info';
-  info.append(makeAvatar(member, 'skill-detail-avatar'));
-  const name = document.createElement('strong'); name.textContent = member.name;
-  const tag = document.createElement('span'); tag.className = 'skill-detail-tag'; tag.textContent = member.tag || 'ASDN OPERATIVE';
-  const score = document.createElement('span'); score.className = 'skill-detail-total'; score.textContent = `${total.toFixed(1)} / 5 · hạng ${gradeOf(total)}`;
-  info.append(name, tag, score);
-  box.append(radarChart(skills[id], `Biểu đồ kỹ năng của ${member.name}`), info);
-  document.querySelectorAll('#skill-body tr').forEach(row => row.classList.toggle('selected', row.dataset.id === id));
-}
-
-function renderSkillTable() {
-  const body = $('#skill-body'); body.replaceChildren();
+function renderSkillCards() {
+  const grid = $('#skill-grid'); grid.replaceChildren();
   const rows = members.filter(m => skills[m.id]).map(m => ({ member: m, total: detailTotal(m.id) })).sort((a, b) => b.total - a.total || a.member.name.localeCompare(b.member.name, 'vi'));
   for (const { member, total } of rows) {
-    const tr = document.createElement('tr'); tr.dataset.id = member.id; tr.tabIndex = 0;
-    tr.addEventListener('click', () => showSkillDetail(member.id));
-    tr.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); showSkillDetail(member.id); } });
-    const nameCell = document.createElement('th'); nameCell.scope = 'row';
-    nameCell.append(makeAvatar(member, 'skill-avatar'));
-    const name = document.createElement('span'); name.textContent = member.name; nameCell.append(name);
-    tr.append(nameCell);
-    for (const [key] of CRITERIA) {
-      const value = skills[member.id][key];
-      const td = document.createElement('td'); td.textContent = Number.isFinite(value) ? String(value) : '—';
-      if (Number.isFinite(value)) td.dataset.level = String(Math.round(value));
-      tr.append(td);
-    }
-    const totalCell = document.createElement('td'); totalCell.className = 'skill-total'; totalCell.textContent = total.toFixed(1);
-    tr.append(totalCell); body.append(tr);
+    const card = document.createElement('article'); card.className = 'skill-card';
+    const head = document.createElement('div'); head.className = 'skill-card-head';
+    head.append(makeAvatar(member, 'skill-card-avatar'));
+    const text = document.createElement('div'); text.className = 'skill-card-text';
+    const name = document.createElement('strong'); name.textContent = member.name; name.title = member.name;
+    const tag = document.createElement('span'); tag.textContent = member.tag || 'ASDN OPERATIVE';
+    text.append(name, tag);
+    const grade = gradeOf(total);
+    const badge = document.createElement('div'); badge.className = 'skill-card-score'; badge.style.setProperty('--grade', GRADE_COLORS[grade]);
+    const number = document.createElement('b'); number.textContent = total.toFixed(1);
+    const letter = document.createElement('small'); letter.textContent = `HẠNG ${grade}`;
+    badge.append(number, letter);
+    head.append(text, badge);
+    card.append(head, radarChart(skills[member.id], `Biểu đồ kỹ năng của ${member.name}`));
+    grid.append(card);
   }
-  if (rows.length) showSkillDetail(selectedSkillId && skills[selectedSkillId] ? selectedSkillId : rows[0].member.id);
 }
 
 function render() {
@@ -544,6 +526,6 @@ $('#auth-button').addEventListener('click', async () => {
   }
 });
 
-renderSkillTable();
+renderSkillCards();
 render();
 initCloud();

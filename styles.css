@@ -77,20 +77,6 @@ body.viewer .results-section{padding-top:38px}
 .team-person-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.team-person-text .team-person-name{flex:none}.team-tag{color:var(--lime);font-size:10px;letter-spacing:.6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 .skills-panel{margin-top:22px}
-.skill-table-wrap{margin-top:22px;overflow-x:auto;border:1px solid #2b3b31}
-.skill-table{width:100%;border-collapse:collapse;min-width:560px;font-size:13px}
-.skill-table th,.skill-table td{padding:8px 10px;text-align:center;border-bottom:1px solid #26342b}
-.skill-table thead th{position:sticky;top:0;background:#223128;color:var(--lime);font:700 11px 'DM Sans',sans-serif;letter-spacing:1px;text-transform:uppercase}
-.skill-table tbody th{text-align:left;display:flex;align-items:center;gap:10px;font-weight:700;border-bottom:1px solid #26342b;min-width:190px}
-.skill-table thead th:first-child{text-align:left}
-.skill-avatar{width:30px;height:30px;object-fit:cover;border-radius:2px;flex-shrink:0;background:#425447}
-.skill-table td[data-level="5"]{background:#35542f;color:#e9ffc8;font-weight:700}
-.skill-table td[data-level="4"]{background:#2a3f2b;color:#cfe8bd}
-.skill-table td[data-level="3"]{background:#2d3322;color:#d8d9a8}
-.skill-table td[data-level="2"]{background:#3b2f22;color:#f1c9a0}
-.skill-table td[data-level="1"]{background:#41251f;color:#f4a58f}
-.skill-table .skill-total{color:var(--lime);font:800 18px 'Barlow Condensed',Impact,sans-serif}
-@media(max-width:700px){.skill-table{font-size:12px;min-width:520px}.skill-table th,.skill-table td{padding:7px 6px}.skill-table tbody th{min-width:150px}}
 
 .skill-radar{display:block;width:100%;height:auto}
 .radar-bg{fill:#13203a}
@@ -101,14 +87,16 @@ body.viewer .results-section{padding-top:38px}
 .radar-dot{fill:#6df0c4}
 .radar-label{fill:#e8f1ff;font:700 11px 'DM Sans',sans-serif}
 .radar-grade{font:800 11px 'DM Sans',sans-serif}
-.skill-detail{display:grid;grid-template-columns:minmax(0,320px) 1fr;gap:24px;align-items:center;margin-top:22px;padding:18px;border:1px solid #2b3b31;background:#142019}
-.skill-detail-info{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
-.skill-detail-avatar{width:88px;height:88px;object-fit:cover;border-radius:2px;background:#425447}
-.skill-detail-info strong{font:700 30px/1 'Barlow Condensed',Impact,sans-serif;text-transform:uppercase}
-.skill-detail-tag{color:var(--lime);font-size:12px;letter-spacing:1px;font-weight:700}
-.skill-detail-total{color:#b4c1b6;font-size:13px}
-.skill-table tbody tr{cursor:pointer}
-.skill-table tbody tr:hover th,.skill-table tbody tr.selected th{background:#233428}
-.skill-table tbody tr.selected th{box-shadow:inset 3px 0 0 var(--lime)}
 .team-radar{padding:14px 16px 4px;border-bottom:1px solid #354438;max-width:340px;margin:0 auto}
-@media(max-width:700px){.skill-detail{grid-template-columns:1fr;gap:14px;padding:12px}.skill-detail-avatar{width:64px;height:64px}.skill-detail-info strong{font-size:26px}}
+
+.skill-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;margin-top:22px}
+.skill-card{border:1px solid #344339;background:#17241a;padding:12px;min-width:0}
+.skill-card-head{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.skill-card-avatar{width:46px;height:46px;object-fit:cover;border-radius:2px;flex-shrink:0;background:#425447}
+.skill-card-text{min-width:0;flex:1;display:flex;flex-direction:column;gap:3px}
+.skill-card-text strong{font:700 19px/1 'Barlow Condensed',Impact,sans-serif;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.skill-card-text span{color:var(--lime);font-size:10px;letter-spacing:.8px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.skill-card-score{display:flex;flex-direction:column;align-items:center;min-width:52px;padding:5px 8px;border:1px solid var(--grade,#c8f36b);color:var(--grade,#c8f36b)}
+.skill-card-score b{font:800 22px/1 'Barlow Condensed',Impact,sans-serif}
+.skill-card-score small{font:700 8px 'DM Sans',sans-serif;letter-spacing:.8px;margin-top:2px}
+@media(max-width:700px){.skill-grid{grid-template-columns:1fr}}
