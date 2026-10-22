@@ -148,6 +148,12 @@ function detailTotal(id) {
 function skill(id) { return detailTotal(id) ?? 3; }
 function hasSkill(id) { return detailTotal(id) !== undefined; }
 function skillText(id) { return hasSkill(id) ? skill(id).toFixed(1) : '—'; }
+const ROLE_LABELS = { admin: 'Ban Quản Trị', elder: 'Người Già', newbie: 'NewBie' };
+function makeRoleIcons(member) {
+  const wrap = document.createElement('span'); wrap.className = 'role-icons';
+  (member.roles || []).forEach((role) => { if (!ROLE_LABELS[role]) return; const img = document.createElement('img'); img.src = `icons/role-${role}.png`; img.alt = ROLE_LABELS[role]; img.title = ROLE_LABELS[role]; wrap.append(img); });
+  return wrap;
+}
 function makeAvatar(member, className) {
   if (!member.avatar) {
     const avatar = document.createElement('span');
@@ -200,6 +206,7 @@ function renderRoster() {
     const name = document.createElement('span'); name.className = 'member-name'; name.textContent = member.name; name.title = member.name;
     const id = document.createElement('span'); id.className = 'member-id'; id.textContent = member.id.startsWith('guest-') ? 'GUEST PLAYER' : (member.tag || 'ASDN OPERATIVE');
     if (member.tag) id.classList.add('has-tag');
+    if (member.roles && member.roles.length) id.prepend(makeRoleIcons(member));
     info.append(name, id, skillBadge); pick.append(info);
     pick.addEventListener('click', () => toggleMember(member.id));
     const styleRow = document.createElement('div'); styleRow.className = 'card-footer style-footer';
@@ -361,7 +368,8 @@ function renderTeams() {
       row.append(makeAvatar(member, 'team-avatar'));
       const text = document.createElement('div'); text.className = 'team-person-text';
       const name = document.createElement('span'); name.className = 'team-person-name'; name.textContent = member.name; name.title = member.name; text.append(name);
-      if (member.tag) { const tag = document.createElement('span'); tag.className = 'team-tag'; tag.textContent = member.tag; text.append(tag); }
+      if (member.roles && member.roles.length) { const roleLine = document.createElement('span'); roleLine.className = 'team-tag'; roleLine.append(makeRoleIcons(member)); if (member.tag) roleLine.append(member.tag); text.append(roleLine); }
+      else if (member.tag) { const tag = document.createElement('span'); tag.className = 'team-tag'; tag.textContent = member.tag; text.append(tag); }
       row.append(text);
       const style = document.createElement('span'); style.className = 'team-style'; style.textContent = styleFor(member.id) ? STYLES[styleFor(member.id)] : '—'; style.title = styleFor(member.id) ? 'Lối chơi' : 'Chưa chọn lối chơi'; row.append(style);
       const badge = document.createElement('span'); badge.className = 'team-skill'; badge.textContent = `★ ${skillText(member.id)}`; badge.title = hasSkill(member.id) ? 'Điểm tổng' : 'Chưa đánh giá, tính tạm là 3'; row.append(badge);

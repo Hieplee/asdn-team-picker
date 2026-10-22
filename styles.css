@@ -126,3 +126,5 @@ body.viewer .roster-panel{order:5}
 .style-footer .style-select{min-height:32px;font-size:11px}
 .member-card.expanded .style-footer{flex-wrap:nowrap}
 }
+
+.role-icons{display:inline-flex;gap:3px;vertical-align:middle;margin-right:5px}.role-icons img{width:14px;height:14px;display:block}
