@@ -204,7 +204,7 @@ function renderRoster() {
     const info = document.createElement('span');
     info.className = 'member-info';
     const name = document.createElement('span'); name.className = 'member-name'; name.textContent = member.name; name.title = member.name;
-    const id = document.createElement('span'); id.className = 'member-id'; id.textContent = member.id.startsWith('guest-') ? 'GUEST PLAYER' : (member.tag || '');
+    const id = document.createElement('span'); id.className = 'member-id'; id.textContent = member.tag || '';
     if (member.tag) id.classList.add('has-tag');
     if (member.roles && member.roles.length) id.prepend(makeRoleIcons(member, true));
     info.append(name, id, skillBadge); pick.append(info);
