@@ -679,12 +679,16 @@ function describeChange({ path, before, after }) {
   if (group === 'assignments') return `${label}: ${name} ${before === null ? '' : `Đội ${before + 1} `}→ ${after === null ? '—' : `Đội ${after + 1}`}`;
   return `${label}${where}: ${name} ${show(before)} → ${show(after)}`;
 }
+let auditLoading = false, auditLoaded = false;
 async function loadAudit() {
+  if (auditLoading) return;
+  auditLoading = true;
   const list = $('#audit-list'); list.textContent = 'Đang tải…';
   try {
     const { query, collection, orderBy, limit, getDocs } = cloudFs;
     const snap = await getDocs(query(collection(cloudDb, 'auditLog'), orderBy('at', 'desc'), limit(100)));
     list.replaceChildren();
+    auditLoaded = true;
     if (snap.empty) list.textContent = 'Chưa có lịch sử.';
     snap.forEach(entry => {
       const data = entry.data();
@@ -696,10 +700,11 @@ async function loadAudit() {
       item.append(head, body);
       list.append(item);
     });
-  } catch (error) { list.textContent = `Không tải được lịch sử: ${error.message}`; }
+  } catch (error) { list.textContent = `Không tải được lịch sử: ${error.message}. Bấm "Tải lại" để thử lại.`; }
+  finally { auditLoading = false; }
 }
 $('#audit-button').addEventListener('click', () => {
   const panel = $('#audit-panel'); panel.hidden = !panel.hidden;
-  if (!panel.hidden) { loadAudit(); panel.scrollIntoView({ behavior: 'smooth' }); }
+  if (!panel.hidden) { if (!auditLoaded) loadAudit(); panel.scrollIntoView({ behavior: 'smooth' }); }
 });
 $('#audit-refresh').addEventListener('click', loadAudit);
