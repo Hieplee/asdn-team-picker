@@ -622,7 +622,7 @@ function renderTeams() {
     if (totals.length > 1) info.push(`Chênh tổng: ${(Math.max(...totals) - Math.min(...totals)).toFixed(1)}`);
     const maxCount = Math.max(...series.map(entry => entry.count));
     const smaller = series.filter(entry => entry.count < maxCount);
-    if (smaller.length) {
+    if (smaller.length && state.splitMode === 'balanced') {
       const adjusted = series.map(entry => entry.total + (maxCount - entry.count) * SIZE_GAP_BONUS);
       info.push(`Chấp: ${smaller.map(entry => `${entry.name} (${entry.count} người) +${((maxCount - entry.count) * SIZE_GAP_BONUS).toFixed(1)}`).join(', ')} điểm`);
       info.push(`Chênh tổng sau chấp: ${(Math.max(...adjusted) - Math.min(...adjusted)).toFixed(1)}`);
