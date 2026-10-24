@@ -160,7 +160,7 @@ async function initCloud() {
       canEdit = Boolean(user && organizerUids.includes(user.uid));
       const button = $('#auth-button');
       button.hidden = false;
-      button.textContent = user ? (canEdit ? 'Tổ chức · Đăng xuất' : 'Đổi tài khoản') : 'Đăng nhập tổ chức';
+      button.textContent = user ? (canEdit ? 'Đăng xuất' : 'Đổi tài khoản') : 'Đăng nhập';
       button.title = user?.uid || '';
       const isAdmin = Boolean(user && user.uid === adminUid);
       $('#audit-button').hidden = !isAdmin;
@@ -767,7 +767,7 @@ $('#auth-button').addEventListener('click', async () => {
   try {
     if (canEdit) {
       await cloudSignOut(cloudAuth);
-      showToast('Đã đăng xuất tài khoản tổ chức.');
+      showToast('Đã đăng xuất.');
     } else {
       if (cloudAuth.currentUser) await cloudSignOut(cloudAuth);
       await cloudSignIn(cloudAuth, cloudProvider);
