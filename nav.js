@@ -6,10 +6,15 @@
     var current = null;
     links.forEach(function (a) {
       var el = targetOf(a);
-      a.hidden = !visible(el);
-      if (visible(el) && el.getBoundingClientRect().top <= 140) current = a;
+      var show = visible(el);
+      // Chỉ ghi khi giá trị đổi: ghi lại cùng giá trị vẫn sinh mutation record → observer gọi lại update() vô hạn.
+      if (a.hidden === show) a.hidden = !show;
+      if (show && el.getBoundingClientRect().top <= 140) current = a;
     });
-    links.forEach(function (a) { a.classList.toggle('active', a === current); });
+    links.forEach(function (a) {
+      var on = a === current;
+      if (a.classList.contains('active') !== on) a.classList.toggle('active', on);
+    });
   }
   addEventListener('scroll', update, { passive: true });
   addEventListener('resize', update);
