@@ -387,7 +387,7 @@ const SIZE_GAP_BONUS = 0.5;
 
 // Cân bằng Thể lực / Kinh nghiệm: rải đều người yếu (điểm <= *_LOW_MAX) và người giỏi (>= *_HIGH_MIN)
 // giữa các đội; người chưa chấm điểm bị bỏ qua. Trọng số cơ bản 0.65.
-const LOW_STAMINA_MAX = 2;
+const LOW_STAMINA_MAX = 3;
 const LOW_EXP_MAX = 2;
 const HIGH_EXP_MIN = 4;
 const STAMINA_WEIGHT = 0.65;
