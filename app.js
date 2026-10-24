@@ -138,7 +138,7 @@ async function initCloud() {
     return;
   }
   try {
-    const [{ initializeApp }, { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }, { getFirestore, doc, onSnapshot, writeBatch, collection, serverTimestamp, query, orderBy, limit, getDocs }] = await Promise.all([
+    const [{ initializeApp }, { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }, { initializeFirestore, doc, onSnapshot, writeBatch, collection, serverTimestamp, query, orderBy, limit, getDocs }] = await Promise.all([
       import('https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js'),
       import('https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js'),
       import('https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js'),
@@ -148,7 +148,7 @@ async function initCloud() {
     cloudSignIn = signInWithPopup;
     cloudSignOut = signOut;
     cloudProvider = new GoogleAuthProvider();
-    const db = getFirestore(app);
+    const db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
     cloudDb = db;
     cloudFs = { doc, writeBatch, collection, serverTimestamp, query, orderBy, limit, getDocs };
     cloudSession = doc(db, 'public', 'current');
@@ -164,6 +164,9 @@ async function initCloud() {
       if (!isAdmin) $('#audit-panel').hidden = true;
       render();
     });
+    const loadTimer = setTimeout(() => {
+      if (!cloudReady) setSyncStatus('Chưa kết nối được dữ liệu chung, đang thử lại…', true);
+    }, 8000);
     const handleSnapshot = (kind, snapshot) => {
       ready[kind] = true;
       if (!pendingWrites[kind]) {
@@ -173,10 +176,12 @@ async function initCloud() {
         auditBase[key] = snapshotFlat(key, key === 'attributes' ? { ratings: state.ratings, styles: state.styles, stats: state.stats } : state);
       }
       cloudReady = ready.session && ready.attributes;
+      if (cloudReady) clearTimeout(loadTimer);
       render();
       setSyncStatus(pendingWrites.session || pendingWrites.attributes ? 'Đang lưu…' : 'Đã đồng bộ');
     };
     const handleError = error => {
+      clearTimeout(loadTimer);
       cloudReady = false;
       setSyncStatus('Không tải được dữ liệu chung', true);
       showToast(error.message);
