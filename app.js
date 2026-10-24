@@ -620,7 +620,14 @@ function renderTeams() {
     const info = [];
     if (state.splitMode) info.push(`Chia kiểu: ${state.splitMode === 'random' ? '⚄ Ngẫu nhiên' : '⚖ Cân bằng'}`);
     if (totals.length > 1) info.push(`Chênh tổng: ${(Math.max(...totals) - Math.min(...totals)).toFixed(1)}`);
-    if (info.length) { const note = document.createElement('div'); note.className = 'compare-note'; note.textContent = info.join(' · '); compare.append(note); }
+    const maxCount = Math.max(...series.map(entry => entry.count));
+    const smaller = series.filter(entry => entry.count < maxCount);
+    if (smaller.length) {
+      const adjusted = series.map(entry => entry.total + (maxCount - entry.count) * SIZE_GAP_BONUS);
+      info.push(`Chấp: ${smaller.map(entry => `${entry.name} (${entry.count} người) +${((maxCount - entry.count) * SIZE_GAP_BONUS).toFixed(1)}`).join(', ')} điểm`);
+      info.push(`Chênh tổng sau chấp: ${(Math.max(...adjusted) - Math.min(...adjusted)).toFixed(1)}`);
+    }
+    if (info.length) { const note = document.createElement('div'); note.className = 'compare-note'; note.append(...info.flatMap((text, i) => [...(i ? [document.createElement('br')] : []), text])); compare.append(note); }
   }
   $('#result-summary').textContent = `${state.mode === 'cqb' ? 'CQB' : 'Sân ngoài trời'} · ${state.selected.length} người · ${state.teamCount} đội · ${state.selected.filter(hasSkill).length} người đã có skill`;
   const badge = $('#split-badge');
