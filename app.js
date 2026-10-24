@@ -463,6 +463,7 @@ function renderTeams() {
     if (member && state.assignments[id] < teams.length) teams[state.assignments[id]].push(member);
   }
   const container = $('#teams'); container.replaceChildren();
+  const series = [];
   container.classList.toggle('many', state.teamCount > 2);
   teams.forEach((people, index) => {
     const card = document.createElement('article'); card.className = 'team-card';
@@ -490,14 +491,24 @@ function renderTeams() {
       select.addEventListener('change', () => { state.assignments[member.id] = Number(select.value); save(); renderTeams(); warnSeparatePairs(); });
       row.append(select); list.append(row);
     });
+    const color = TEAM_COLORS[index % TEAM_COLORS.length];
+    card.style.borderTop = `3px solid ${color}`;
+    title.prepend(Object.assign(document.createElement('i'), { className: 'team-dot' }));
+    title.firstChild.style.background = color;
     const average = teamAverage(people);
-    if (Object.keys(average).length) {
-      const radar = document.createElement('div'); radar.className = 'team-radar';
-      radar.append(radarChart(average, `Biểu đồ trung bình Đội ${index + 1}`));
-      card.append(head, radar, list);
-    } else card.append(head, list);
+    if (Object.keys(average).length) series.push({ values: average, color, name: `Đội ${index + 1}` });
+    card.append(head, list);
     container.append(card);
   });
+  let compare = $('#team-compare');
+  if (!compare) { compare = document.createElement('div'); compare.id = 'team-compare'; compare.className = 'team-compare'; container.before(compare); }
+  compare.replaceChildren();
+  compare.hidden = series.length === 0;
+  if (series.length) {
+    const legend = document.createElement('div'); legend.className = 'compare-legend';
+    series.forEach(({ name, color }) => { const item = document.createElement('span'); const dot = document.createElement('i'); dot.className = 'team-dot'; dot.style.background = color; item.append(dot, name); legend.append(item); });
+    compare.append(radarChart({}, 'Biểu đồ so sánh các đội', series), legend);
+  }
   $('#result-summary').textContent = `${state.mode === 'cqb' ? 'CQB' : 'Sân ngoài trời'} · ${state.selected.length} người · ${state.teamCount} đội · ${state.selected.filter(hasSkill).length} người đã có skill`;
 }
 
@@ -510,7 +521,8 @@ function svgEl(name, attrs = {}, text) {
 }
 function gradeOf(value) { return value >= 4.8 ? 'S' : value >= 4.2 ? 'A' : value >= 3.5 ? 'B' : value >= 2.5 ? 'C' : 'D'; }
 const GRADE_COLORS = { S: '#f4d35e', A: '#c8f36b', B: '#6fd3ff', C: '#7be0a0', D: '#f4a45f' };
-function radarChart(values = {}, label) {
+const TEAM_COLORS = ['#c8f36b', '#f4a45f', '#6fd3ff', '#f472b6', '#a78bfa', '#f4d35e'];
+function radarChart(values = {}, label, series = null) {
   const cx = 130, cy = 140, radius = 72, step = (Math.PI * 2) / CRITERIA.length;
   const point = (index, scale, extra = 0) => {
     const angle = -Math.PI / 2 + index * step, length = radius * scale + extra;
@@ -522,8 +534,13 @@ function radarChart(values = {}, label) {
   for (let level = 5; level >= 1; level--) svg.append(svgEl('polygon', { points: polygon(level / 5), class: level === 5 ? 'radar-ring outer' : 'radar-ring' }));
   CRITERIA.forEach((_, index) => { const [x, y] = point(index, 1); svg.append(svgEl('line', { x1: cx, y1: cy, x2: x.toFixed(1), y2: y.toFixed(1), class: 'radar-axis' })); });
   const shape = CRITERIA.map(([key], index) => point(index, Math.max(values[key] ?? 0, 0.3) / 5).map(n => n.toFixed(1)).join(',')).join(' ');
-  const hasValues = CRITERIA.some(([key]) => Number.isFinite(values[key]));
+  const hasValues = !series && CRITERIA.some(([key]) => Number.isFinite(values[key]));
   if (hasValues) svg.append(svgEl('polygon', { points: shape, class: 'radar-shape' }));
+  for (const { values: teamValues, color } of series || []) {
+    const pts = CRITERIA.map(([key], index) => point(index, Math.max(teamValues[key] ?? 0, 0.3) / 5));
+    svg.append(svgEl('polygon', { points: pts.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' '), fill: color, 'fill-opacity': 0.18, stroke: color, 'stroke-width': 2.2, 'stroke-linejoin': 'round' }));
+    pts.forEach(([x, y]) => svg.append(svgEl('circle', { cx: x.toFixed(1), cy: y.toFixed(1), r: 3, fill: color })));
+  }
   CRITERIA.forEach(([key, name], index) => {
     const value = values[key];
     const [px, py] = point(index, Math.max(value ?? 0, 0.3) / 5);
@@ -532,7 +549,7 @@ function radarChart(values = {}, label) {
     const anchor = Math.abs(lx - cx) < 4 ? 'middle' : lx > cx ? 'start' : 'end';
     const dx = anchor === 'start' ? -8 : anchor === 'end' ? 8 : 0;
     svg.append(svgEl('text', { x: (lx + dx).toFixed(1), y: (ly + (index === 0 ? -10 : 18)).toFixed(1), 'text-anchor': anchor, class: 'radar-label' }, name));
-    if (Number.isFinite(value)) {
+    if (!series && Number.isFinite(value)) {
       const grade = gradeOf(value), color = GRADE_COLORS[grade];
       const [gx, gy] = point(index, 1, 15);
       svg.append(svgEl('circle', { cx: gx.toFixed(1), cy: gy.toFixed(1), r: 9, fill: '#101714', stroke: color, 'stroke-width': 1.6 }));

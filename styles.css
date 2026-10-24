@@ -145,3 +145,9 @@ body.viewer .roster-panel{order:5}
 @media(max-width:700px){.section-nav{padding:6px 0}.section-nav a{min-height:44px;display:flex;align-items:center;justify-content:center;font-size:11px;letter-spacing:.6px}}
 #roster-heading,#setup-heading,#results-heading{scroll-margin-top:80px}
 .audit-panel{margin-top:24px}.audit-list{list-style:none;margin:0;padding:0 16px 16px;display:grid;gap:10px;font-size:13px}.audit-list li{border-bottom:1px solid rgba(128,128,128,.25);padding-bottom:8px;overflow-wrap:anywhere}
+
+.team-compare{max-width:520px;margin:28px auto 0}
+.compare-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 18px;margin-top:10px;font:700 12px 'DM Sans',sans-serif;color:var(--text)}
+.compare-legend span{display:inline-flex;align-items:center;gap:6px}
+.team-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;vertical-align:middle}
+.compare-legend .team-dot{margin-right:0}
