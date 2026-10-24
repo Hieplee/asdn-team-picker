@@ -5,7 +5,7 @@ import { firebaseConfig, organizerUids, adminUid } from './cloud-config.js';
 const STORAGE_KEY = 'asdn-team-picker-v1';
 const $ = (selector) => document.querySelector(selector);
 const MODES = ['cqb', 'outdoor'];
-const CRITERIA = [['attack', 'Tấn công'], ['team', 'Phối hợp'], ['exp', 'Kinh nghiệm'], ['defense', 'Phòng thủ'], ['solo', 'Độc lập tác chiến'], ['stamina', 'Thể lực']];
+const CRITERIA = [['attack', 'Tấn công'], ['team', 'Phối hợp'], ['exp', 'Kinh nghiệm'], ['defense', 'Phòng thủ'], ['solo', 'Solo'], ['stamina', 'Thể lực']];
 const STYLES = { push: 'Đẩy mục tiêu', hold: 'Giữ vị trí', mobile: 'Cơ động' };
 const initial = { selected: [], guests: [], teamCount: 2, mode: 'cqb', assignments: {}, ratings: { cqb: {}, outdoor: {} }, styles: { cqb: {}, outdoor: {} }, stats: {} };
 const cloudEnabled = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId);
