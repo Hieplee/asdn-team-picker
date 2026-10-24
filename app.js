@@ -381,8 +381,8 @@ const SEPARATE_PAIRS = [
 ];
 const SEPARATE_PENALTY = 1000;
 // Khi số người các đội lệch nhau (hơn kém 1), đội ít người hơn được bù thêm tổng kỹ năng
-// bằng SIZE_GAP_BONUS (null = mặc định là kỹ năng trung bình của một người đã chọn).
-const SIZE_GAP_BONUS = null;
+// bằng SIZE_GAP_BONUS điểm skill (thang 1-5).
+const SIZE_GAP_BONUS = 0.5;
 
 function brokenPairs(assignments) {
   return SEPARATE_PAIRS.filter(([a, b]) => Number.isInteger(assignments[a]) && assignments[a] === assignments[b]);
