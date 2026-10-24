@@ -377,7 +377,7 @@ function smallestTeam() {
 
 // Các cặp không được ở chung đội (thêm cặp mới bằng cách thêm [idA, idB]).
 const SEPARATE_PAIRS = [
-  ['005', '007'], // Hoàng Nguyễn - Hoàng Trung
+  // ['005', '007'], // ví dụ: Hoàng Nguyễn - Hoàng Trung (đang tắt)
 ];
 const SEPARATE_PENALTY = 1000;
 // Khi số người các đội lệch nhau (hơn kém 1), đội ít người hơn được bù thêm tổng kỹ năng
