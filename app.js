@@ -535,6 +535,9 @@ function splitTeams() {
 const SPLIT_MODE_KEY = 'asdn-split-mode';
 let splitMode = 'balanced';
 try { if (localStorage.getItem(SPLIT_MODE_KEY) === 'random') splitMode = 'random'; } catch {}
+function updateSplitIcons() {
+  document.querySelectorAll('.mode-icon').forEach(icon => { icon.textContent = splitMode === 'random' ? '⚄' : '⚖'; });
+}
 function runSplit() { return splitMode === 'random' ? splitRandom() : splitTeams(); }
 
 function splitRandom() {
@@ -685,7 +688,7 @@ function render() {
   $('#split-button').disabled = !ready || !cloudReady || !canEdit;
   $('#split-mode').disabled = !cloudReady || !canEdit;
   $('#split-mode').value = splitMode;
-  document.querySelectorAll('.mode-icon').forEach(icon => { icon.textContent = splitMode === 'random' ? '⚄' : '⚖'; });
+  updateSplitIcons();
   $('#setup-message').textContent = !cloudReady ? 'Đang tải dữ liệu chung…' : !canEdit ? 'Chỉ người tổ chức được chọn người và chia đội. Bạn đang ở chế độ xem.' : ready ? `${state.selected.length} người sẽ được chia vào ${state.teamCount} đội.` : `Chọn ít nhất ${state.teamCount} người để tạo ${state.teamCount} đội.`;
   const viewer = cloudEnabled && !canEdit;
   document.body.classList.toggle('viewer', viewer);
