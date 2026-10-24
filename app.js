@@ -532,6 +532,11 @@ function splitTeams() {
   $('#results').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+const SPLIT_MODE_KEY = 'asdn-split-mode';
+let splitMode = 'balanced';
+try { if (localStorage.getItem(SPLIT_MODE_KEY) === 'random') splitMode = 'random'; } catch {}
+function runSplit() { return splitMode === 'random' ? splitRandom() : splitTeams(); }
+
 function splitRandom() {
   if (state.selected.length < state.teamCount) { showToast(`Cần ít nhất ${state.teamCount} người cho ${state.teamCount} đội.`); return; }
   const order = [...state.selected];
@@ -678,7 +683,9 @@ function render() {
   });
   const ready = state.selected.length >= state.teamCount;
   $('#split-button').disabled = !ready || !cloudReady || !canEdit;
-  $('#random-button').disabled = !ready || !cloudReady || !canEdit;
+  $('#split-mode').disabled = !cloudReady || !canEdit;
+  $('#split-mode').value = splitMode;
+  $('#split-icon').textContent = splitMode === 'random' ? '⚄' : '⚖';
   $('#setup-message').textContent = !cloudReady ? 'Đang tải dữ liệu chung…' : !canEdit ? 'Chỉ người tổ chức được chọn người và chia đội. Bạn đang ở chế độ xem.' : ready ? `${state.selected.length} người sẽ được chia vào ${state.teamCount} đội.` : `Chọn ít nhất ${state.teamCount} người để tạo ${state.teamCount} đội.`;
   const viewer = cloudEnabled && !canEdit;
   document.body.classList.toggle('viewer', viewer);
@@ -725,10 +732,14 @@ $('#roster-toggle').addEventListener('click', () => {
   applyRosterOpen();
 });
 mobileQuery.addEventListener('change', () => { if (!rosterTouched) render(); });
-$('#split-button').addEventListener('click', splitTeams);
-$('#random-button').addEventListener('click', splitRandom);
-$('#bar-split').addEventListener('click', splitTeams);
-$('#reshuffle').addEventListener('click', splitTeams);
+$('#split-mode').addEventListener('change', event => {
+  splitMode = event.target.value === 'random' ? 'random' : 'balanced';
+  try { localStorage.setItem(SPLIT_MODE_KEY, splitMode); } catch {}
+  render();
+});
+$('#split-button').addEventListener('click', runSplit);
+$('#bar-split').addEventListener('click', runSplit);
+$('#reshuffle').addEventListener('click', runSplit);
 $('#copy-result').addEventListener('click', async () => {
   const lines = [`ASDN · ${state.mode === 'cqb' ? 'CQB' : 'SÂN NGOÀI TRỜI'} · ĐỘI HÌNH (${state.selected.length} người)`];
   for (let i = 0; i < state.teamCount; i++) {
