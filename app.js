@@ -380,6 +380,9 @@ const SEPARATE_PAIRS = [
   ['005', '007'], // Hoàng Nguyễn - Hoàng Trung
 ];
 const SEPARATE_PENALTY = 1000;
+// Khi số người các đội lệch nhau (hơn kém 1), đội ít người hơn được bù thêm tổng kỹ năng
+// bằng SIZE_GAP_BONUS (null = mặc định là kỹ năng trung bình của một người đã chọn).
+const SIZE_GAP_BONUS = null;
 
 function brokenPairs(assignments) {
   return SEPARATE_PAIRS.filter(([a, b]) => Number.isInteger(assignments[a]) && assignments[a] === assignments[b]);
@@ -405,8 +408,16 @@ function scoreLayout(assignments, ids, teamCount) {
     const style = styleFor(id);
     if (style) { styleCounts[team][style]++; styleTotals[style]++; }
   }
-  const target = ids.reduce((sum, id) => sum + skill(id), 0) / ids.length;
-  const skillPenalty = totals.reduce((sum, total, index) => sum + (total / counts[index] - target) ** 2, 0);
+  const sumSkill = totals.reduce((a, b) => a + b, 0);
+  const bonus = SIZE_GAP_BONUS ?? sumSkill / ids.length;
+  const maxCount = Math.max(...counts);
+  const deficits = counts.map(count => maxCount - count);
+  const avgDeficit = deficits.reduce((a, b) => a + b, 0) / teamCount;
+  // Tổng kỹ năng mục tiêu của mỗi đội: đội ít người hơn cao hơn đội đông người một khoảng bonus.
+  const skillPenalty = totals.reduce((sum, total, index) => {
+    const target = sumSkill / teamCount + (deficits[index] - avgDeficit) * bonus;
+    return sum + ((total - target) / counts[index]) ** 2;
+  }, 0);
   const stylePenalty = styleCounts.reduce((sum, team, index) => {
     for (const style of Object.keys(STYLES)) {
       const expected = styleTotals[style] * counts[index] / ids.length;
