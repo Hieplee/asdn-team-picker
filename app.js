@@ -428,9 +428,33 @@ function scoreLayout(assignments, ids, teamCount) {
   return skillPenalty + stylePenalty * 0.65 + brokenPairs(assignments).length * SEPARATE_PENALTY;
 }
 
-function balancedAssignments(ids, teamCount) {
-  let best = null, bestScore = Infinity;
-  for (let attempt = 0; attempt < 32; attempt++) {
+// Khóa đội hình không phụ thuộc thứ tự đội: mỗi đội là tập thành viên đã sắp xếp.
+function layoutKey(assignments, ids, teamCount) {
+  const teams = Array.from({ length: teamCount }, () => []);
+  ids.forEach(id => teams[assignments[id]].push(id));
+  return teams.map(team => team.sort().join(',')).sort().join('|');
+}
+
+function randomIndex(length) {
+  const values = new Uint32Array(1);
+  crypto.getRandomValues(values);
+  return values[0] % length;
+}
+
+// Số lần chia gần nhất được nhớ để không lặp lại, và độ lệch điểm tối đa so với phương án tốt nhất
+// mà một đội hình vẫn được coi là "cân bằng đủ tốt" để chọn ngẫu nhiên.
+const RECENT_LAYOUTS = 6;
+const NEAR_BEST_TOLERANCE = 0.35;
+const recentLayouts = [];
+
+function addCandidate(candidates, assignments, ids, teamCount, score) {
+  const key = layoutKey(assignments, ids, teamCount);
+  if (!candidates.has(key)) candidates.set(key, { assignments: { ...assignments }, score, key });
+}
+
+function balancedAssignments(ids, teamCount, avoid = []) {
+  const candidates = new Map();
+  for (let attempt = 0; attempt < 64; attempt++) {
     const assignments = {};
     shuffle(ids).forEach((id, index) => { assignments[id] = index % teamCount; });
     let current = scoreLayout(assignments, ids, teamCount);
@@ -446,9 +470,23 @@ function balancedAssignments(ids, teamCount) {
       }
       if (!improved) break;
     }
-    if (current < bestScore) { bestScore = current; best = assignments; }
+    addCandidate(candidates, assignments, ids, teamCount, current);
+    // Các đội hình lân cận (đổi chỗ 1 cặp) của phương án cục bộ tốt cũng là ứng viên "gần tốt nhất".
+    for (let a = 0; a < ids.length; a++) for (let b = a + 1; b < ids.length; b++) {
+      const first = ids[a], second = ids[b];
+      if (assignments[first] === assignments[second]) continue;
+      [assignments[first], assignments[second]] = [assignments[second], assignments[first]];
+      addCandidate(candidates, { ...assignments }, ids, teamCount, scoreLayout(assignments, ids, teamCount));
+      [assignments[first], assignments[second]] = [assignments[second], assignments[first]];
+    }
   }
-  return best;
+  const ranked = [...candidates.values()].sort((x, y) => x.score - y.score);
+  const fresh = ranked.filter(c => !avoid.includes(c.key));
+  const pool = fresh.length ? fresh : ranked;
+  const limit = pool[0].score + Math.max(NEAR_BEST_TOLERANCE, pool[0].score * 0.25);
+  const nearBest = pool.filter(c => c.score <= limit);
+  const pick = nearBest[randomIndex(nearBest.length)];
+  return { assignments: pick.assignments, key: pick.key };
 }
 
 function warnSeparatePairs() {
@@ -458,7 +496,13 @@ function warnSeparatePairs() {
 
 function splitTeams() {
   if (state.selected.length < state.teamCount) { showToast(`Cần ít nhất ${state.teamCount} người cho ${state.teamCount} đội.`); return; }
-  state.assignments = balancedAssignments(state.selected, state.teamCount);
+  const currentKey = state.selected.every(id => Number.isInteger(state.assignments[id]))
+    ? layoutKey(state.assignments, state.selected, state.teamCount) : null;
+  const avoid = [...recentLayouts, currentKey].filter(Boolean);
+  const { assignments, key } = balancedAssignments(state.selected, state.teamCount, avoid);
+  state.assignments = assignments;
+  recentLayouts.push(key);
+  if (recentLayouts.length > RECENT_LAYOUTS) recentLayouts.shift();
   save(); render();
   warnSeparatePairs();
   $('#results').scrollIntoView({ behavior: 'smooth', block: 'start' });
