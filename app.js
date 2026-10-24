@@ -385,7 +385,7 @@ const SEPARATE_PENALTY = 1000;
 const SIZE_GAP_BONUS = 0.5;
 
 // Cân bằng Thể lực / Kinh nghiệm: rải đều người yếu (điểm <= *_LOW_MAX) và người giỏi (>= *_HIGH_MIN)
-// giữa các đội; người chưa chấm điểm bị bỏ qua. Trọng số tương đương lối chơi (0.65).
+// giữa các đội; người chưa chấm điểm bị bỏ qua. Trọng số cơ bản 0.65.
 const LOW_STAMINA_MAX = 2;
 const LOW_EXP_MAX = 2;
 const HIGH_EXP_MIN = 4;
@@ -416,12 +416,8 @@ function shuffle(ids) {
 
 function scoreLayout(assignments, ids, teamCount) {
   const totals = Array(teamCount).fill(0), counts = Array(teamCount).fill(0);
-  const styleCounts = Array.from({ length: teamCount }, () => ({ push: 0, hold: 0, mobile: 0 }));
-  const styleTotals = { push: 0, hold: 0, mobile: 0 };
   for (const id of ids) {
     const team = assignments[id]; totals[team] += skill(id); counts[team]++;
-    const style = styleFor(id);
-    if (style) { styleCounts[team][style]++; styleTotals[style]++; }
   }
   // Phạt chênh lệch số người "yếu/giỏi" giữa các đội so với kỳ vọng theo quân số.
   const flags = [
@@ -452,14 +448,7 @@ function scoreLayout(assignments, ids, teamCount) {
     const target = sumSkill / teamCount + (deficits[index] - avgDeficit) * bonus;
     return sum + ((total - target) / counts[index]) ** 2;
   }, 0);
-  const stylePenalty = styleCounts.reduce((sum, team, index) => {
-    for (const style of Object.keys(STYLES)) {
-      const expected = styleTotals[style] * counts[index] / ids.length;
-      sum += (team[style] - expected) ** 2;
-    }
-    return sum;
-  }, 0);
-  return skillPenalty + stylePenalty * 0.65 + attrPenalty + brokenPairs(assignments).length * SEPARATE_PENALTY;
+  return skillPenalty + attrPenalty + brokenPairs(assignments).length * SEPARATE_PENALTY;
 }
 
 // Khóa đội hình không phụ thuộc thứ tự đội: mỗi đội là tập thành viên đã sắp xếp.
