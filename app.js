@@ -101,7 +101,7 @@ function diffChanges(before, after) {
   return changes;
 }
 
-function save(kind = 'session') {
+function save(kind = 'session', action = null) {
   if (!cloudEnabled) { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); return; }
   if (!cloudReady || !canEdit) return;
   const snapshot = kind === 'attributes'
@@ -110,6 +110,7 @@ function save(kind = 'session') {
   pendingWrites[kind]++;
   setSyncStatus('Đang lưu…');
   const changes = diffChanges(auditBase[kind], snapshotFlat(kind, snapshot));
+  if (action && changes.length) changes.unshift({ path: 'action', before: null, after: action });
   auditBase[kind] = snapshotFlat(kind, snapshot);
   writeQueue[kind] = writeQueue[kind].catch(() => {}).then(() => {
     const { doc, writeBatch, collection, serverTimestamp } = cloudFs;
@@ -526,7 +527,24 @@ function splitTeams() {
   state.assignments = assignments;
   recentLayouts.push(key);
   if (recentLayouts.length > RECENT_LAYOUTS) recentLayouts.shift();
-  save(); render();
+  save('session', 'balanced'); render();
+  warnSeparatePairs();
+  $('#results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function splitRandom() {
+  if (state.selected.length < state.teamCount) { showToast(`Cần ít nhất ${state.teamCount} người cho ${state.teamCount} đội.`); return; }
+  const order = [...state.selected];
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = randomIndex(i + 1);
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  // Chia vòng tròn sau khi xáo trộn: quân số các đội chênh tối đa 1; chọn ngẫu nhiên đội nhận người dư.
+  const offset = randomIndex(state.teamCount);
+  const assignments = {};
+  order.forEach((id, index) => { assignments[id] = (index + offset) % state.teamCount; });
+  state.assignments = assignments;
+  save('session', 'random'); render();
   warnSeparatePairs();
   $('#results').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -660,6 +678,7 @@ function render() {
   });
   const ready = state.selected.length >= state.teamCount;
   $('#split-button').disabled = !ready || !cloudReady || !canEdit;
+  $('#random-button').disabled = !ready || !cloudReady || !canEdit;
   $('#setup-message').textContent = !cloudReady ? 'Đang tải dữ liệu chung…' : !canEdit ? 'Chỉ người tổ chức được chọn người và chia đội. Bạn đang ở chế độ xem.' : ready ? `${state.selected.length} người sẽ được chia vào ${state.teamCount} đội.` : `Chọn ít nhất ${state.teamCount} người để tạo ${state.teamCount} đội.`;
   const viewer = cloudEnabled && !canEdit;
   document.body.classList.toggle('viewer', viewer);
@@ -707,6 +726,7 @@ $('#roster-toggle').addEventListener('click', () => {
 });
 mobileQuery.addEventListener('change', () => { if (!rosterTouched) render(); });
 $('#split-button').addEventListener('click', splitTeams);
+$('#random-button').addEventListener('click', splitRandom);
 $('#bar-split').addEventListener('click', splitTeams);
 $('#reshuffle').addEventListener('click', splitTeams);
 $('#copy-result').addEventListener('click', async () => {
@@ -751,6 +771,7 @@ function describeChange({ path, before, after }) {
   const label = PATH_LABELS[group] || group;
   const where = modeIndex ? ` (${a})` : '';
   const show = value => value === null ? '—' : group === 'stats' ? Object.entries(JSON.parse(value)).map(([k, v]) => `${k}:${v}`).join(' ') : String(value);
+  if (group === 'action') return `Kiểu chia: ${after === 'random' ? 'ngẫu nhiên hoàn toàn' : 'cân bằng'}`;
   if (group === 'selected') return `${label}: ${name} ${after ? 'tham gia' : 'bỏ chọn'}`;
   if (group === 'guests') return `${label}: ${after ? 'thêm' : 'xóa'} ${name}`;
   if (group === 'teamCount' || group === 'mode') return `${label}: ${show(before)} → ${show(after)}`;

@@ -14,6 +14,7 @@ Từ thư mục này, chạy `python3 -m http.server 8000` rồi mở `http://lo
 - Thêm khách mời, chọn 2–6 đội, chia quân số chênh tối đa 1 và giảm chênh lệch skill trung bình bằng các lượt hoán đổi. Cũng rải đều người yếu Thể lực (≤2), người yếu Kinh nghiệm (≤2) và người Kinh nghiệm cao (≥4) giữa các đội (hằng số `LOW_STAMINA_MAX`, `LOW_EXP_MAX`, `HIGH_EXP_MIN` và các `*_WEIGHT` trong `app.js`); người chưa chấm điểm bị bỏ qua.
 - Khi các đội lệch quân số 1 người, đội ít người hơn được bù để có **tổng** skill cao hơn đội đông đúng **0.5 điểm** (`SIZE_GAP_BONUS` trong `app.js`).
 - Các cặp không được chung đội khai báo trong `SEPARATE_PAIRS` ở `app.js` (hiện đang để trống, không có cặp nào bị ràng buộc; thêm theo id trong `members.json`); khi có cặp, thuật toán chia sẽ tách cặp và đổi đội thủ công sẽ hiện cảnh báo nếu vi phạm.
+- Nút **CHIA NGẪU NHIÊN** chia hoàn toàn ngẫu nhiên (xáo trộn rồi chia vòng tròn, chênh tối đa 1 người, bỏ qua skill/thể lực/kinh nghiệm); nút **CHIA ĐỘI CÂN BẰNG** dùng thuật toán cân bằng. Lịch sử ghi rõ kiểu chia ("Kiểu chia: ngẫu nhiên hoàn toàn / cân bằng").
 - Đổi đội thủ công cho từng người, chia lại, sao chép đội hình.
 - Đồng bộ lựa chọn và đội hình qua Firestore để mọi người thấy cùng kết quả và đều có thể chia đội. Chỉ tài khoản tổ chức được chọn người, chia đội và chọn lối chơi.
 
