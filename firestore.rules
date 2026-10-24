@@ -22,5 +22,18 @@ service cloud.firestore {
         && request.auth.uid in ['57BKTGPZoDaIc2wChRWut3NBf6E3', 'kEkdLPY3kLWPCVBJG8112W1yDlB3', 'ig2pUINnEgZX4HzXbCRyjtvKQ2E3', 'ZCJPrmNKeXQBx6O56iUcwKoLupz2']
         && request.resource.data.keys().hasOnly(['ratings', 'styles', 'stats']);
     }
+    // Append-only edit history. Only the system admin (hiepbrse@gmail.com) can read it.
+    match /auditLog/{entry} {
+      allow read: if request.auth != null && request.auth.uid == '57BKTGPZoDaIc2wChRWut3NBf6E3';
+      allow create: if request.auth != null
+        && request.auth.uid in ['57BKTGPZoDaIc2wChRWut3NBf6E3', 'kEkdLPY3kLWPCVBJG8112W1yDlB3', 'ig2pUINnEgZX4HzXbCRyjtvKQ2E3', 'ZCJPrmNKeXQBx6O56iUcwKoLupz2']
+        && request.resource.data.keys().hasOnly(['uid', 'email', 'doc', 'changes', 'at'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.doc in ['current', 'attributes']
+        && request.resource.data.changes is list
+        && request.resource.data.changes.size() <= 300
+        && request.resource.data.at == request.time;
+      allow update, delete: if false;
+    }
   }
 }

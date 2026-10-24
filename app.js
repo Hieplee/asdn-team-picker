@@ -1,6 +1,6 @@
 import members from './members.json' with { type: 'json' };
 import skills from './skills.json' with { type: 'json' };
-import { firebaseConfig, organizerUids } from './cloud-config.js';
+import { firebaseConfig, organizerUids, adminUid } from './cloud-config.js';
 
 const STORAGE_KEY = 'asdn-team-picker-v1';
 const $ = (selector) => document.querySelector(selector);
@@ -12,7 +12,8 @@ const cloudEnabled = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId);
 let state = cloudEnabled ? structuredClone(initial) : loadState();
 let canEdit = !cloudEnabled;
 let cloudReady = !cloudEnabled;
-let cloudAuth, cloudSignIn, cloudSignOut, cloudProvider, cloudSession, cloudAttributes, cloudSetDocument;
+let cloudAuth, cloudSignIn, cloudSignOut, cloudProvider, cloudSession, cloudAttributes, cloudDb, cloudFs;
+const auditBase = { session: null, attributes: null };
 const ready = { session: false, attributes: false };
 const writeQueue = { session: Promise.resolve(), attributes: Promise.resolve() };
 const pendingWrites = { session: 0, attributes: 0 };
@@ -74,6 +75,32 @@ function setSyncStatus(message, error = false) {
   status.classList.toggle('sync-error', error);
 }
 
+function snapshotFlat(kind, snap) {
+  const flat = {};
+  if (kind === 'attributes') {
+    for (const mode of MODES) {
+      for (const [id, value] of Object.entries(snap.ratings?.[mode] || {})) flat[`ratings/${mode}/${id}`] = value;
+      for (const [id, value] of Object.entries(snap.styles?.[mode] || {})) flat[`styles/${mode}/${id}`] = value;
+    }
+    for (const [id, value] of Object.entries(snap.stats || {})) flat[`stats/${id}`] = JSON.stringify(value);
+  } else {
+    snap.selected.forEach(id => { flat[`selected/${id}`] = true; });
+    snap.guests.forEach(guest => { flat[`guests/${guest.id}`] = guest.name; });
+    flat.teamCount = snap.teamCount;
+    flat.mode = snap.mode;
+    for (const [id, value] of Object.entries(snap.assignments || {})) flat[`assignments/${id}`] = value;
+  }
+  return flat;
+}
+function diffChanges(before, after) {
+  if (!before) return [];
+  const changes = [];
+  for (const path of new Set([...Object.keys(before), ...Object.keys(after)])) {
+    if (before[path] !== after[path]) changes.push({ path, before: before[path] ?? null, after: after[path] ?? null });
+  }
+  return changes;
+}
+
 function save(kind = 'session') {
   if (!cloudEnabled) { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); return; }
   if (!cloudReady || !canEdit) return;
@@ -82,7 +109,18 @@ function save(kind = 'session') {
     : { selected: [...state.selected], guests: structuredClone(state.guests), teamCount: state.teamCount, mode: state.mode, assignments: structuredClone(state.assignments) };
   pendingWrites[kind]++;
   setSyncStatus('Đang lưu…');
-  writeQueue[kind] = writeQueue[kind].catch(() => {}).then(() => cloudSetDocument(kind === 'attributes' ? cloudAttributes : cloudSession, snapshot));
+  const changes = diffChanges(auditBase[kind], snapshotFlat(kind, snapshot));
+  auditBase[kind] = snapshotFlat(kind, snapshot);
+  writeQueue[kind] = writeQueue[kind].catch(() => {}).then(() => {
+    const { doc, writeBatch, collection, serverTimestamp } = cloudFs;
+    const batch = writeBatch(cloudDb);
+    batch.set(kind === 'attributes' ? cloudAttributes : cloudSession, snapshot);
+    if (changes.length) {
+      const user = cloudAuth.currentUser;
+      batch.set(doc(collection(cloudDb, 'auditLog')), { uid: user.uid, email: user.email || '', doc: kind === 'attributes' ? 'attributes' : 'current', changes: changes.slice(0, 300), at: serverTimestamp() });
+    }
+    return batch.commit();
+  });
   writeQueue[kind].then(() => {
     pendingWrites[kind]--;
     if (!pendingWrites.session && !pendingWrites.attributes) setSyncStatus('Đã đồng bộ');
@@ -100,7 +138,7 @@ async function initCloud() {
     return;
   }
   try {
-    const [{ initializeApp }, { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }, { getFirestore, doc, onSnapshot, setDoc }] = await Promise.all([
+    const [{ initializeApp }, { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }, { getFirestore, doc, onSnapshot, writeBatch, collection, serverTimestamp, query, orderBy, limit, getDocs }] = await Promise.all([
       import('https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js'),
       import('https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js'),
       import('https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js'),
@@ -110,8 +148,9 @@ async function initCloud() {
     cloudSignIn = signInWithPopup;
     cloudSignOut = signOut;
     cloudProvider = new GoogleAuthProvider();
-    cloudSetDocument = setDoc;
     const db = getFirestore(app);
+    cloudDb = db;
+    cloudFs = { doc, writeBatch, collection, serverTimestamp, query, orderBy, limit, getDocs };
     cloudSession = doc(db, 'public', 'current');
     cloudAttributes = doc(db, 'public', 'attributes');
     onAuthStateChanged(cloudAuth, user => {
@@ -120,6 +159,9 @@ async function initCloud() {
       button.hidden = false;
       button.textContent = user ? (canEdit ? 'Tổ chức · Đăng xuất' : 'Đổi tài khoản') : 'Đăng nhập tổ chức';
       button.title = user?.uid || '';
+      const isAdmin = Boolean(user && user.uid === adminUid);
+      $('#audit-button').hidden = !isAdmin;
+      if (!isAdmin) $('#audit-panel').hidden = true;
       render();
     });
     const handleSnapshot = (kind, snapshot) => {
@@ -127,6 +169,8 @@ async function initCloud() {
       if (!pendingWrites[kind]) {
         const data = snapshot.exists() ? snapshot.data() : {};
         state = normalizeState({ ...state, ...data });
+        const key = kind === 'attributes' ? 'attributes' : 'session';
+        auditBase[key] = snapshotFlat(key, key === 'attributes' ? { ratings: state.ratings, styles: state.styles, stats: state.stats } : state);
       }
       cloudReady = ready.session && ready.attributes;
       render();
@@ -597,3 +641,43 @@ $('#auth-button').addEventListener('click', async () => {
 
 render();
 initCloud();
+
+const PATH_LABELS = { selected: 'Điểm danh', guests: 'Khách mời', teamCount: 'Số đội', mode: 'Chế độ', assignments: 'Đội', ratings: 'Điểm đánh giá', styles: 'Lối chơi', stats: 'Chỉ số' };
+function describeChange({ path, before, after }) {
+  const [group, a, b] = path.split('/');
+  const modeIndex = group === 'ratings' || group === 'styles';
+  const id = modeIndex ? b : a;
+  const name = findMember(id)?.name || (group === 'guests' ? after ?? before : id);
+  const label = PATH_LABELS[group] || group;
+  const where = modeIndex ? ` (${a})` : '';
+  const show = value => value === null ? '—' : group === 'stats' ? Object.entries(JSON.parse(value)).map(([k, v]) => `${k}:${v}`).join(' ') : String(value);
+  if (group === 'selected') return `${label}: ${name} ${after ? 'tham gia' : 'bỏ chọn'}`;
+  if (group === 'guests') return `${label}: ${after ? 'thêm' : 'xóa'} ${name}`;
+  if (group === 'teamCount' || group === 'mode') return `${label}: ${show(before)} → ${show(after)}`;
+  if (group === 'assignments') return `${label}: ${name} ${before === null ? '' : `Đội ${before + 1} `}→ ${after === null ? '—' : `Đội ${after + 1}`}`;
+  return `${label}${where}: ${name} ${show(before)} → ${show(after)}`;
+}
+async function loadAudit() {
+  const list = $('#audit-list'); list.textContent = 'Đang tải…';
+  try {
+    const { query, collection, orderBy, limit, getDocs } = cloudFs;
+    const snap = await getDocs(query(collection(cloudDb, 'auditLog'), orderBy('at', 'desc'), limit(100)));
+    list.replaceChildren();
+    if (snap.empty) list.textContent = 'Chưa có lịch sử.';
+    snap.forEach(entry => {
+      const data = entry.data();
+      const item = document.createElement('li');
+      const head = document.createElement('strong');
+      head.textContent = `${data.at?.toDate().toLocaleString('vi-VN') || '…'} · ${data.email || data.uid}`;
+      const body = document.createElement('div');
+      body.textContent = data.changes.map(describeChange).join('; ');
+      item.append(head, body);
+      list.append(item);
+    });
+  } catch (error) { list.textContent = `Không tải được lịch sử: ${error.message}`; }
+}
+$('#audit-button').addEventListener('click', () => {
+  const panel = $('#audit-panel'); panel.hidden = !panel.hidden;
+  if (!panel.hidden) { loadAudit(); panel.scrollIntoView({ behavior: 'smooth' }); }
+});
+$('#audit-refresh').addEventListener('click', loadAudit);

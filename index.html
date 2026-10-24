@@ -17,7 +17,7 @@
   <div class="app-shell">
     <header class="topbar">
       <a class="brand" href="#top" aria-label="ASDN, về đầu trang"><span class="brand-mark">A<span>✦</span></span><span>ASDN<span class="brand-sub"> / TEAM OPS</span></span></a>
-      <div class="topbar-account"><span id="sync-status" class="sync-status" role="status">Đang tải dữ liệu…</span><button id="auth-button" class="auth-button" type="button" hidden>Đăng nhập tổ chức</button></div>
+      <div class="topbar-account"><span id="sync-status" class="sync-status" role="status">Đang tải dữ liệu…</span><button id="audit-button" class="auth-button" type="button" hidden>Lịch sử</button><button id="auth-button" class="auth-button" type="button" hidden>Đăng nhập tổ chức</button></div>
     </header>
     <nav id="section-nav" class="section-nav" aria-label="Điều hướng">
       <a href="#roster-heading" data-target="roster-heading">Chọn người</a>
@@ -57,6 +57,7 @@
 
     </main>
 
+    <section id="audit-panel" class="panel audit-panel" hidden><div class="section-head"><div><p class="eyebrow">ADMIN</p><h2>Lịch sử chỉnh sửa</h2><p class="section-description">100 thay đổi gần nhất. Chỉ system admin xem được.</p></div><button id="audit-refresh" class="secondary-button" type="button">↻ TẢI LẠI</button></div><ul id="audit-list" class="audit-list"></ul></section>
     <div id="mobile-bar" class="mobile-bar" hidden><span><strong id="bar-count">0</strong> người · <b id="bar-teams">2</b> đội</span><button id="bar-split" class="primary-button" type="button">CHIA ĐỘI <span class="arrow">↗</span></button></div>
 
     <footer><span>ASDN <span class="footer-star">✦</span> TEAM OPS</span><span>BUILD YOUR SQUAD. PLAY FAIR.</span></footer>
