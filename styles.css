@@ -156,3 +156,6 @@ body.viewer .roster-panel{order:5}
 
 
 .split-badge{display:inline-block;margin:10px 0 0;padding:6px 12px;border:1px solid #4b6547;background:#263628;color:var(--lime);font:700 12px 'DM Sans',sans-serif;letter-spacing:.8px}
+.compare-legend span{flex-direction:column;align-items:center;gap:2px;text-align:center}
+.compare-legend small{font:600 11px 'DM Sans',sans-serif;color:var(--muted,#9aa8a0)}
+.compare-note{margin-top:8px;text-align:center;font:600 12px 'DM Sans',sans-serif;color:var(--muted,#9aa8a0)}

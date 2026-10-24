@@ -604,7 +604,7 @@ function renderTeams() {
     title.prepend(Object.assign(document.createElement('i'), { className: 'team-dot' }));
     title.firstChild.style.background = color;
     const average = teamAverage(people);
-    if (Object.keys(average).length) series.push({ values: average, color, name: `Đội ${index + 1}` });
+    if (Object.keys(average).length) series.push({ values: average, color, name: `Đội ${index + 1}`, count: people.length, total: people.reduce((sum, person) => sum + skill(person.id), 0) });
     card.append(head, list);
     container.append(card);
   });
@@ -614,8 +614,13 @@ function renderTeams() {
   compare.hidden = series.length === 0;
   if (series.length) {
     const legend = document.createElement('div'); legend.className = 'compare-legend';
-    series.forEach(({ name, color }) => { const item = document.createElement('span'); const dot = document.createElement('i'); dot.className = 'team-dot'; dot.style.background = color; item.append(dot, name); legend.append(item); });
+    series.forEach(({ name, color, count, total }) => { const item = document.createElement('span'); const dot = document.createElement('i'); dot.className = 'team-dot'; dot.style.background = color; const label = document.createElement('b'); label.textContent = name; const stats = document.createElement('small'); stats.textContent = `${count} người · TB ${(total / (count || 1)).toFixed(1)} · tổng ${total.toFixed(1)}`; item.append(dot, label, stats); legend.append(item); });
     compare.append(radarChart({}, 'Biểu đồ so sánh các đội', series), legend);
+    const totals = series.map(entry => entry.total);
+    const info = [];
+    if (state.splitMode) info.push(`Chia kiểu: ${state.splitMode === 'random' ? '⚄ Ngẫu nhiên' : '⚖ Cân bằng'}`);
+    if (totals.length > 1) info.push(`Chênh tổng: ${(Math.max(...totals) - Math.min(...totals)).toFixed(1)}`);
+    if (info.length) { const note = document.createElement('div'); note.className = 'compare-note'; note.textContent = info.join(' · '); compare.append(note); }
   }
   $('#result-summary').textContent = `${state.mode === 'cqb' ? 'CQB' : 'Sân ngoài trời'} · ${state.selected.length} người · ${state.teamCount} đội · ${state.selected.filter(hasSkill).length} người đã có skill`;
   const badge = $('#split-badge');
