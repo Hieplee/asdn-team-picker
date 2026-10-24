@@ -384,6 +384,21 @@ const SEPARATE_PENALTY = 1000;
 // bằng SIZE_GAP_BONUS điểm skill (thang 1-5).
 const SIZE_GAP_BONUS = 0.5;
 
+// Cân bằng Thể lực / Kinh nghiệm: rải đều người yếu (điểm <= *_LOW_MAX) và người giỏi (>= *_HIGH_MIN)
+// giữa các đội; người chưa chấm điểm bị bỏ qua. Trọng số tương đương lối chơi (0.65).
+const LOW_STAMINA_MAX = 2;
+const LOW_EXP_MAX = 2;
+const HIGH_EXP_MIN = 4;
+const STAMINA_WEIGHT = 0.65;
+const STAMINA_AVG_WEIGHT = 0.15;
+const EXP_LOW_WEIGHT = 0.65;
+const EXP_HIGH_WEIGHT = 0.4;
+
+function rated(id, key) {
+  const value = statsFor(id)?.[key];
+  return Number.isFinite(value) ? value : undefined;
+}
+
 function brokenPairs(assignments) {
   return SEPARATE_PAIRS.filter(([a, b]) => Number.isInteger(assignments[a]) && assignments[a] === assignments[b]);
 }
@@ -408,6 +423,25 @@ function scoreLayout(assignments, ids, teamCount) {
     const style = styleFor(id);
     if (style) { styleCounts[team][style]++; styleTotals[style]++; }
   }
+  // Phạt chênh lệch số người "yếu/giỏi" giữa các đội so với kỳ vọng theo quân số.
+  const flags = [
+    ['stamina', v => v <= LOW_STAMINA_MAX, STAMINA_WEIGHT],
+    ['exp', v => v <= LOW_EXP_MAX, EXP_LOW_WEIGHT],
+    ['exp', v => v >= HIGH_EXP_MIN, EXP_HIGH_WEIGHT],
+  ];
+  let attrPenalty = 0;
+  for (const [key, test, weight] of flags) {
+    const per = Array(teamCount).fill(0); let all = 0;
+    for (const id of ids) { const v = rated(id, key); if (v !== undefined && test(v)) { per[assignments[id]]++; all++; } }
+    if (all) attrPenalty += weight * per.reduce((sum, c, i) => sum + (c - all * counts[i] / ids.length) ** 2, 0);
+  }
+  const stam = Array(teamCount).fill(0), stamN = Array(teamCount).fill(0);
+  for (const id of ids) { const v = rated(id, 'stamina'); if (v !== undefined) { stam[assignments[id]] += v; stamN[assignments[id]]++; } }
+  const stamAll = stamN.reduce((a, b) => a + b, 0);
+  if (stamAll) {
+    const mean = stam.reduce((a, b) => a + b, 0) / stamAll;
+    attrPenalty += STAMINA_AVG_WEIGHT * stam.reduce((sum, t, i) => sum + (stamN[i] ? (t / stamN[i] - mean) ** 2 : 0), 0);
+  }
   const sumSkill = totals.reduce((a, b) => a + b, 0);
   const bonus = SIZE_GAP_BONUS ?? sumSkill / ids.length;
   const maxCount = Math.max(...counts);
@@ -425,7 +459,7 @@ function scoreLayout(assignments, ids, teamCount) {
     }
     return sum;
   }, 0);
-  return skillPenalty + stylePenalty * 0.65 + brokenPairs(assignments).length * SEPARATE_PENALTY;
+  return skillPenalty + stylePenalty * 0.65 + attrPenalty + brokenPairs(assignments).length * SEPARATE_PENALTY;
 }
 
 // Khóa đội hình không phụ thuộc thứ tự đội: mỗi đội là tập thành viên đã sắp xếp.
