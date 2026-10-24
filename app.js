@@ -417,6 +417,15 @@ function shuffle(ids) {
   return result;
 }
 
+// Tổng kỹ năng mục tiêu của mỗi đội: đội ít người hơn cao hơn đội đông người một khoảng SIZE_GAP_BONUS mỗi người thiếu.
+function sizeTargets(totals, counts) {
+  const sumSkill = totals.reduce((a, b) => a + b, 0);
+  const maxCount = Math.max(...counts);
+  const deficits = counts.map(count => maxCount - count);
+  const avgDeficit = deficits.reduce((a, b) => a + b, 0) / totals.length;
+  return totals.map((_, index) => sumSkill / totals.length + (deficits[index] - avgDeficit) * SIZE_GAP_BONUS);
+}
+
 function scoreLayout(assignments, ids, teamCount) {
   const totals = Array(teamCount).fill(0), counts = Array(teamCount).fill(0);
   for (const id of ids) {
@@ -441,16 +450,8 @@ function scoreLayout(assignments, ids, teamCount) {
     const mean = stam.reduce((a, b) => a + b, 0) / stamAll;
     attrPenalty += STAMINA_AVG_WEIGHT * stam.reduce((sum, t, i) => sum + (stamN[i] ? (t / stamN[i] - mean) ** 2 : 0), 0);
   }
-  const sumSkill = totals.reduce((a, b) => a + b, 0);
-  const bonus = SIZE_GAP_BONUS ?? sumSkill / ids.length;
-  const maxCount = Math.max(...counts);
-  const deficits = counts.map(count => maxCount - count);
-  const avgDeficit = deficits.reduce((a, b) => a + b, 0) / teamCount;
-  // Tổng kỹ năng mục tiêu của mỗi đội: đội ít người hơn cao hơn đội đông người một khoảng bonus.
-  const skillPenalty = totals.reduce((sum, total, index) => {
-    const target = sumSkill / teamCount + (deficits[index] - avgDeficit) * bonus;
-    return sum + ((total - target) / counts[index]) ** 2;
-  }, 0);
+  const targets = sizeTargets(totals, counts);
+  const skillPenalty = totals.reduce((sum, total, index) => sum + ((total - targets[index]) / counts[index]) ** 2, 0);
   return skillPenalty + attrPenalty + brokenPairs(assignments).length * SEPARATE_PENALTY;
 }
 
@@ -620,12 +621,13 @@ function renderTeams() {
     const info = [];
     if (state.splitMode) info.push(`Chia kiểu: ${state.splitMode === 'random' ? '⚄ Ngẫu nhiên' : '⚖ Cân bằng'}`);
     if (totals.length > 1) info.push(`Chênh tổng: ${(Math.max(...totals) - Math.min(...totals)).toFixed(1)}`);
-    const maxCount = Math.max(...series.map(entry => entry.count));
-    const smaller = series.filter(entry => entry.count < maxCount);
-    if (smaller.length && state.splitMode === 'balanced') {
-      const adjusted = series.map(entry => entry.total + (maxCount - entry.count) * SIZE_GAP_BONUS);
-      info.push(`Chấp: ${smaller.map(entry => `${entry.name} (${entry.count} người) +${((maxCount - entry.count) * SIZE_GAP_BONUS).toFixed(1)}`).join(', ')} điểm`);
-      info.push(`Chênh tổng sau chấp: ${(Math.max(...adjusted) - Math.min(...adjusted)).toFixed(1)}`);
+    const counts = series.map(entry => entry.count);
+    if (state.splitMode === 'balanced' && Math.max(...counts) !== Math.min(...counts)) {
+      const targets = sizeTargets(totals, counts);
+      const devs = totals.map((total, index) => total - targets[index]);
+      const big = series.filter(entry => entry.count === Math.max(...counts)), small = series.filter(entry => entry.count < Math.max(...counts));
+      info.push(`Mục tiêu: đội ít người (${small.map(entry => entry.name).join(', ')}) cao hơn đội đông người (${big.map(entry => entry.name).join(', ')}) khoảng ${SIZE_GAP_BONUS.toFixed(1)} điểm/người thiếu`);
+      info.push(`Lệch so với mục tiêu: ${(Math.max(...devs) - Math.min(...devs)).toFixed(1)}`);
     }
     if (info.length) { const note = document.createElement('div'); note.className = 'compare-note'; note.append(...info.flatMap((text, i) => [...(i ? [document.createElement('br')] : []), text])); compare.append(note); }
   }
