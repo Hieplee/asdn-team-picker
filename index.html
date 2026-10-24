@@ -12,9 +12,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
-  <link rel="stylesheet" href="styles.css?v=mode3">
-  <script type="module" src="app.js?v=mode3"></script>
-  <script defer src="nav.js?v=mode3"></script>
+  <link rel="stylesheet" href="styles.css?v=howto1">
+  <script type="module" src="app.js?v=howto1"></script>
+  <script defer src="nav.js?v=howto1"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -26,6 +26,7 @@
       <a href="#roster-heading" data-target="roster-heading">Chọn người</a>
       <a href="#setup-heading" data-target="setup-heading">Chia đội</a>
       <a href="#results-heading" data-target="results-heading">Đội hình</a>
+      <a href="#howto-heading" data-target="howto-heading">Cách chia</a>
     </nav>
 
     <main id="top">
@@ -59,6 +60,20 @@
       <section id="results" class="results-section" aria-labelledby="results-heading" hidden><div class="results-heading"><div><p class="eyebrow">03 / DEPLOYMENT</p><h2 id="results-heading">Đội hình đã sẵn sàng.</h2><p id="result-summary" class="section-description"></p></div><div class="result-actions"><button id="reshuffle" class="secondary-button" type="button"><span class="mode-icon">⚖</span> &nbsp; CHIA LẠI</button><button id="copy-result" class="secondary-button" type="button">⧉ &nbsp; SAO CHÉP</button></div></div><div id="teams" class="teams-grid"></div><p class="result-hint">Chỉ người tổ chức được đổi đội. Đội hình được đồng bộ cho mọi người xem.</p></section>
 
     </main>
+
+    <section id="howto-section" class="panel howto-panel" aria-labelledby="howto-heading">
+      <div class="section-head"><div><p class="eyebrow">04 / RULES</p><h2 id="howto-heading">Cách chia đội</h2><p class="section-description">Ai cũng xem được. Có 2 kiểu chia, người tổ chức chọn trước khi bấm CHIA ĐỘI.</p></div></div>
+      <div class="howto-grid">
+        <article class="howto-card"><h3>⚄ Ngẫu nhiên</h3><ul><li>Xáo trộn danh sách rồi chia lần lượt vòng tròn cho từng đội.</li><li>Quân số các đội chênh nhau tối đa 1 người.</li><li>Không xét điểm hay thể lực, hoàn toàn may rủi.</li></ul></article>
+        <article class="howto-card"><h3>⚖ Cân bằng</h3><ul><li>Thử nhiều cách chia, rồi đổi chỗ từng cặp người để các đội đều nhau nhất.</li><li>Quân số các đội chênh nhau tối đa 1 người.</li><li id="howto-skill">Tổng skill các đội gần bằng nhau.</li><li id="howto-stamina">Người thể lực thấp được rải đều.</li><li id="howto-exp">Người ít và nhiều kinh nghiệm được rải đều.</li></ul></article>
+      </div>
+      <ul class="howto-notes">
+        <li id="howto-criteria">Skill là điểm trung bình của các tiêu chí.</li>
+        <li>Người chưa được chấm điểm tính skill là 3, và không tính vào thể lực, kinh nghiệm.</li>
+        <li>Lối chơi (Đẩy mục tiêu, Giữ vị trí, Cơ động) không ảnh hưởng cách chia.</li>
+        <li>Bấm CHIA LẠI sẽ ra đội hình khác, vẫn cân bằng, và tránh lặp lại vài lần chia gần nhất.</li>
+      </ul>
+    </section>
 
     <section id="audit-panel" class="panel audit-panel" hidden><div class="section-head"><div><p class="eyebrow">ADMIN</p><h2>Lịch sử chỉnh sửa</h2><p class="section-description">100 thay đổi gần nhất. Chỉ system admin xem được.</p></div><button id="audit-refresh" class="secondary-button" type="button">↻ TẢI LẠI</button></div><ul id="audit-list" class="audit-list"></ul></section>
     <div id="mobile-bar" class="mobile-bar" hidden><span><strong id="bar-count">0</strong> người · <b id="bar-teams">2</b> đội</span><button id="bar-split" class="primary-button" type="button">CHIA ĐỘI <span class="arrow mode-icon">⚖</span></button></div>

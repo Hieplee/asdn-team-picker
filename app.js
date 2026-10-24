@@ -773,6 +773,15 @@ $('#auth-button').addEventListener('click', async () => {
   }
 });
 
+function renderHowTo() {
+  const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
+  set('howto-criteria', `Skill là điểm trung bình của ${CRITERIA.length} tiêu chí: ${CRITERIA.map(c => c[1]).join(', ')}.`);
+  set('howto-skill', `Tổng skill các đội gần bằng nhau. Khi quân số lệch 1 người, đội ít người hơn được bù ${SIZE_GAP_BONUS} điểm skill.`);
+  set('howto-stamina', `Người thể lực thấp (${LOW_STAMINA_MAX} điểm trở xuống) được rải đều, thể lực trung bình mỗi đội cũng được cân.`);
+  set('howto-exp', `Người kinh nghiệm thấp (${LOW_EXP_MAX} điểm trở xuống) và cao (${HIGH_EXP_MIN} điểm trở lên) được rải đều giữa các đội.`);
+}
+renderHowTo();
+
 render();
 initCloud();
 
