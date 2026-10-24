@@ -129,3 +129,10 @@ body.viewer .roster-panel{order:5}
 
 .role-icons{display:inline-flex;gap:3px;vertical-align:middle;margin-right:5px}.role-icons img{width:14px;height:14px;display:block}
 .role-chip{display:inline-flex;align-items:center;gap:4px}.role-icons:has(.role-chip){gap:10px;margin-right:8px}.team-tag .role-icons{flex-wrap:wrap}
+
+.stats-edit{padding:8px 4px 2px;text-align:center}
+.stats-edit-button,.stats-form button{min-height:36px;padding:0 14px;background:#1b2a20;border:1px solid #344737;border-radius:6px;color:var(--lime);font:700 11px 'DM Sans',sans-serif;letter-spacing:.6px;cursor:pointer}
+.stats-form{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.stats-form label{display:flex;flex-direction:column;gap:3px;font:700 11px 'DM Sans',sans-serif;color:var(--muted);text-align:left}
+.stats-form select{min-height:34px;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:6px}
+.stats-form button{grid-column:auto}

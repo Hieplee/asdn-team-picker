@@ -5,9 +5,9 @@ import { firebaseConfig, organizerUids } from './cloud-config.js';
 const STORAGE_KEY = 'asdn-team-picker-v1';
 const $ = (selector) => document.querySelector(selector);
 const MODES = ['cqb', 'outdoor'];
-const CRITERIA = [['aim', 'Aim'], ['move', 'Di chuyển'], ['aware', 'Quan sát'], ['team', 'Phối hợp'], ['stamina', 'Thể lực']];
+const CRITERIA = [['attack', 'Tấn công'], ['defense', 'Phòng thủ'], ['team', 'Phối hợp'], ['solo', 'Độc lập tác chiến'], ['exp', 'Kinh nghiệm'], ['stamina', 'Thể lực']];
 const STYLES = { push: 'Đẩy mục tiêu', hold: 'Giữ vị trí', mobile: 'Cơ động' };
-const initial = { selected: [], guests: [], teamCount: 2, mode: 'cqb', assignments: {}, ratings: { cqb: {}, outdoor: {} }, styles: { cqb: {}, outdoor: {} } };
+const initial = { selected: [], guests: [], teamCount: 2, mode: 'cqb', assignments: {}, ratings: { cqb: {}, outdoor: {} }, styles: { cqb: {}, outdoor: {} }, stats: {} };
 const cloudEnabled = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId);
 let state = cloudEnabled ? structuredClone(initial) : loadState();
 let canEdit = !cloudEnabled;
@@ -55,7 +55,16 @@ function normalizeState(saved) {
         }
       }
     }
-    return { selected, guests, teamCount, mode, assignments, ratings, styles };
+    const stats = {};
+    if (saved.stats && typeof saved.stats === 'object') {
+      for (const [id, detail] of Object.entries(saved.stats)) {
+        if (!ids.has(id) || !detail || typeof detail !== 'object') continue;
+        const clean = {};
+        for (const [key] of CRITERIA) if (Number.isInteger(detail[key]) && detail[key] >= 1 && detail[key] <= 5) clean[key] = detail[key];
+        if (Object.keys(clean).length) stats[id] = clean;
+      }
+    }
+    return { selected, guests, teamCount, mode, assignments, ratings, styles, stats };
   } catch { return structuredClone(initial); }
 }
 
@@ -69,7 +78,7 @@ function save(kind = 'session') {
   if (!cloudEnabled) { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); return; }
   if (!cloudReady || !canEdit) return;
   const snapshot = kind === 'attributes'
-    ? { ratings: structuredClone(state.ratings), styles: structuredClone(state.styles) }
+    ? { ratings: structuredClone(state.ratings), styles: structuredClone(state.styles), stats: structuredClone(state.stats) }
     : { selected: [...state.selected], guests: structuredClone(state.guests), teamCount: state.teamCount, mode: state.mode, assignments: structuredClone(state.assignments) };
   pendingWrites[kind]++;
   setSyncStatus('Đang lưu…');
@@ -139,8 +148,9 @@ function allMembers() { return [...members, ...state.guests]; }
 function findMember(id) { return allMembers().find(m => m.id === id); }
 function initials(name) { return [...name.trim()][0]?.toUpperCase() || '?'; }
 function styleFor(id) { return state.styles[state.mode][id]; }
+function statsFor(id) { return state.stats[id] || skills[id]; }
 function detailTotal(id) {
-  const detail = skills[id];
+  const detail = statsFor(id);
   if (!detail) return undefined;
   const values = CRITERIA.map(([key]) => detail[key]).filter(Number.isFinite);
   return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : undefined;
@@ -222,9 +232,9 @@ function renderRoster() {
       save('attributes'); renderTeams();
     });
     styleRow.append(styleLabel, styleSelect);
-    if (skills[member.id]) {
+    {
       const chart = document.createElement('div'); chart.className = 'card-radar';
-      chart.append(radarChart(skills[member.id], `Biểu đồ kỹ năng của ${member.name}`));
+      chart.append(radarChart(statsFor(member.id), `Biểu đồ kỹ năng của ${member.name}`));
       const expand = document.createElement('button'); expand.type = 'button'; expand.className = 'card-expand';
       const open = expandedCards.has(member.id);
       card.classList.toggle('expanded', open);
@@ -237,8 +247,9 @@ function renderRoster() {
         expand.setAttribute('aria-expanded', String(next));
         expand.lastChild.textContent = next ? 'ẨN BIỂU ĐỒ ▴' : 'XEM BIỂU ĐỒ ▾';
       });
+      if (canEdit && cloudReady) chart.append(statsEditor(member));
       card.append(pick, expand, chart, styleRow);
-    } else card.append(pick, styleRow);
+    }
     if (member.id.startsWith('guest-') && canEdit && cloudReady) {
       const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'guest-remove';
       remove.textContent = '✕'; remove.setAttribute('aria-label', `Xóa khách mời ${member.name}`); remove.title = 'Xóa khách mời';
@@ -255,12 +266,45 @@ function renderRoster() {
   $('#empty-search').hidden = filtered.length > 0;
 }
 
+function statsEditor(member) {
+  const wrap = document.createElement('div'); wrap.className = 'stats-edit';
+  const edit = document.createElement('button'); edit.type = 'button'; edit.className = 'stats-edit-button'; edit.textContent = '✎ SỬA CHỈ SỐ';
+  edit.setAttribute('aria-label', `Sửa chỉ số của ${member.name}`);
+  edit.addEventListener('click', () => {
+    const form = document.createElement('form'); form.className = 'stats-form';
+    const current = statsFor(member.id) || {};
+    const inputs = CRITERIA.map(([key, name]) => {
+      const label = document.createElement('label'); label.textContent = name;
+      const select = document.createElement('select');
+      select.add(new Option('—', ''));
+      for (let n = 1; n <= 5; n++) select.add(new Option(String(n), String(n)));
+      select.value = Number.isFinite(current[key]) ? String(current[key]) : '';
+      label.append(select); form.append(label);
+      return [key, select];
+    });
+    const save_ = document.createElement('button'); save_.type = 'submit'; save_.textContent = 'LƯU';
+    const cancel = document.createElement('button'); cancel.type = 'button'; cancel.textContent = 'HỦY';
+    cancel.addEventListener('click', () => wrap.replaceChildren(edit));
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      const next = {};
+      for (const [key, select] of inputs) if (select.value) next[key] = Number(select.value);
+      if (Object.keys(next).length) state.stats[member.id] = next; else delete state.stats[member.id];
+      save('attributes'); render();
+    });
+    form.append(save_, cancel); wrap.replaceChildren(form);
+  });
+  wrap.append(edit);
+  return wrap;
+}
+
 function removeGuest(id) {
   const guest = state.guests.find(g => g.id === id);
   state.guests = state.guests.filter(g => g.id !== id);
   state.selected = state.selected.filter(value => value !== id);
   delete state.assignments[id];
   for (const mode of ['cqb', 'outdoor']) { delete state.ratings[mode][id]; delete state.styles[mode][id]; }
+  delete state.stats[id];
   save(); save('attributes'); render();
   if (guest) showToast(`Đã xóa ${guest.name}.`);
 }
@@ -401,7 +445,7 @@ function svgEl(name, attrs = {}, text) {
 }
 function gradeOf(value) { return value >= 4.8 ? 'S' : value >= 4.2 ? 'A' : value >= 3.5 ? 'B' : value >= 2.5 ? 'C' : 'D'; }
 const GRADE_COLORS = { S: '#f4d35e', A: '#c8f36b', B: '#6fd3ff', C: '#7be0a0', D: '#f4a45f' };
-function radarChart(values, label) {
+function radarChart(values = {}, label) {
   const cx = 130, cy = 140, radius = 72, step = (Math.PI * 2) / CRITERIA.length;
   const point = (index, scale, extra = 0) => {
     const angle = -Math.PI / 2 + index * step, length = radius * scale + extra;
@@ -413,11 +457,12 @@ function radarChart(values, label) {
   for (let level = 5; level >= 1; level--) svg.append(svgEl('polygon', { points: polygon(level / 5), class: level === 5 ? 'radar-ring outer' : 'radar-ring' }));
   CRITERIA.forEach((_, index) => { const [x, y] = point(index, 1); svg.append(svgEl('line', { x1: cx, y1: cy, x2: x.toFixed(1), y2: y.toFixed(1), class: 'radar-axis' })); });
   const shape = CRITERIA.map(([key], index) => point(index, Math.max(values[key] ?? 0, 0.3) / 5).map(n => n.toFixed(1)).join(',')).join(' ');
-  svg.append(svgEl('polygon', { points: shape, class: 'radar-shape' }));
+  const hasValues = CRITERIA.some(([key]) => Number.isFinite(values[key]));
+  if (hasValues) svg.append(svgEl('polygon', { points: shape, class: 'radar-shape' }));
   CRITERIA.forEach(([key, name], index) => {
     const value = values[key];
     const [px, py] = point(index, Math.max(value ?? 0, 0.3) / 5);
-    svg.append(svgEl('circle', { cx: px.toFixed(1), cy: py.toFixed(1), r: 2.6, class: 'radar-dot' }));
+    if (hasValues) svg.append(svgEl('circle', { cx: px.toFixed(1), cy: py.toFixed(1), r: 2.6, class: 'radar-dot' }));
     const [lx, ly] = point(index, 1, 30);
     const anchor = Math.abs(lx - cx) < 4 ? 'middle' : lx > cx ? 'start' : 'end';
     const dx = anchor === 'start' ? -8 : anchor === 'end' ? 8 : 0;
@@ -434,7 +479,7 @@ function radarChart(values, label) {
 function teamAverage(people) {
   const result = {};
   for (const [key] of CRITERIA) {
-    const values = people.map(person => skills[person.id]?.[key]).filter(Number.isFinite);
+    const values = people.map(person => statsFor(person.id)?.[key]).filter(Number.isFinite);
     if (values.length) result[key] = values.reduce((sum, value) => sum + value, 0) / values.length;
   }
   return result;
