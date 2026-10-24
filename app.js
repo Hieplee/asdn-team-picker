@@ -383,9 +383,12 @@ const SEPARATE_PAIRS = [
   // ['005', '007'], // ví dụ: Hoàng Nguyễn - Hoàng Trung (đang tắt)
 ];
 const SEPARATE_PENALTY = 1000;
-// Cân bằng theo skill trung bình mỗi người. Khi số người các đội lệch nhau (hơn kém 1),
-// đội ít người hơn được cộng SIZE_GAP_AVG_BONUS điểm vào trung bình mỗi người (thang 1-5).
-const SIZE_GAP_AVG_BONUS = 0.1;
+// Cân bằng theo skill trung bình mỗi người. Khi số người các đội lệch nhau, TB mỗi người của đội ít người
+// phải cao hơn đội đông ít nhất SIZE_GAP_MIN_AVG (thang 1-5): thiếu thì phạt rất nặng (bình phương, trọng số lớn),
+// dư thì chỉ kéo nhẹ về gần mức tối thiểu. Nếu không thể đạt được thì chọn phương án gần nhất, không báo lỗi.
+const SIZE_GAP_MIN_AVG = 0.2;
+const SIZE_GAP_SHORT_WEIGHT = 1000;
+const SIZE_GAP_EXCESS_WEIGHT = 1;
 
 // Cân bằng Thể lực / Kinh nghiệm: rải đều người yếu (điểm <= *_LOW_MAX) và người giỏi (>= *_HIGH_MIN)
 // giữa các đội; người chưa chấm điểm bị bỏ qua. Trọng số cơ bản 0.65.
@@ -417,14 +420,26 @@ function shuffle(ids) {
   return result;
 }
 
-// TB skill mỗi người của từng đội sau khi trừ bù (mục tiêu: TB đội ít người = TB đội đông + SIZE_GAP_AVG_BONUS,
-// tức TB đã trừ bù của mọi đội bằng nhau) và TB chung làm mục tiêu. Dùng chung cho scoreLayout và phần hiển thị để hai nơi không lệch nhau.
-function sizeTargets(totals, counts) {
-  const maxCount = Math.max(...counts);
-  const adjusted = totals.map((total, index) => total / (counts[index] || 1) + - (counts[index] < maxCount ? SIZE_GAP_AVG_BONUS : 0));
-  const people = counts.reduce((a, b) => a + b, 0) || 1;
-  const target = adjusted.reduce((sum, value, index) => sum + value * counts[index], 0) / people;
-  return { adjusted, target };
+// Phạt skill TB: các đội cùng quân số thì TB càng gần nhau càng tốt; đội ít người so với đội đông hơn
+// thì cần chênh >= SIZE_GAP_MIN_AVG. Dùng chung cho scoreLayout.
+function skillGapPenalty(totals, counts) {
+  const avgs = totals.map((total, i) => total / (counts[i] || 1));
+  let penalty = 0;
+  for (let i = 0; i < avgs.length; i++) for (let j = i + 1; j < avgs.length; j++) {
+    if (counts[i] === counts[j]) { penalty += (avgs[i] - avgs[j]) ** 2; continue; }
+    const gap = counts[i] < counts[j] ? avgs[i] - avgs[j] : avgs[j] - avgs[i];
+    penalty += gap < SIZE_GAP_MIN_AVG ? SIZE_GAP_SHORT_WEIGHT * (SIZE_GAP_MIN_AVG - gap) ** 2 : SIZE_GAP_EXCESS_WEIGHT * (gap - SIZE_GAP_MIN_AVG) ** 2;
+  }
+  return penalty;
+}
+
+// Chênh TB nhỏ nhất giữa một đội ít người và một đội đông hơn (âm nếu đội ít người thấp hơn).
+function minSizeGap(totals, counts) {
+  let min = Infinity;
+  for (let i = 0; i < counts.length; i++) for (let j = 0; j < counts.length; j++) {
+    if (counts[i] < counts[j]) min = Math.min(min, totals[i] / counts[i] - totals[j] / counts[j]);
+  }
+  return min;
 }
 
 function scoreLayout(assignments, ids, teamCount) {
@@ -451,9 +466,7 @@ function scoreLayout(assignments, ids, teamCount) {
     const mean = stam.reduce((a, b) => a + b, 0) / stamAll;
     attrPenalty += STAMINA_AVG_WEIGHT * stam.reduce((sum, t, i) => sum + (stamN[i] ? (t / stamN[i] - mean) ** 2 : 0), 0);
   }
-  const { adjusted, target } = sizeTargets(totals, counts);
-  const skillPenalty = adjusted.reduce((sum, value) => sum + (value - target) ** 2, 0);
-  return skillPenalty + attrPenalty + brokenPairs(assignments).length * SEPARATE_PENALTY;
+  return skillGapPenalty(totals, counts) + attrPenalty + brokenPairs(assignments).length * SEPARATE_PENALTY;
 }
 
 // Khóa đội hình không phụ thuộc thứ tự đội: mỗi đội là tập thành viên đã sắp xếp.
@@ -623,11 +636,10 @@ function renderTeams() {
     if (state.splitMode) info.push(`Chia kiểu: ${state.splitMode === 'random' ? '⚄ Ngẫu nhiên' : '⚖ Cân bằng'}`);
     const counts = series.map(entry => entry.count);
     if (state.splitMode === 'balanced' && Math.max(...counts) !== Math.min(...counts)) {
-      const { adjusted } = sizeTargets(totals, counts);
-      const small = series.filter(entry => entry.count < Math.max(...counts));
-      info.push(`Mục tiêu: TB mỗi người bằng nhau, đội ít người (${small.map(entry => entry.name).join(', ')}) cao hơn ${SIZE_GAP_AVG_BONUS.toFixed(1)}`);
-      const avgs = series.map(entry => entry.total / (entry.count || 1));
-      info.push(`Chênh TB thực tế: ${(Math.max(...avgs) - Math.min(...avgs)).toFixed(2)} · Lệch so với mục tiêu: ${(Math.max(...adjusted) - Math.min(...adjusted)).toFixed(2)}`);
+      info.push(`Mục tiêu: đội ít người cao hơn đội đông ít nhất ${SIZE_GAP_MIN_AVG.toFixed(1)}`);
+      const gap = minSizeGap(totals, counts);
+      const ok = gap >= SIZE_GAP_MIN_AVG - 1e-9;
+      info.push(`Chênh TB thực tế: ${gap.toFixed(2)} ${ok ? '✓ đạt' : '✗ chưa đạt'}`);
     }
     const unrated = state.selected.filter(id => !hasSkill(id)).length;
     if (unrated) info.push(`${unrated} người chưa chấm skill được tính 3`);
