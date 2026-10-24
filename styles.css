@@ -136,3 +136,12 @@ body.viewer .roster-panel{order:5}
 .stats-form label{display:flex;flex-direction:column;gap:3px;font:700 11px 'DM Sans',sans-serif;color:var(--muted);text-align:left}
 .stats-form select{min-height:34px;background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:6px}
 .stats-form button{grid-column:auto}
+
+.section-nav{position:sticky;top:0;z-index:7;display:flex;gap:6px;padding:8px 0;background:#101714f2;backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+.section-nav a{flex:1;text-align:center;padding:11px 12px;border:1px solid #344737;background:#19251e;color:#a6b7a8;font:700 12px 'DM Sans',sans-serif;letter-spacing:1px;text-transform:uppercase;text-decoration:none}
+.section-nav a:hover{border-color:#668066;color:var(--text)}
+.section-nav a.active{background:var(--lime);border-color:var(--lime);color:#172016}
+.section-nav a[hidden]{display:none}
+@media(min-width:701px){.section-nav a{flex:none;min-width:150px}}
+@media(max-width:700px){.section-nav{padding:6px 0}.section-nav a{min-height:44px;display:flex;align-items:center;justify-content:center;font-size:11px;letter-spacing:.6px}}
+#roster-heading,#setup-heading,#results-heading{scroll-margin-top:80px}

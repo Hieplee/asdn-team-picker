@@ -11,6 +11,7 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="stylesheet" href="styles.css?v=no-placeholder">
   <script type="module" src="app.js?v=no-placeholder"></script>
+  <script defer src="nav.js"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -18,6 +19,11 @@
       <a class="brand" href="#top" aria-label="ASDN, về đầu trang"><span class="brand-mark">A<span>✦</span></span><span>ASDN<span class="brand-sub"> / TEAM OPS</span></span></a>
       <div class="topbar-account"><span id="sync-status" class="sync-status" role="status">Đang tải dữ liệu…</span><button id="auth-button" class="auth-button" type="button" hidden>Đăng nhập tổ chức</button></div>
     </header>
+    <nav id="section-nav" class="section-nav" aria-label="Điều hướng">
+      <a href="#roster-heading" data-target="roster-heading">Chọn người</a>
+      <a href="#setup-heading" data-target="setup-heading">Chia đội</a>
+      <a href="#results-heading" data-target="results-heading">Đội hình</a>
+    </nav>
 
     <main id="top">
       <section class="hero">
@@ -34,7 +40,7 @@
         <span class="workflow-step active"><b>01</b> CHỌN NGƯỜI</span><span class="workflow-line"></span><span class="workflow-step"><b>02</b> CHIA ĐỘI</span><span class="workflow-line"></span><span class="workflow-step"><b>03</b> CHỐT ĐỘI HÌNH</span>
       </div>
 
-      <section class="panel roster-panel" aria-labelledby="roster-heading">
+      <section id="roster-section" class="panel roster-panel" aria-labelledby="roster-heading">
         <div class="section-head"><div><p class="eyebrow">01 / ROSTER</p><h2 id="roster-heading">Ai tham gia hôm nay?</h2><p class="section-description">Ai cũng xem được danh sách và đội hình. Chỉ người tổ chức được chọn người, chia đội và chọn lối chơi. Skill tự tính từ điểm 5 tiêu chí.</p></div><div class="roster-head-actions"><div class="selection-pill"><span class="selection-dot"></span><strong id="selected-count">0</strong> NGƯỜI ĐÃ CHỌN</div><button id="roster-toggle" class="secondary-button roster-toggle" type="button" aria-expanded="true" aria-controls="roster">THU GỌN DANH SÁCH ▴</button></div></div>
         <div class="mode-control"><span class="field-label">KIỂU TRẬN HÔM NAY</span><div class="mode-buttons" role="group" aria-label="Kiểu trận"><button type="button" class="mode-button active" data-mode="cqb" aria-pressed="true">CQB</button><button type="button" class="mode-button" data-mode="outdoor" aria-pressed="false">SÂN NGOÀI TRỜI</button></div><span class="mode-note">Lối chơi được lưu riêng theo kiểu trận. Skill tự tính từ điểm 5 tiêu chí.</span></div>
         <div class="roster-toolbar"><label class="search-box"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg><input id="search" type="search" placeholder="Tìm thành viên..." autocomplete="off" aria-label="Tìm thành viên"></label><div class="toolbar-actions"><button id="select-all" class="text-button" type="button">Chọn tất cả</button><span class="toolbar-divider"></span><button id="clear-all" class="text-button" type="button">Bỏ chọn</button></div></div>
@@ -43,7 +49,7 @@
         <form id="guest-form" class="guest-form"><label for="guest-name">THÊM KHÁCH MỜI</label><div class="guest-input"><input id="guest-name" name="guest-name" maxlength="50" placeholder="Nhập tên người mới..." autocomplete="off" required><button type="submit" aria-label="Thêm khách mời">+ THÊM</button></div></form>
       </section>
 
-      <section class="panel setup-panel" aria-labelledby="setup-heading"><div class="section-head"><div><p class="eyebrow">02 / SETUP</p><h2 id="setup-heading">Thiết lập trận đấu</h2><p class="section-description">Chọn số đội. App sẽ cân quân số, skill và lối chơi.</p></div></div><div class="setup-content"><div class="setup-field"><span class="field-label">SỐ ĐỘI</span><div class="segmented" role="group" aria-label="Số đội"><button type="button" class="team-count active" data-count="2" aria-pressed="true">02</button><button type="button" class="team-count" data-count="3" aria-pressed="false">03</button><button type="button" class="team-count" data-count="4" aria-pressed="false">04</button><button type="button" class="team-count" data-count="5" aria-pressed="false">05</button><button type="button" class="team-count" data-count="6" aria-pressed="false">06</button></div></div><div class="setup-note"><span class="note-icon">i</span><p>Skill chưa đánh giá được tính tạm là 3; lối chơi chưa chọn sẽ không ảnh hưởng cách chia. Mỗi đội chênh tối đa 1 người.</p></div><button id="split-button" class="primary-button" type="button" disabled><span>CHIA ĐỘI CÂN BẰNG</span><span class="arrow">↗</span></button></div><p id="setup-message" class="setup-message" role="status">Chọn ít nhất 2 người để bắt đầu.</p></section>
+      <section id="setup-section" class="panel setup-panel" aria-labelledby="setup-heading"><div class="section-head"><div><p class="eyebrow">02 / SETUP</p><h2 id="setup-heading">Thiết lập trận đấu</h2><p class="section-description">Chọn số đội. App sẽ cân quân số, skill và lối chơi.</p></div></div><div class="setup-content"><div class="setup-field"><span class="field-label">SỐ ĐỘI</span><div class="segmented" role="group" aria-label="Số đội"><button type="button" class="team-count active" data-count="2" aria-pressed="true">02</button><button type="button" class="team-count" data-count="3" aria-pressed="false">03</button><button type="button" class="team-count" data-count="4" aria-pressed="false">04</button><button type="button" class="team-count" data-count="5" aria-pressed="false">05</button><button type="button" class="team-count" data-count="6" aria-pressed="false">06</button></div></div><div class="setup-note"><span class="note-icon">i</span><p>Skill chưa đánh giá được tính tạm là 3; lối chơi chưa chọn sẽ không ảnh hưởng cách chia. Mỗi đội chênh tối đa 1 người.</p></div><button id="split-button" class="primary-button" type="button" disabled><span>CHIA ĐỘI CÂN BẰNG</span><span class="arrow">↗</span></button></div><p id="setup-message" class="setup-message" role="status">Chọn ít nhất 2 người để bắt đầu.</p></section>
 
       <p id="viewer-empty" class="viewer-empty" hidden>Chưa có đội hình. Người tổ chức sẽ chia đội và cập nhật tại đây.</p>
 
