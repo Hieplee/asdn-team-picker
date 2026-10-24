@@ -685,7 +685,7 @@ function render() {
   $('#split-button').disabled = !ready || !cloudReady || !canEdit;
   $('#split-mode').disabled = !cloudReady || !canEdit;
   $('#split-mode').value = splitMode;
-  $('#split-icon').textContent = splitMode === 'random' ? '⚄' : '⚖';
+  document.querySelectorAll('.mode-icon').forEach(icon => { icon.textContent = splitMode === 'random' ? '⚄' : '⚖'; });
   $('#setup-message').textContent = !cloudReady ? 'Đang tải dữ liệu chung…' : !canEdit ? 'Chỉ người tổ chức được chọn người và chia đội. Bạn đang ở chế độ xem.' : ready ? `${state.selected.length} người sẽ được chia vào ${state.teamCount} đội.` : `Chọn ít nhất ${state.teamCount} người để tạo ${state.teamCount} đội.`;
   const viewer = cloudEnabled && !canEdit;
   document.body.classList.toggle('viewer', viewer);
