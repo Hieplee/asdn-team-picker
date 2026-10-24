@@ -12,6 +12,7 @@ Từ thư mục này, chạy `python3 -m http.server 8000` rồi mở `http://lo
 - Chọn CQB hoặc sân ngoài trời. Skill 1–5 và lối chơi của từng người được lưu riêng cho mỗi kiểu trận.
 - Lối chơi gồm **Đẩy mục tiêu**, **Giữ vị trí**, **Cơ động**. Skill là trung bình 6 tiêu chí hình lục giác (Tấn công, Phòng thủ, Phối hợp, Độc lập tác chiến, Kinh nghiệm, Thể lực, thang 1–5) hiển thị bằng biểu đồ trên thẻ người chơi; người tổ chức bấm **✎ SỬA CHỈ SỐ** trên thẻ để nhập, dữ liệu lưu ở Firestore `public/attributes.stats` (`skills.json` chỉ là dữ liệu gốc, hiện để trống); người chưa có chỉ số được tính tạm là 3; lối chơi chưa chọn không ảnh hưởng cách chia.
 - Thêm khách mời, chọn 2–6 đội, chia quân số chênh tối đa 1 và giảm chênh lệch skill trung bình lẫn phân bố lối chơi bằng các lượt hoán đổi.
+- Các cặp không được chung đội khai báo trong `SEPARATE_PAIRS` ở `app.js` (hiện có Hoàng Nguyễn & Hoang Trung, theo id trong `members.json`); thuật toán chia luôn tách cặp, đổi đội thủ công sẽ hiện cảnh báo nếu vi phạm.
 - Đổi đội thủ công cho từng người, chia lại, sao chép đội hình.
 - Đồng bộ lựa chọn và đội hình qua Firestore để mọi người thấy cùng kết quả và đều có thể chia đội. Chỉ tài khoản tổ chức được chọn người, chia đội và chọn lối chơi.
 

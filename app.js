@@ -326,6 +326,16 @@ function smallestTeam() {
   return counts.indexOf(Math.min(...counts));
 }
 
+// Các cặp không được ở chung đội (thêm cặp mới bằng cách thêm [idA, idB]).
+const SEPARATE_PAIRS = [
+  ['005', '007'], // Hoàng Nguyễn - Hoàng Trung
+];
+const SEPARATE_PENALTY = 1000;
+
+function brokenPairs(assignments) {
+  return SEPARATE_PAIRS.filter(([a, b]) => Number.isInteger(assignments[a]) && assignments[a] === assignments[b]);
+}
+
 function shuffle(ids) {
   const result = [...ids];
   for (let i = result.length - 1; i > 0; i--) {
@@ -355,7 +365,7 @@ function scoreLayout(assignments, ids, teamCount) {
     }
     return sum;
   }, 0);
-  return skillPenalty + stylePenalty * 0.65;
+  return skillPenalty + stylePenalty * 0.65 + brokenPairs(assignments).length * SEPARATE_PENALTY;
 }
 
 function balancedAssignments(ids, teamCount) {
@@ -381,10 +391,16 @@ function balancedAssignments(ids, teamCount) {
   return best;
 }
 
+function warnSeparatePairs() {
+  const broken = brokenPairs(state.assignments);
+  if (broken.length) showToast(`Cảnh báo: ${broken.map(pair => pair.map(id => findMember(id)?.name || id).join(' & ')).join(', ')} không nên chung đội.`);
+}
+
 function splitTeams() {
   if (state.selected.length < state.teamCount) { showToast(`Cần ít nhất ${state.teamCount} người cho ${state.teamCount} đội.`); return; }
   state.assignments = balancedAssignments(state.selected, state.teamCount);
   save(); render();
+  warnSeparatePairs();
   $('#results').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -422,7 +438,7 @@ function renderTeams() {
       select.value = String(index);
       select.disabled = !cloudReady || !canEdit;
       select.hidden = !canEdit;
-      select.addEventListener('change', () => { state.assignments[member.id] = Number(select.value); save(); renderTeams(); });
+      select.addEventListener('change', () => { state.assignments[member.id] = Number(select.value); save(); renderTeams(); warnSeparatePairs(); });
       row.append(select); list.append(row);
     });
     const average = teamAverage(people);
