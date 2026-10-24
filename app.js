@@ -383,9 +383,9 @@ const SEPARATE_PAIRS = [
   // ['005', '007'], // ví dụ: Hoàng Nguyễn - Hoàng Trung (đang tắt)
 ];
 const SEPARATE_PENALTY = 1000;
-// Khi số người các đội lệch nhau (hơn kém 1), đội ít người hơn được bù thêm tổng kỹ năng
-// bằng SIZE_GAP_BONUS điểm skill (thang 1-5).
-const SIZE_GAP_BONUS = 0.5;
+// Cân bằng theo skill trung bình mỗi người. Khi số người các đội lệch nhau (hơn kém 1),
+// đội ít người hơn được cộng SIZE_GAP_AVG_BONUS điểm vào trung bình mỗi người (thang 1-5).
+const SIZE_GAP_AVG_BONUS = 0.1;
 
 // Cân bằng Thể lực / Kinh nghiệm: rải đều người yếu (điểm <= *_LOW_MAX) và người giỏi (>= *_HIGH_MIN)
 // giữa các đội; người chưa chấm điểm bị bỏ qua. Trọng số cơ bản 0.65.
@@ -417,13 +417,14 @@ function shuffle(ids) {
   return result;
 }
 
-// Tổng kỹ năng mục tiêu của mỗi đội: đội ít người hơn cao hơn đội đông người một khoảng SIZE_GAP_BONUS mỗi người thiếu.
+// TB skill mỗi người của từng đội sau khi cộng bù (đội ít người hơn được +SIZE_GAP_AVG_BONUS) và TB chung
+// làm mục tiêu. Dùng chung cho scoreLayout và phần hiển thị để hai nơi không lệch nhau.
 function sizeTargets(totals, counts) {
-  const sumSkill = totals.reduce((a, b) => a + b, 0);
   const maxCount = Math.max(...counts);
-  const deficits = counts.map(count => maxCount - count);
-  const avgDeficit = deficits.reduce((a, b) => a + b, 0) / totals.length;
-  return totals.map((_, index) => sumSkill / totals.length + (deficits[index] - avgDeficit) * SIZE_GAP_BONUS);
+  const adjusted = totals.map((total, index) => total / (counts[index] || 1) + (counts[index] < maxCount ? SIZE_GAP_AVG_BONUS : 0));
+  const people = counts.reduce((a, b) => a + b, 0) || 1;
+  const target = adjusted.reduce((sum, value, index) => sum + value * counts[index], 0) / people;
+  return { adjusted, target };
 }
 
 function scoreLayout(assignments, ids, teamCount) {
@@ -450,8 +451,8 @@ function scoreLayout(assignments, ids, teamCount) {
     const mean = stam.reduce((a, b) => a + b, 0) / stamAll;
     attrPenalty += STAMINA_AVG_WEIGHT * stam.reduce((sum, t, i) => sum + (stamN[i] ? (t / stamN[i] - mean) ** 2 : 0), 0);
   }
-  const targets = sizeTargets(totals, counts);
-  const skillPenalty = totals.reduce((sum, total, index) => sum + ((total - targets[index]) / counts[index]) ** 2, 0);
+  const { adjusted, target } = sizeTargets(totals, counts);
+  const skillPenalty = adjusted.reduce((sum, value) => sum + (value - target) ** 2, 0);
   return skillPenalty + attrPenalty + brokenPairs(assignments).length * SEPARATE_PENALTY;
 }
 
@@ -620,14 +621,12 @@ function renderTeams() {
     const totals = series.map(entry => entry.total);
     const info = [];
     if (state.splitMode) info.push(`Chia kiểu: ${state.splitMode === 'random' ? '⚄ Ngẫu nhiên' : '⚖ Cân bằng'}`);
-    if (totals.length > 1) info.push(`Chênh tổng: ${(Math.max(...totals) - Math.min(...totals)).toFixed(1)}`);
     const counts = series.map(entry => entry.count);
     if (state.splitMode === 'balanced' && Math.max(...counts) !== Math.min(...counts)) {
-      const targets = sizeTargets(totals, counts);
-      const devs = totals.map((total, index) => total - targets[index]);
-      const big = series.filter(entry => entry.count === Math.max(...counts)), small = series.filter(entry => entry.count < Math.max(...counts));
-      info.push(`Mục tiêu: đội ít người (${small.map(entry => entry.name).join(', ')}) cao hơn đội đông người (${big.map(entry => entry.name).join(', ')}) khoảng ${SIZE_GAP_BONUS.toFixed(1)} điểm/người thiếu`);
-      info.push(`Lệch so với mục tiêu: ${(Math.max(...devs) - Math.min(...devs)).toFixed(1)}`);
+      const { adjusted } = sizeTargets(totals, counts);
+      const small = series.filter(entry => entry.count < Math.max(...counts));
+      info.push(`Mục tiêu: TB mỗi người bằng nhau, đội ít người (${small.map(entry => entry.name).join(', ')}) được cộng ${SIZE_GAP_AVG_BONUS.toFixed(1)}`);
+      info.push(`Lệch TB/người: ${(Math.max(...adjusted) - Math.min(...adjusted)).toFixed(2)}`);
     }
     if (info.length) { const note = document.createElement('div'); note.className = 'compare-note'; note.append(...info.flatMap((text, i) => [...(i ? [document.createElement('br')] : []), text])); compare.append(note); }
   }
