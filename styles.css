@@ -154,10 +154,5 @@ body.viewer .roster-panel{order:5}
 
 .split-actions{display:flex;gap:10px;align-items:flex-end}.split-mode{display:flex;flex-direction:column;gap:6px}.split-mode select{height:52px;padding:0 14px;font:inherit;font-weight:800;color:inherit;background:transparent;border:1px solid currentColor;border-radius:inherit;cursor:pointer}.split-mode select:disabled{opacity:.48;cursor:not-allowed}@media(max-width:1050px){.split-actions{grid-column:1/-1}.split-actions .primary-button{flex:1;width:auto}}@media(max-width:700px){.split-actions{flex-direction:row;align-items:flex-end}.split-actions .primary-button{justify-content:space-between}}
 
-.howto-panel{margin-bottom:24px}#howto-heading{scroll-margin-top:80px}
-.howto-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:24px}
-.howto-card{border:1px solid #3b5040;background:#19251e;padding:18px 20px}
-.howto-card h3{font:700 24px 'Barlow Condensed',Impact,sans-serif;text-transform:uppercase;margin:0 0 8px;color:var(--lime)}
-.howto-card ul,.howto-notes{margin:0;padding-left:18px;font-size:14px;line-height:1.65;color:#b4c1b6}
-.howto-notes{margin-top:20px;color:#9caca0}
-@media(max-width:700px){.howto-grid{grid-template-columns:1fr}}
+
+.split-badge{display:inline-block;margin:10px 0 0;padding:6px 12px;border:1px solid #4b6547;background:#263628;color:var(--lime);font:700 12px 'DM Sans',sans-serif;letter-spacing:.8px}

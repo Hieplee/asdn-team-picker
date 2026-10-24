@@ -65,7 +65,8 @@ function normalizeState(saved) {
         if (Object.keys(clean).length) stats[id] = clean;
       }
     }
-    return { selected, guests, teamCount, mode, assignments, ratings, styles, stats };
+    const splitKind = ['balanced', 'random'].includes(saved.splitMode) ? saved.splitMode : undefined;
+    return { selected, guests, teamCount, mode, assignments, ratings, styles, stats, ...(splitKind && { splitMode: splitKind }) };
   } catch { return structuredClone(initial); }
 }
 
@@ -88,6 +89,7 @@ function snapshotFlat(kind, snap) {
     snap.guests.forEach(guest => { flat[`guests/${guest.id}`] = guest.name; });
     flat.teamCount = snap.teamCount;
     flat.mode = snap.mode;
+    flat.splitMode = snap.splitMode ?? null;
     for (const [id, value] of Object.entries(snap.assignments || {})) flat[`assignments/${id}`] = value;
   }
   return flat;
@@ -106,7 +108,7 @@ function save(kind = 'session', action = null) {
   if (!cloudReady || !canEdit) return;
   const snapshot = kind === 'attributes'
     ? { ratings: structuredClone(state.ratings), styles: structuredClone(state.styles), stats: structuredClone(state.stats) }
-    : { selected: [...state.selected], guests: structuredClone(state.guests), teamCount: state.teamCount, mode: state.mode, assignments: structuredClone(state.assignments) };
+    : { selected: [...state.selected], guests: structuredClone(state.guests), teamCount: state.teamCount, mode: state.mode, assignments: structuredClone(state.assignments), ...(state.splitMode && { splitMode: state.splitMode }) };
   pendingWrites[kind]++;
   setSyncStatus('Đang lưu…');
   const changes = diffChanges(auditBase[kind], snapshotFlat(kind, snapshot));
@@ -172,7 +174,7 @@ async function initCloud() {
       ready[kind] = true;
       if (!pendingWrites[kind]) {
         const data = snapshot.exists() ? snapshot.data() : {};
-        state = normalizeState({ ...state, ...data });
+        state = normalizeState({ ...state, ...(kind === 'attributes' ? {} : { splitMode: undefined }), ...data });
         const key = kind === 'attributes' ? 'attributes' : 'session';
         auditBase[key] = snapshotFlat(key, key === 'attributes' ? { ratings: state.ratings, styles: state.styles, stats: state.stats } : state);
       }
@@ -525,6 +527,7 @@ function splitTeams() {
   const avoid = [...recentLayouts, currentKey].filter(Boolean);
   const { assignments, key } = balancedAssignments(state.selected, state.teamCount, avoid);
   state.assignments = assignments;
+  state.splitMode = 'balanced';
   recentLayouts.push(key);
   if (recentLayouts.length > RECENT_LAYOUTS) recentLayouts.shift();
   save('session', 'balanced'); render();
@@ -552,6 +555,7 @@ function splitRandom() {
   const assignments = {};
   order.forEach((id, index) => { assignments[id] = (index + offset) % state.teamCount; });
   state.assignments = assignments;
+  state.splitMode = 'random';
   save('session', 'random'); render();
   warnSeparatePairs();
   $('#results').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -614,6 +618,9 @@ function renderTeams() {
     compare.append(radarChart({}, 'Biểu đồ so sánh các đội', series), legend);
   }
   $('#result-summary').textContent = `${state.mode === 'cqb' ? 'CQB' : 'Sân ngoài trời'} · ${state.selected.length} người · ${state.teamCount} đội · ${state.selected.filter(hasSkill).length} người đã có skill`;
+  const badge = $('#split-badge');
+  badge.hidden = !state.splitMode;
+  if (state.splitMode) badge.textContent = `Chia kiểu: ${state.splitMode === 'random' ? '⚄ Ngẫu nhiên' : '⚖ Cân bằng'}`;
 }
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
@@ -712,7 +719,7 @@ $('#select-all').addEventListener('click', () => {
   for (const id of ids) if (!state.selected.includes(id)) { state.selected.push(id); if (Object.keys(state.assignments).length) state.assignments[id] = smallestTeam(); }
   save(); render();
 });
-$('#clear-all').addEventListener('click', () => { state.selected = []; state.assignments = {}; save(); render(); });
+$('#clear-all').addEventListener('click', () => { state.selected = []; state.assignments = {}; delete state.splitMode; save(); render(); });
 $('#guest-form').addEventListener('submit', event => {
   event.preventDefault(); const input = $('#guest-name'); const name = input.value.trim();
   if (!name) return;
@@ -773,14 +780,6 @@ $('#auth-button').addEventListener('click', async () => {
   }
 });
 
-function renderHowTo() {
-  const set = (id, text) => { const el = document.getElementById(id); if (el) el.textContent = text; };
-  set('howto-criteria', `Skill là điểm trung bình của ${CRITERIA.length} tiêu chí: ${CRITERIA.map(c => c[1]).join(', ')}.`);
-  set('howto-skill', `Tổng skill các đội gần bằng nhau. Khi quân số lệch 1 người, đội ít người hơn được bù ${SIZE_GAP_BONUS} điểm skill.`);
-  set('howto-stamina', `Người thể lực thấp (${LOW_STAMINA_MAX} điểm trở xuống) được rải đều, thể lực trung bình mỗi đội cũng được cân.`);
-  set('howto-exp', `Người kinh nghiệm thấp (${LOW_EXP_MAX} điểm trở xuống) và cao (${HIGH_EXP_MIN} điểm trở lên) được rải đều giữa các đội.`);
-}
-renderHowTo();
 
 render();
 initCloud();
