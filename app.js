@@ -417,11 +417,11 @@ function shuffle(ids) {
   return result;
 }
 
-// TB skill mỗi người của từng đội sau khi cộng bù (đội ít người hơn được +SIZE_GAP_AVG_BONUS) và TB chung
-// làm mục tiêu. Dùng chung cho scoreLayout và phần hiển thị để hai nơi không lệch nhau.
+// TB skill mỗi người của từng đội sau khi trừ bù (mục tiêu: TB đội ít người = TB đội đông + SIZE_GAP_AVG_BONUS,
+// tức TB đã trừ bù của mọi đội bằng nhau) và TB chung làm mục tiêu. Dùng chung cho scoreLayout và phần hiển thị để hai nơi không lệch nhau.
 function sizeTargets(totals, counts) {
   const maxCount = Math.max(...counts);
-  const adjusted = totals.map((total, index) => total / (counts[index] || 1) + (counts[index] < maxCount ? SIZE_GAP_AVG_BONUS : 0));
+  const adjusted = totals.map((total, index) => total / (counts[index] || 1) + - (counts[index] < maxCount ? SIZE_GAP_AVG_BONUS : 0));
   const people = counts.reduce((a, b) => a + b, 0) || 1;
   const target = adjusted.reduce((sum, value, index) => sum + value * counts[index], 0) / people;
   return { adjusted, target };
@@ -472,7 +472,7 @@ function randomIndex(length) {
 // Số lần chia gần nhất được nhớ để không lặp lại, và độ lệch điểm tối đa so với phương án tốt nhất
 // mà một đội hình vẫn được coi là "cân bằng đủ tốt" để chọn ngẫu nhiên.
 const RECENT_LAYOUTS = 6;
-const NEAR_BEST_TOLERANCE = 0.35;
+const NEAR_BEST_TOLERANCE = 0.05;
 const recentLayouts = [];
 
 function addCandidate(candidates, assignments, ids, teamCount, score) {
@@ -511,7 +511,7 @@ function balancedAssignments(ids, teamCount, avoid = []) {
   const ranked = [...candidates.values()].sort((x, y) => x.score - y.score);
   const fresh = ranked.filter(c => !avoid.includes(c.key));
   const pool = fresh.length ? fresh : ranked;
-  const limit = pool[0].score + Math.max(NEAR_BEST_TOLERANCE, pool[0].score * 0.25);
+  const limit = pool[0].score + Math.max(NEAR_BEST_TOLERANCE, pool[0].score * 0.1);
   const nearBest = pool.filter(c => c.score <= limit);
   const pick = nearBest[randomIndex(nearBest.length)];
   return { assignments: pick.assignments, key: pick.key };
@@ -625,9 +625,12 @@ function renderTeams() {
     if (state.splitMode === 'balanced' && Math.max(...counts) !== Math.min(...counts)) {
       const { adjusted } = sizeTargets(totals, counts);
       const small = series.filter(entry => entry.count < Math.max(...counts));
-      info.push(`Mục tiêu: TB mỗi người bằng nhau, đội ít người (${small.map(entry => entry.name).join(', ')}) được cộng ${SIZE_GAP_AVG_BONUS.toFixed(1)}`);
-      info.push(`Lệch TB/người: ${(Math.max(...adjusted) - Math.min(...adjusted)).toFixed(2)}`);
+      info.push(`Mục tiêu: TB mỗi người bằng nhau, đội ít người (${small.map(entry => entry.name).join(', ')}) cao hơn ${SIZE_GAP_AVG_BONUS.toFixed(1)}`);
+      const avgs = series.map(entry => entry.total / (entry.count || 1));
+      info.push(`Chênh TB thực tế: ${(Math.max(...avgs) - Math.min(...avgs)).toFixed(2)} · Lệch so với mục tiêu: ${(Math.max(...adjusted) - Math.min(...adjusted)).toFixed(2)}`);
     }
+    const unrated = state.selected.filter(id => !hasSkill(id)).length;
+    if (unrated) info.push(`${unrated} người chưa chấm skill được tính 3`);
     if (info.length) { const note = document.createElement('div'); note.className = 'compare-note'; note.append(...info.flatMap((text, i) => [...(i ? [document.createElement('br')] : []), text])); compare.append(note); }
   }
   $('#result-summary').textContent = `${state.mode === 'cqb' ? 'CQB' : 'Sân ngoài trời'} · ${state.selected.length} người · ${state.teamCount} đội · ${state.selected.filter(hasSkill).length} người đã có skill`;
