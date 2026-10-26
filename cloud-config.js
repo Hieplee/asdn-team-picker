@@ -8,8 +8,8 @@ export const firebaseConfig = {
 };
 
 // Organizers who may edit. Keep in sync with firestore.rules.
-// 57BKT... = hiepbrse@gmail.com, kEkdL... = khanhtrandhp@gmail.com, ig2pU... = highlandart89@gmail.com
-export const organizerUids = ['57BKTGPZoDaIc2wChRWut3NBf6E3', 'kEkdLPY3kLWPCVBJG8112W1yDlB3', 'ig2pUINnEgZX4HzXbCRyjtvKQ2E3', 'ZCJPrmNKeXQBx6O56iUcwKoLupz2'];
+// 57BKT... = hiepbrse@gmail.com, kEkdL... = khanhtrandhp@gmail.com, ig2pU... = highlandart89@gmail.com, ZCJPr... = writewin@gmail.com, 5QtTq... = nguyenkhoi0708@gmail.com
+export const organizerUids = ['57BKTGPZoDaIc2wChRWut3NBf6E3', 'kEkdLPY3kLWPCVBJG8112W1yDlB3', 'ig2pUINnEgZX4HzXbCRyjtvKQ2E3', 'ZCJPrmNKeXQBx6O56iUcwKoLupz2', '5QtTq81TTrbt0TPA5BujGMeBQ6N2'];
 
 // System admin: the only account allowed to read the audit log (auditLog collection). Keep in sync with firestore.rules.
 // 57BKT... = hiepbrse@gmail.com
