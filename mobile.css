@@ -140,3 +140,22 @@ body.has-results:not(.setup-open) #setup-section{display:none}
 .team-head .team-lock{min-height:40px;padding:0 8px;font-size:11px}
 .team-person select{min-width:64px;max-width:74px;padding:0 4px;font-size:12px}
 .person-lock{min-width:40px;padding:0}
+
+/* Gợi ý cân lại: nút nằm ở thanh dưới (CÂN LẠI), trong hộp chỉ còn dòng cảnh báo */
+.rebalance-box>.secondary-button{display:none}
+.rebalance-box:has(> span){padding:12px 14px}
+.result-actions #rebalance-min{position:relative}
+.result-actions #rebalance-min.needs-rebalance{border-color:#f4a45f;background:#3a2f1a;color:#ffd9a8}
+.result-actions #rebalance-min.needs-rebalance:after{content:'!';position:absolute;top:-7px;right:-4px;width:20px;height:20px;border-radius:50%;background:#f4a45f;color:#1b1608;font:800 12px/20px 'DM Sans',sans-serif;text-align:center;animation:rb-pulse 1.6s ease-in-out infinite}
+@keyframes rb-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+@media (prefers-reduced-motion:reduce){.result-actions #rebalance-min.needs-rebalance:after{animation:none}}
+
+/* Xem trước cân lại nằm trong bottom sheet, không hiện hộp gợi ý inline */
+.rebalance-box:has(.rebalance-actions){display:none}
+.rb-moves{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-direction:column;gap:6px}
+.rb-moves li{padding:12px 14px;border:1px solid #344737;border-radius:12px;background:#202c24;font:600 15px 'DM Sans',sans-serif}
+.rb-diff{margin:0 0 6px;color:#b9c8bc;font-size:13px;line-height:1.5;white-space:pre-line}
+.rb-actions{position:sticky;bottom:calc(-16px - var(--safe-b));display:flex;gap:8px;margin:12px -14px calc(-16px - var(--safe-b));padding:10px 14px calc(12px + var(--safe-b));background:#19211d;border-top:1px solid #344737}
+.rb-btn{flex:1;min-height:52px;border:1px solid #668066;border-radius:12px;background:#233227;color:var(--lime);font:800 14px 'DM Sans',sans-serif;letter-spacing:.8px}
+.rb-btn.primary{background:var(--lime);border-color:var(--lime);color:#172016;flex:1.6}
+.rb-btn:active{transform:scale(.97)}

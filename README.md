@@ -27,6 +27,7 @@ Trên màn hình ≤768px, app dùng giao diện riêng nằm trong `mobile.css`
 - **Tab bar dưới**: Chọn người · Đội hình · Lịch sử (chỉ admin). Sau khi chia, app tự chuyển sang tab Đội hình; thanh **CHIA ĐỘI** nổi ở tab Chọn người, thanh **CHIA LẠI / CÂN LẠI / SAO CHÉP** (và Mở khóa khi có khóa) nổi ở tab Đội hình.
 - **Bottom sheet** thay mọi `<select>` (đổi đội, kiểu chia, lối chơi) vì picker gốc hẹp khó bấm.
 - **Vuốt hàng người chơi** trong đội: vuốt trái = khóa/mở khóa, vuốt phải = đổi đội. Nút 🔒 và nút đổi đội vẫn bấm được như bình thường.
+- **Cân lại tối thiểu** trên mobile: bấm nút CÂN LẠI ở thanh dưới là hiện ngay bottom sheet xem trước (ai đổi đội, điểm trước/sau) với nút ÁP DỤNG/HỦY cố định, không phải cuộn.
 - Header đội dính khi cuộn, phần "Thiết lập" tự thu gọn khi đã có đội hình, hero thu thành 3 ô thống kê, safe-area cho iPhone.
 - **PWA**: `manifest.webmanifest` + `icons/icon-*.png`; mở trên điện thoại rồi "Thêm vào Màn hình chính" để chạy toàn màn hình. Chưa có service worker (không dùng offline).
 - Không đổi logic chia đội, dữ liệu hay `firestore.rules`.
