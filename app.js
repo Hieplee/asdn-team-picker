@@ -365,9 +365,14 @@ function toggleMember(id) {
   if (state.selected.includes(id)) {
     state.selected = state.selected.filter(value => value !== id);
     delete state.assignments[id];
+    delete movedFrom[id];
   } else {
     state.selected.push(id);
-    if (Object.keys(state.assignments).length) state.assignments[id] = smallestTeam();
+    const placed = Object.keys(state.assignments).length > 0;
+    if (placed) placeMember(id);
+    save('session', placed ? 'auto-place' : null); render();
+    if (placed) announcePlacement([id]);
+    return;
   }
   save(); render();
 }
@@ -376,6 +381,27 @@ function smallestTeam() {
   const counts = Array(state.teamCount).fill(0);
   Object.values(state.assignments).forEach(index => { if (index < counts.length) counts[index]++; });
   return counts.indexOf(Math.min(...counts));
+}
+
+// Người vừa được chuyển đội (chỉ lưu tạm trên máy này, mất khi chia lại hoặc tải lại trang).
+const movedFrom = {};
+function resetRebalance() { for (const id of Object.keys(movedFrom)) delete movedFrom[id]; pendingRebalance = null; }
+function noteMove(id, from, to) {
+  if (movedFrom[id] === undefined) movedFrom[id] = from;
+  if (movedFrom[id] === to) delete movedFrom[id];
+}
+let pendingRebalance = null;
+
+// Xếp người mới vào đội hình đang có mà không đụng đến ai khác. Lineup chia ngẫu nhiên giữ cách đơn giản
+// (đội ít người nhất); còn lại luôn chọn đội cho điểm cân bằng tốt nhất.
+function placeMember(id) {
+  if (state.splitMode === 'random') { state.assignments[id] = smallestTeam(); return; }
+  const others = state.selected.filter(other => other !== id && Number.isInteger(state.assignments[other]));
+  state.assignments[id] = bestTeamFor(state.assignments, others, state.teamCount, id);
+}
+function announcePlacement(ids) {
+  if (ids.length === 1) showToast(`${findMember(ids[0])?.name || 'Người mới'} → Đội ${state.assignments[ids[0]] + 1}`);
+  else showToast(`Đã xếp ${ids.length} người mới vào đội, không đổi người cũ.`);
 }
 
 // Các cặp không được ở chung đội (thêm cặp mới bằng cách thêm [idA, idB]).
@@ -437,7 +463,7 @@ function skillGapPenalty(totals, counts) {
 function minSizeGap(totals, counts) {
   let min = Infinity;
   for (let i = 0; i < counts.length; i++) for (let j = 0; j < counts.length; j++) {
-    if (counts[i] < counts[j]) min = Math.min(min, totals[i] / counts[i] - totals[j] / counts[j]);
+    if (counts[i] < counts[j]) min = Math.min(min, totals[i] / (counts[i] || 1) - totals[j] / counts[j]);
   }
   return min;
 }
@@ -480,6 +506,91 @@ function randomIndex(length) {
   const values = new Uint32Array(1);
   crypto.getRandomValues(values);
   return values[0] % length;
+}
+
+// ---- Xếp người mới / cân lại tối thiểu (hàm thuần, không đụng vào state) ----
+const REBALANCE_MAX_MOVES = 3;
+const REBALANCE_BEAM = 150;
+const SPREAD_FLAGS = [
+  ['stamina', v => v <= LOW_STAMINA_MAX],
+  ['exp', v => v <= LOW_EXP_MAX],
+  ['exp', v => v >= HIGH_EXP_MIN],
+];
+
+// Đánh giá độ cân bằng theo thứ tự ưu tiên: quân số (chênh <= 1), luật +SIZE_GAP_MIN_AVG, rồi chênh lệch
+// số người yếu thể lực / ít kinh nghiệm / kinh nghiệm cao giữa các đội (<= 1). ok = không vi phạm gì.
+function balanceStatus(assignments, ids, teamCount) {
+  const totals = Array(teamCount).fill(0), counts = Array(teamCount).fill(0);
+  for (const id of ids) { const team = assignments[id]; totals[team] += skill(id); counts[team]++; }
+  const sizeExcess = Math.max(0, Math.max(...counts) - Math.min(...counts) - 1);
+  const gap = minSizeGap(totals, counts);
+  const gapShort = Number.isFinite(gap) ? Math.max(0, SIZE_GAP_MIN_AVG - gap) : 0;
+  let attrExcess = 0;
+  for (const [key, test] of SPREAD_FLAGS) {
+    const per = Array(teamCount).fill(0);
+    for (const id of ids) { const v = rated(id, key); if (v !== undefined && test(v)) per[assignments[id]]++; }
+    attrExcess += Math.max(0, Math.max(...per) - Math.min(...per) - 1);
+  }
+  const ok = sizeExcess === 0 && gapShort < 1e-9 && attrExcess === 0;
+  return { counts, totals, gap, sizeExcess, gapShort, attrExcess, ok, score: scoreLayout(assignments, ids, teamCount) };
+}
+
+function compareStatus(x, y, withScore = true) {
+  if (x.sizeExcess !== y.sizeExcess) return x.sizeExcess - y.sizeExcess;
+  if (Math.abs(x.gapShort - y.gapShort) > 1e-6) return x.gapShort - y.gapShort;
+  if (x.attrExcess !== y.attrExcess) return x.attrExcess - y.attrExcess;
+  return withScore ? x.score - y.score : 0;
+}
+
+// Đội tốt nhất cho một người mới: chỉ xét các đội đang ít người nhất (giữ chênh quân số nhỏ nhất),
+// chọn đội cho scoreLayout thấp nhất. Không động đến người đã xếp.
+function bestTeamFor(assignments, ids, teamCount, id) {
+  const counts = Array(teamCount).fill(0);
+  for (const other of ids) counts[assignments[other]]++;
+  const low = Math.min(...counts);
+  let best = -1, bestScore = Infinity;
+  for (let team = 0; team < teamCount; team++) {
+    if (counts[team] !== low) continue;
+    const score = scoreLayout({ ...assignments, [id]: team }, [...ids, id], teamCount);
+    if (score < bestScore - 1e-9) { best = team; bestScore = score; }
+  }
+  return best;
+}
+
+// Tìm cách cân lại với ít lượt chuyển nhất (<= maxMoves lượt, mỗi lượt là chuyển 1 người hoặc đổi chỗ 2 người).
+// Tìm theo từng độ sâu (beam search); dừng ở độ sâu đầu tiên đạt cân bằng hoàn toàn, nếu không thì ở độ sâu
+// đầu tiên đạt kết quả tốt nhất tìm được.
+function findMinimalRebalance(assignments, ids, teamCount, maxMoves = REBALANCE_MAX_MOVES) {
+  const startStatus = balanceStatus(assignments, ids, teamCount);
+  const before = { assignments: { ...assignments }, status: startStatus };
+  let best = { assignments: before.assignments, status: startStatus, depth: 0 };
+  if (startStatus.ok) return { before, after: best, moved: [] };
+  const keyOf = a => ids.map(id => a[id]).join('');
+  const seen = new Set([keyOf(assignments)]);
+  let frontier = [{ assignments: { ...assignments }, status: startStatus }];
+  for (let depth = 1; depth <= maxMoves; depth++) {
+    const next = [];
+    const push = a => {
+      const key = keyOf(a);
+      if (seen.has(key)) return;
+      seen.add(key);
+      next.push({ assignments: a, status: balanceStatus(a, ids, teamCount) });
+    };
+    for (const node of frontier) {
+      const a = node.assignments;
+      for (let i = 0; i < ids.length; i++) {
+        for (let team = 0; team < teamCount; team++) if (team !== a[ids[i]]) push({ ...a, [ids[i]]: team });
+        for (let j = i + 1; j < ids.length; j++) if (a[ids[i]] !== a[ids[j]]) push({ ...a, [ids[i]]: a[ids[j]], [ids[j]]: a[ids[i]] });
+      }
+    }
+    if (!next.length) break;
+    next.sort((x, y) => compareStatus(x.status, y.status));
+    if (compareStatus(next[0].status, best.status, false) < 0) best = { ...next[0], depth };
+    if (best.status.ok) break;
+    frontier = next.slice(0, REBALANCE_BEAM);
+  }
+  const moved = ids.filter(id => best.assignments[id] !== assignments[id]).map(id => ({ id, from: assignments[id], to: best.assignments[id] }));
+  return { before, after: best, moved };
 }
 
 // Số lần chia gần nhất được nhớ để không lặp lại, và độ lệch điểm tối đa so với phương án tốt nhất
@@ -543,6 +654,7 @@ function splitTeams() {
   const { assignments, key } = balancedAssignments(state.selected, state.teamCount, avoid);
   state.assignments = assignments;
   state.splitMode = 'balanced';
+  resetRebalance();
   recentLayouts.push(key);
   if (recentLayouts.length > RECENT_LAYOUTS) recentLayouts.shift();
   save('session', 'balanced'); render();
@@ -571,14 +683,91 @@ function splitRandom() {
   order.forEach((id, index) => { assignments[id] = (index + offset) % state.teamCount; });
   state.assignments = assignments;
   state.splitMode = 'random';
+  resetRebalance();
   save('session', 'random'); render();
   warnSeparatePairs();
   $('#results').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+function rebalanceText(status) {
+  const gap = Number.isFinite(status.gap) ? ` · chênh TB ${status.gap >= 0 ? '+' : ''}${status.gap.toFixed(2)}` : '';
+  return `${status.counts.join('·')} người${gap} · điểm lệch ${status.score.toFixed(2)}`;
+}
+
+function renderRebalance(hasResult) {
+  const box = $('#rebalance-box');
+  box.replaceChildren();
+  const editable = hasResult && cloudReady && canEdit;
+  const assignKey = hasResult ? state.selected.map(id => state.assignments[id]).join('') : '';
+  if (pendingRebalance && (!editable || pendingRebalance.base !== assignKey)) pendingRebalance = null;
+  box.hidden = true;
+  if (!editable) return;
+  if (pendingRebalance) {
+    const { result } = pendingRebalance;
+    box.hidden = false;
+    const title = document.createElement('strong');
+    title.textContent = result.moved.length ? `Gợi ý cân lại: chuyển ${result.moved.length} người` : 'Đã cân bằng, không cần chuyển ai.';
+    box.append(title);
+    if (result.moved.length) {
+      const moves = document.createElement('p'); moves.className = 'rebalance-moves';
+      moves.textContent = result.moved.map(({ id, from, to }) => `${findMember(id)?.name || id}: Đội ${from + 1}→${to + 1}`).join(' · ');
+      const diff = document.createElement('p'); diff.className = 'rebalance-diff';
+      diff.textContent = `Trước: ${rebalanceText(result.before.status)}\nSau: ${rebalanceText(result.after.status)}${result.after.status.ok ? ' ✓' : ''}`;
+      box.append(moves, diff);
+      if (!result.after.status.ok) {
+        const note = document.createElement('p'); note.className = 'rebalance-diff';
+        note.textContent = `Với tối đa ${REBALANCE_MAX_MOVES} lượt chưa cân hoàn toàn được; đây là phương án gần nhất.`;
+        box.append(note);
+      }
+    }
+    const actions = document.createElement('div'); actions.className = 'rebalance-actions';
+    if (result.moved.length) {
+      const apply = document.createElement('button'); apply.type = 'button'; apply.className = 'secondary-button'; apply.textContent = 'ÁP DỤNG';
+      apply.addEventListener('click', applyRebalance); actions.append(apply);
+    }
+    const cancel = document.createElement('button'); cancel.type = 'button'; cancel.className = 'secondary-button'; cancel.textContent = result.moved.length ? 'HỦY' : 'ĐÓNG';
+    cancel.addEventListener('click', () => { pendingRebalance = null; renderTeams(); });
+    actions.append(cancel); box.append(actions);
+    return;
+  }
+  const status = balanceStatus(state.assignments, state.selected, state.teamCount);
+  const gapMatters = state.splitMode !== 'random';
+  if (status.sizeExcess > 0 || (gapMatters && status.gapShort > 1e-9)) {
+    box.hidden = false;
+    const text = document.createElement('span');
+    text.textContent = status.sizeExcess > 0
+      ? `Đội hình đang lệch quân số (${status.counts.join(' · ')}).`
+      : `Đội ít người chưa cao hơn đội đông ${SIZE_GAP_MIN_AVG.toFixed(1)} TB skill.`;
+    const suggest = document.createElement('button'); suggest.type = 'button'; suggest.className = 'secondary-button'; suggest.textContent = 'XEM GỢI Ý CÂN LẠI';
+    suggest.addEventListener('click', previewRebalance);
+    box.append(text, suggest);
+  }
+}
+
+function previewRebalance() {
+  if (!cloudReady || !canEdit) return;
+  const hasResult = state.selected.length > 0 && state.selected.every(id => Number.isInteger(state.assignments[id]));
+  if (!hasResult) return;
+  const result = findMinimalRebalance(state.assignments, state.selected, state.teamCount);
+  pendingRebalance = { result, base: state.selected.map(id => state.assignments[id]).join('') };
+  renderTeams();
+}
+
+function applyRebalance() {
+  if (!pendingRebalance) return;
+  for (const { id, from, to } of pendingRebalance.result.moved) { noteMove(id, from, to); state.assignments[id] = to; }
+  const count = pendingRebalance.result.moved.length;
+  pendingRebalance = null;
+  save('session', 'rebalance-min'); render();
+  warnSeparatePairs();
+  showToast(`Đã cân lại: chuyển ${count} người.`);
+}
+
 function renderTeams() {
   const hasResult = state.selected.length > 0 && state.selected.every(id => Number.isInteger(state.assignments[id]));
   $('#results').hidden = !hasResult;
+  for (const id of Object.keys(movedFrom)) if (!state.selected.includes(id) || state.assignments[id] === movedFrom[id]) delete movedFrom[id];
+  renderRebalance(hasResult);
   if (!hasResult) return;
   const teams = Array.from({ length: state.teamCount }, () => []);
   for (const id of state.selected) {
@@ -603,6 +792,7 @@ function renderTeams() {
       const name = document.createElement('span'); name.className = 'team-person-name'; name.textContent = member.name; name.title = member.name; text.append(name);
       if (member.roles && member.roles.length) { const roleLine = document.createElement('span'); roleLine.className = 'team-tag'; roleLine.append(makeRoleIcons(member, true)); if (member.tag) roleLine.append(member.tag); text.append(roleLine); }
       else if (member.tag) { const tag = document.createElement('span'); tag.className = 'team-tag'; tag.textContent = member.tag; text.append(tag); }
+      if (movedFrom[member.id] !== undefined) { const chip = document.createElement('span'); chip.className = 'moved-chip'; chip.textContent = `↔ từ Đội ${movedFrom[member.id] + 1}`; chip.title = 'Vừa được chuyển đội'; text.append(chip); }
       row.append(text);
       const style = document.createElement('span'); style.className = 'team-style'; style.textContent = styleFor(member.id) ? STYLES[styleFor(member.id)] : '—'; style.title = styleFor(member.id) ? 'Lối chơi' : 'Chưa chọn lối chơi'; row.append(style);
       const badge = document.createElement('span'); badge.className = 'team-skill'; badge.textContent = `★ ${skillText(member.id)}`; badge.title = hasSkill(member.id) ? 'Điểm tổng' : 'Chưa đánh giá, tính tạm là 3'; row.append(badge);
@@ -611,7 +801,7 @@ function renderTeams() {
       select.value = String(index);
       select.disabled = !cloudReady || !canEdit;
       select.hidden = !canEdit;
-      select.addEventListener('change', () => { state.assignments[member.id] = Number(select.value); save(); renderTeams(); warnSeparatePairs(); });
+      select.addEventListener('change', () => { noteMove(member.id, state.assignments[member.id], Number(select.value)); state.assignments[member.id] = Number(select.value); save('session', 'manual'); renderTeams(); warnSeparatePairs(); });
       row.append(select); list.append(row);
     });
     const color = TEAM_COLORS[index % TEAM_COLORS.length];
@@ -706,7 +896,7 @@ function teamAverage(people) {
   return result;
 }
 function render() {
-  document.querySelectorAll('.mode-button, .team-count, #select-all, #clear-all, #guest-name, #guest-form button, #reshuffle').forEach(control => { control.disabled = !cloudReady || !canEdit; });
+  document.querySelectorAll('.mode-button, .team-count, #select-all, #clear-all, #guest-name, #guest-form button, #reshuffle, #rebalance-min').forEach(control => { control.disabled = !cloudReady || !canEdit; });
   $('#roster-total').textContent = allMembers().length;
   $('#selected-total').textContent = state.selected.length;
   $('#selected-count').textContent = state.selected.length;
@@ -744,24 +934,28 @@ function showToast(message) {
 $('#search').addEventListener('input', event => { search = event.target.value; renderRoster(); });
 $('#select-all').addEventListener('click', () => {
   const ids = allMembers().map(m => m.id);
-  for (const id of ids) if (!state.selected.includes(id)) { state.selected.push(id); if (Object.keys(state.assignments).length) state.assignments[id] = smallestTeam(); }
-  save(); render();
+  const placed = [];
+  for (const id of ids) if (!state.selected.includes(id)) { state.selected.push(id); if (Object.keys(state.assignments).length) { placeMember(id); placed.push(id); } }
+  save('session', placed.length ? 'auto-place' : null); render();
+  if (placed.length) announcePlacement(placed);
 });
-$('#clear-all').addEventListener('click', () => { state.selected = []; state.assignments = {}; delete state.splitMode; save(); render(); });
+$('#clear-all').addEventListener('click', () => { state.selected = []; state.assignments = {}; delete state.splitMode; resetRebalance(); save(); render(); });
 $('#guest-form').addEventListener('submit', event => {
   event.preventDefault(); const input = $('#guest-name'); const name = input.value.trim();
   if (!name) return;
   const id = `guest-${crypto.randomUUID()}`;
   state.guests.push({ id, name }); state.selected.push(id);
-  if (Object.keys(state.assignments).length) state.assignments[id] = smallestTeam();
-  input.value = ''; save(); render(); showToast(`Đã thêm ${name}.`);
+  const placed = Object.keys(state.assignments).length > 0;
+  if (placed) placeMember(id);
+  input.value = ''; save('session', placed ? 'auto-place' : null); render();
+  if (placed) announcePlacement([id]); else showToast(`Đã thêm ${name}.`);
 });
 document.querySelectorAll('.team-count').forEach(button => button.addEventListener('click', () => {
-  state.teamCount = Number(button.dataset.count); state.assignments = {}; save(); render();
+  state.teamCount = Number(button.dataset.count); state.assignments = {}; resetRebalance(); save(); render();
 }));
 document.querySelectorAll('.mode-button').forEach(button => button.addEventListener('click', () => {
   if (button.dataset.mode === state.mode) return;
-  state.mode = button.dataset.mode; state.assignments = {}; save(); render();
+  state.mode = button.dataset.mode; state.assignments = {}; resetRebalance(); save(); render();
 }));
 $('#roster-toggle').addEventListener('click', () => {
   rosterTouched = true;
@@ -778,6 +972,7 @@ $('#split-mode').addEventListener('change', event => {
 $('#split-button').addEventListener('click', runSplit);
 $('#bar-split').addEventListener('click', runSplit);
 $('#reshuffle').addEventListener('click', runSplit);
+$('#rebalance-min').addEventListener('click', previewRebalance);
 $('#copy-result').addEventListener('click', async () => {
   const lines = [`ASDN · ${state.mode === 'cqb' ? 'CQB' : 'SÂN NGOÀI TRỜI'} · ĐỘI HÌNH (${state.selected.length} người)`];
   for (let i = 0; i < state.teamCount; i++) {
@@ -813,6 +1008,7 @@ render();
 initCloud();
 
 const PATH_LABELS = { selected: 'Điểm danh', guests: 'Khách mời', teamCount: 'Số đội', mode: 'Chế độ', assignments: 'Đội', ratings: 'Điểm đánh giá', styles: 'Lối chơi', stats: 'Chỉ số' };
+const ACTION_LABELS = { 'auto-place': 'Tự xếp người mới vào đội', 'rebalance-min': 'Cân lại tối thiểu', manual: 'Đổi đội thủ công' };
 function describeChange({ path, before, after }) {
   const [group, a, b] = path.split('/');
   const modeIndex = group === 'ratings' || group === 'styles';
@@ -821,7 +1017,7 @@ function describeChange({ path, before, after }) {
   const label = PATH_LABELS[group] || group;
   const where = modeIndex ? ` (${a})` : '';
   const show = value => value === null ? '—' : group === 'stats' ? Object.entries(JSON.parse(value)).map(([k, v]) => `${k}:${v}`).join(' ') : String(value);
-  if (group === 'action') return `Kiểu chia: ${after === 'random' ? 'ngẫu nhiên hoàn toàn' : 'cân bằng'}`;
+  if (group === 'action') return ACTION_LABELS[after] || `Kiểu chia: ${after === 'random' ? 'ngẫu nhiên hoàn toàn' : 'cân bằng'}`;
   if (group === 'selected') return `${label}: ${name} ${after ? 'tham gia' : 'bỏ chọn'}`;
   if (group === 'guests') return `${label}: ${after ? 'thêm' : 'xóa'} ${name}`;
   if (group === 'teamCount' || group === 'mode') return `${label}: ${show(before)} → ${show(after)}`;
