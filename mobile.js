@@ -64,24 +64,23 @@
   $('#split-mode').addEventListener('change', setupLabel);
   syncResults();
 
-  // --- Gợi ý cân lại: nút ở thanh dưới, đánh dấu khi đội đang lệch; xem trước thì cuộn tới hộp Áp dụng/Hủy ---
+  // --- Gợi ý cân lại: nút ở thanh dưới, đánh dấu khi đội đang lệch; xem trước hiện ngay trong bottom sheet ---
   var rbBox = $('#rebalance-box'), rbBtn = $('#rebalance-min');
   function syncRebalance() {
     var needs = !rbBox.hidden && !!rbBox.querySelector(':scope > span');
     if (rbBtn.classList.contains('needs-rebalance') !== needs) rbBtn.classList.toggle('needs-rebalance', needs);
-    if (mq.matches && !rbBox.hidden && rbBox.querySelector('.rebalance-actions') && !rbBox.dataset.seen) {
-      rbBox.dataset.seen = '1'; rbBox.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    }
-    if (!rbBox.querySelector('.rebalance-actions')) delete rbBox.dataset.seen;
+    var hasPreview = !rbBox.hidden && !!rbBox.querySelector('.rebalance-actions');
+    if (mq.matches && hasPreview) openRebalanceSheet();
+    else if (rbOpen) closeSheet();
   }
   new MutationObserver(syncRebalance).observe(rbBox, { childList: true, attributes: true, attributeFilter: ['hidden'] });
-  syncRebalance();
 
   // --- Bottom sheet thay <select> ---
   var sheet = $('#sheet'), optionsBox = $('#sheet-options'), titleEl = $('#sheet-title'), current = null;
+  var rbOpen = false;
   function closeSheet() {
     if (sheet.hidden) return;
-    sheet.classList.remove('open'); current = null;
+    sheet.classList.remove('open'); current = null; rbOpen = false;
     setTimeout(function () { sheet.hidden = true; }, 230);
   }
   function openSheet(select) {
@@ -101,8 +100,37 @@
     sheet.hidden = false;
     requestAnimationFrame(function () { requestAnimationFrame(function () { sheet.classList.add('open'); }); });
   }
-  sheet.addEventListener('click', function (e) { if (e.target.hasAttribute('data-close')) closeSheet(); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeSheet(); });
+  function dismissSheet() {
+    if (rbOpen) { var cancel = rbBox.querySelector('.rebalance-actions button:last-child'); if (cancel) { cancel.click(); return; } }
+    closeSheet();
+  }
+  sheet.addEventListener('click', function (e) { if (e.target.hasAttribute('data-close')) dismissSheet(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') dismissSheet(); });
+  function openRebalanceSheet() {
+    if (rbOpen) return;
+    var title = rbBox.querySelector('strong'), moves = rbBox.querySelector('.rebalance-moves'), diffs = rbBox.querySelectorAll('.rebalance-diff'), buttons = rbBox.querySelectorAll('.rebalance-actions button');
+    rbOpen = true; current = null;
+    titleEl.textContent = title ? title.textContent : 'Cân lại tối thiểu';
+    optionsBox.replaceChildren();
+    if (moves) {
+      var list = document.createElement('ul'); list.className = 'rb-moves';
+      moves.textContent.split(' · ').forEach(function (m) { var li = document.createElement('li'); li.textContent = m; list.append(li); });
+      optionsBox.append(list);
+    }
+    diffs.forEach(function (d) { var p = document.createElement('p'); p.className = 'rb-diff'; p.textContent = d.textContent; optionsBox.append(p); });
+    var bar = document.createElement('div'); bar.className = 'rb-actions';
+    buttons.forEach(function (real, i) {
+      var b = document.createElement('button'); b.type = 'button';
+      b.className = 'rb-btn' + (buttons.length > 1 && i === 0 ? ' primary' : '');
+      b.textContent = real.textContent;
+      b.addEventListener('click', function () { buzz(10); real.click(); });
+      bar.append(b);
+    });
+    optionsBox.append(bar);
+    sheet.hidden = false;
+    requestAnimationFrame(function () { requestAnimationFrame(function () { sheet.classList.add('open'); }); });
+  }
+  syncRebalance();
   // select có pointer-events:none, nên tìm select nằm dưới ngón tay
   document.addEventListener('click', function (e) {
     if (!mq.matches || !sheet.hidden || e.target.closest('.sheet')) return;
