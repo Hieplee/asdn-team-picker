@@ -20,6 +20,17 @@ Từ thư mục này, chạy `python3 -m http.server 8000` rồi mở `http://lo
 - **Khóa người / khóa đội** (chỉ organizer bấm, mọi người đều thấy): nút 🔒/🔓 cạnh dropdown của từng người và ở header mỗi đội. Người bị khóa (hoặc thuộc đội khóa) không bao giờ bị di chuyển bởi Chia đội / Chia lại / thêm người mới, nhưng vẫn tính vào quân số và skill TB; những người còn lại được cân bằng vào các đội chưa khóa (chênh tối đa 1 người nếu có thể). Người bị khóa không đổi đội thủ công được cho tới khi mở khóa. Bỏ chọn/xóa khách sẽ gỡ khóa; đổi số đội, đổi kiểu trận hoặc "Bỏ chọn" xóa mọi khóa; có nút "Mở khóa tất cả". Lưu ở `public/current` (`lockedPlayers`, `lockedTeams`) và ghi lịch sử "Khóa/Mở khóa". **Cần deploy lại rules:** `firebase deploy --only firestore:rules --project asdn-team-picker`.
 - Đồng bộ lựa chọn và đội hình qua Firestore để mọi người thấy cùng kết quả và đều có thể chia đội. Chỉ tài khoản tổ chức được chọn người, chia đội và chọn lối chơi.
 
+## Giao diện mobile (kiểu app)
+
+Trên màn hình ≤768px, app dùng giao diện riêng nằm trong `mobile.css` (chỉ được nạp bằng `media="(max-width:768px)"`) và `mobile.js`; PC giữ nguyên layout cũ.
+
+- **Tab bar dưới**: Chọn người · Đội hình · Lịch sử (chỉ admin). Sau khi chia, app tự chuyển sang tab Đội hình; thanh **CHIA ĐỘI** nổi ở tab Chọn người, thanh **CHIA LẠI / CÂN LẠI / SAO CHÉP** (và Mở khóa khi có khóa) nổi ở tab Đội hình.
+- **Bottom sheet** thay mọi `<select>` (đổi đội, kiểu chia, lối chơi) vì picker gốc hẹp khó bấm.
+- **Vuốt hàng người chơi** trong đội: vuốt trái = khóa/mở khóa, vuốt phải = đổi đội. Nút 🔒 và nút đổi đội vẫn bấm được như bình thường.
+- Header đội dính khi cuộn, phần "Thiết lập" tự thu gọn khi đã có đội hình, hero thu thành 3 ô thống kê, safe-area cho iPhone.
+- **PWA**: `manifest.webmanifest` + `icons/icon-*.png`; mở trên điện thoại rồi "Thêm vào Màn hình chính" để chạy toàn màn hình. Chưa có service worker (không dùng offline).
+- Không đổi logic chia đội, dữ liệu hay `firestore.rules`.
+
 ## Firebase
 
 1. Tạo Firebase project và web app, rồi chép web config vào `cloud-config.js`. Các giá trị này là mã định danh công khai, không phải khoá bí mật.

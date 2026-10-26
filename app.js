@@ -229,6 +229,7 @@ function makeAvatar(member, className) {
   }
   const avatar = document.createElement('img');
   avatar.className = className;
+  avatar.decoding = 'async';
   avatar.src = member.avatar;
   avatar.alt = '';
   avatar.loading = 'lazy';
