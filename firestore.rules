@@ -5,7 +5,7 @@ service cloud.firestore {
       allow read: if true;
       allow create, update: if request.auth != null
         && request.auth.uid in ['57BKTGPZoDaIc2wChRWut3NBf6E3', 'kEkdLPY3kLWPCVBJG8112W1yDlB3', 'ig2pUINnEgZX4HzXbCRyjtvKQ2E3', 'ZCJPrmNKeXQBx6O56iUcwKoLupz2']
-        && request.resource.data.keys().hasOnly(['selected', 'guests', 'teamCount', 'mode', 'assignments', 'splitMode'])
+        && request.resource.data.keys().hasOnly(['selected', 'guests', 'teamCount', 'mode', 'assignments', 'splitMode', 'lockedPlayers', 'lockedTeams'])
         && request.resource.data.selected is list
         && request.resource.data.selected.size() <= 100
         && request.resource.data.guests is list
@@ -15,6 +15,8 @@ service cloud.firestore {
         && request.resource.data.teamCount <= 6
         && request.resource.data.mode in ['cqb', 'outdoor']
         && request.resource.data.assignments is map
+        && (!('lockedPlayers' in request.resource.data) || (request.resource.data.lockedPlayers is list && request.resource.data.lockedPlayers.size() <= 100))
+        && (!('lockedTeams' in request.resource.data) || (request.resource.data.lockedTeams is list && request.resource.data.lockedTeams.size() <= 6))
         && (!('splitMode' in request.resource.data) || request.resource.data.splitMode in ['balanced', 'random']);
     }
     match /public/attributes {

@@ -167,3 +167,14 @@ body.viewer #rebalance-min{display:none}
 .rebalance-diff{white-space:pre-line;color:#cfd8c4;font-size:12px}
 .rebalance-actions{display:flex;gap:8px;flex-wrap:wrap}
 .moved-chip{display:inline-block;align-self:flex-start;margin-top:3px;padding:1px 7px;border:1px solid #c9a24b;border-radius:9px;background:#3a3216;color:#f4d35e;font:700 10px 'DM Sans',sans-serif;letter-spacing:.4px}
+.lock-button{min-height:40px;min-width:40px;padding:0 8px;border:1px solid #3a4a3e;background:#16201a;color:#a0afa4;font:700 12px 'Barlow Condensed',Impact,sans-serif;letter-spacing:.6px;white-space:nowrap}
+.lock-button.on{border-color:var(--lime);background:#2b3d27;color:var(--lime)}
+.lock-button:disabled{cursor:default;opacity:.85}
+.team-head{flex-wrap:wrap;gap:8px}.team-lock{margin-left:auto}
+.team-card.team-locked{outline:1px solid #6b8a45;background-image:linear-gradient(rgba(200,243,107,.05),rgba(200,243,107,.05))}
+.team-person.person-locked{box-shadow:inset 3px 0 0 var(--lime);background:rgba(200,243,107,.05)}
+.lock-mark{opacity:.55;font-size:14px}
+.lock-hint{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+#unlock-all{white-space:nowrap}
+body.viewer #unlock-all,body.viewer #lock-hint{display:none}
+.lock-hint[hidden],#unlock-all[hidden]{display:none}

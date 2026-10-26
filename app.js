@@ -7,7 +7,7 @@ const $ = (selector) => document.querySelector(selector);
 const MODES = ['cqb', 'outdoor'];
 const CRITERIA = [['attack', 'Tấn công'], ['team', 'Phối hợp'], ['exp', 'Kinh nghiệm'], ['defense', 'Phòng thủ'], ['solo', 'Solo'], ['stamina', 'Thể lực']];
 const STYLES = { push: 'Đẩy mục tiêu', hold: 'Giữ vị trí', mobile: 'Cơ động' };
-const initial = { selected: [], guests: [], teamCount: 2, mode: 'cqb', assignments: {}, ratings: { cqb: {}, outdoor: {} }, styles: { cqb: {}, outdoor: {} }, stats: {} };
+const initial = { selected: [], guests: [], teamCount: 2, mode: 'cqb', assignments: {}, lockedPlayers: [], lockedTeams: [], ratings: { cqb: {}, outdoor: {} }, styles: { cqb: {}, outdoor: {} }, stats: {} };
 const cloudEnabled = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId);
 let state = cloudEnabled ? structuredClone(initial) : loadState();
 let canEdit = !cloudEnabled;
@@ -40,6 +40,8 @@ function normalizeState(saved) {
         if (Number.isInteger(team) && team >= 0 && team < teamCount) assignments[id] = team;
       }
     }
+    const lockedPlayers = Array.isArray(saved.lockedPlayers) ? [...new Set(saved.lockedPlayers.filter(id => Number.isInteger(assignments[id])))] : [];
+    const lockedTeams = Array.isArray(saved.lockedTeams) && Object.keys(assignments).length ? [...new Set(saved.lockedTeams.filter(t => Number.isInteger(t) && t >= 0 && t < teamCount))] : [];
     const mode = MODES.includes(saved.mode) ? saved.mode : 'cqb';
     const ratings = { cqb: {}, outdoor: {} }, styles = { cqb: {}, outdoor: {} };
     for (const currentMode of MODES) {
@@ -66,7 +68,7 @@ function normalizeState(saved) {
       }
     }
     const splitKind = ['balanced', 'random'].includes(saved.splitMode) ? saved.splitMode : undefined;
-    return { selected, guests, teamCount, mode, assignments, ratings, styles, stats, ...(splitKind && { splitMode: splitKind }) };
+    return { selected, guests, teamCount, mode, assignments, lockedPlayers, lockedTeams, ratings, styles, stats, ...(splitKind && { splitMode: splitKind }) };
   } catch { return structuredClone(initial); }
 }
 
@@ -91,6 +93,8 @@ function snapshotFlat(kind, snap) {
     flat.mode = snap.mode;
     flat.splitMode = snap.splitMode ?? null;
     for (const [id, value] of Object.entries(snap.assignments || {})) flat[`assignments/${id}`] = value;
+    (snap.lockedPlayers || []).forEach(id => { flat[`lockedPlayers/${id}`] = true; });
+    (snap.lockedTeams || []).forEach(index => { flat[`lockedTeams/${index}`] = true; });
   }
   return flat;
 }
@@ -108,7 +112,7 @@ function save(kind = 'session', action = null) {
   if (!cloudReady || !canEdit) return;
   const snapshot = kind === 'attributes'
     ? { ratings: structuredClone(state.ratings), styles: structuredClone(state.styles), stats: structuredClone(state.stats) }
-    : { selected: [...state.selected], guests: structuredClone(state.guests), teamCount: state.teamCount, mode: state.mode, assignments: structuredClone(state.assignments), ...(state.splitMode && { splitMode: state.splitMode }) };
+    : { selected: [...state.selected], guests: structuredClone(state.guests), teamCount: state.teamCount, mode: state.mode, assignments: structuredClone(state.assignments), lockedPlayers: [...state.lockedPlayers], lockedTeams: [...state.lockedTeams], ...(state.splitMode && { splitMode: state.splitMode }) };
   pendingWrites[kind]++;
   setSyncStatus('Đang lưu…');
   const changes = diffChanges(auditBase[kind], snapshotFlat(kind, snapshot));
@@ -174,7 +178,7 @@ async function initCloud() {
       ready[kind] = true;
       if (!pendingWrites[kind]) {
         const data = snapshot.exists() ? snapshot.data() : {};
-        state = normalizeState({ ...state, ...(kind === 'attributes' ? {} : { splitMode: undefined }), ...data });
+        state = normalizeState({ ...state, ...(kind === 'attributes' ? {} : { splitMode: undefined, lockedPlayers: undefined, lockedTeams: undefined }), ...data });
         const key = kind === 'attributes' ? 'attributes' : 'session';
         auditBase[key] = snapshotFlat(key, key === 'attributes' ? { ratings: state.ratings, styles: state.styles, stats: state.stats } : state);
       }
@@ -354,7 +358,7 @@ function removeGuest(id) {
   const guest = state.guests.find(g => g.id === id);
   state.guests = state.guests.filter(g => g.id !== id);
   state.selected = state.selected.filter(value => value !== id);
-  delete state.assignments[id];
+  delete state.assignments[id]; unlockPlayer(id);
   for (const mode of ['cqb', 'outdoor']) { delete state.ratings[mode][id]; delete state.styles[mode][id]; }
   delete state.stats[id];
   save(); save('attributes'); render();
@@ -364,7 +368,7 @@ function removeGuest(id) {
 function toggleMember(id) {
   if (state.selected.includes(id)) {
     state.selected = state.selected.filter(value => value !== id);
-    delete state.assignments[id];
+    delete state.assignments[id]; unlockPlayer(id);
     delete movedFrom[id];
   } else {
     state.selected.push(id);
@@ -380,7 +384,40 @@ function toggleMember(id) {
 function smallestTeam() {
   const counts = Array(state.teamCount).fill(0);
   Object.values(state.assignments).forEach(index => { if (index < counts.length) counts[index]++; });
-  return counts.indexOf(Math.min(...counts));
+  const open = eligibleTeams();
+  return open.reduce((best, team) => counts[team] < counts[best] ? team : best, open[0]);
+}
+
+// Khóa: một người "cố định" nếu bị khóa riêng hoặc thuộc đội đã khóa. Mọi thao tác tự động chỉ được
+// di chuyển người nào isMovable; người cố định vẫn được tính vào quân số/skill của đội.
+function isTeamLocked(team) { return state.lockedTeams.includes(team); }
+function isPlayerLocked(id) { return state.lockedPlayers.includes(id); }
+function isMovable(id) { return !isPlayerLocked(id) && !(Number.isInteger(state.assignments[id]) && isTeamLocked(state.assignments[id])); }
+function eligibleTeams() {
+  const open = Array.from({ length: state.teamCount }, (_, i) => i).filter(i => !isTeamLocked(i));
+  return open.length ? open : Array.from({ length: state.teamCount }, (_, i) => i);
+}
+function unlockPlayer(id) { state.lockedPlayers = state.lockedPlayers.filter(value => value !== id); }
+function clearLocks() { state.lockedPlayers = []; state.lockedTeams = []; }
+function lockCount() { return state.lockedPlayers.length + state.lockedTeams.length; }
+// Gán người tự do vào đội: lần lượt vào đội ít người nhất trong các đội được phép (hòa thì chọn ngẫu nhiên).
+function fillFree(free, fixed, teamCount, teams) {
+  const counts = Array(teamCount).fill(0);
+  Object.values(fixed).forEach(t => counts[t]++);
+  const assignments = { ...fixed };
+  for (const id of free) {
+    const min = Math.min(...teams.map(t => counts[t]));
+    const ties = teams.filter(t => counts[t] === min);
+    const team = ties[randomIndex(ties.length)];
+    assignments[id] = team; counts[team]++;
+  }
+  return assignments;
+}
+// Tách danh sách thành người cố định (kèm đội hiện tại) và người tự do.
+function splitFixed(ids) {
+  const fixed = {}, free = [];
+  for (const id of ids) { if (!isMovable(id) && Number.isInteger(state.assignments[id])) fixed[id] = state.assignments[id]; else free.push(id); }
+  return { fixed, free };
 }
 
 // Người vừa được chuyển đội (chỉ lưu tạm trên máy này, mất khi chia lại hoặc tải lại trang).
@@ -547,9 +584,10 @@ function compareStatus(x, y, withScore = true) {
 function bestTeamFor(assignments, ids, teamCount, id) {
   const counts = Array(teamCount).fill(0);
   for (const other of ids) counts[assignments[other]]++;
-  const low = Math.min(...counts);
+  const open = eligibleTeams();
+  const low = Math.min(...open.map(team => counts[team]));
   let best = -1, bestScore = Infinity;
-  for (let team = 0; team < teamCount; team++) {
+  for (const team of open) {
     if (counts[team] !== low) continue;
     const score = scoreLayout({ ...assignments, [id]: team }, [...ids, id], teamCount);
     if (score < bestScore - 1e-9) { best = team; bestScore = score; }
@@ -566,6 +604,8 @@ function findMinimalRebalance(assignments, ids, teamCount, maxMoves = REBALANCE_
   let best = { assignments: before.assignments, status: startStatus, depth: 0 };
   if (startStatus.ok) return { before, after: best, moved: [] };
   const keyOf = a => ids.map(id => a[id]).join('');
+  // Người bị khóa (hoặc thuộc đội khóa) đứng yên; không ai được chuyển vào đội khóa.
+  const movable = ids.filter(isMovable), open = eligibleTeams();
   const seen = new Set([keyOf(assignments)]);
   let frontier = [{ assignments: { ...assignments }, status: startStatus }];
   for (let depth = 1; depth <= maxMoves; depth++) {
@@ -578,9 +618,9 @@ function findMinimalRebalance(assignments, ids, teamCount, maxMoves = REBALANCE_
     };
     for (const node of frontier) {
       const a = node.assignments;
-      for (let i = 0; i < ids.length; i++) {
-        for (let team = 0; team < teamCount; team++) if (team !== a[ids[i]]) push({ ...a, [ids[i]]: team });
-        for (let j = i + 1; j < ids.length; j++) if (a[ids[i]] !== a[ids[j]]) push({ ...a, [ids[i]]: a[ids[j]], [ids[j]]: a[ids[i]] });
+      for (let i = 0; i < movable.length; i++) {
+        for (const team of open) if (team !== a[movable[i]]) push({ ...a, [movable[i]]: team });
+        for (let j = i + 1; j < movable.length; j++) if (a[movable[i]] !== a[movable[j]]) push({ ...a, [movable[i]]: a[movable[j]], [movable[j]]: a[movable[i]] });
       }
     }
     if (!next.length) break;
@@ -604,16 +644,16 @@ function addCandidate(candidates, assignments, ids, teamCount, score) {
   if (!candidates.has(key)) candidates.set(key, { assignments: { ...assignments }, score, key });
 }
 
-function balancedAssignments(ids, teamCount, avoid = []) {
+function balancedAssignments(ids, teamCount, avoid = [], fixed = {}, teams = Array.from({ length: teamCount }, (_, i) => i)) {
+  const free = ids.filter(id => !(id in fixed));
   const candidates = new Map();
   for (let attempt = 0; attempt < 64; attempt++) {
-    const assignments = {};
-    shuffle(ids).forEach((id, index) => { assignments[id] = index % teamCount; });
+    const assignments = fillFree(shuffle(free), fixed, teamCount, teams);
     let current = scoreLayout(assignments, ids, teamCount);
     for (let pass = 0; pass < 12; pass++) {
       let improved = false;
-      for (let a = 0; a < ids.length; a++) for (let b = a + 1; b < ids.length; b++) {
-        const first = ids[a], second = ids[b];
+      for (let a = 0; a < free.length; a++) for (let b = a + 1; b < free.length; b++) {
+        const first = free[a], second = free[b];
         if (assignments[first] === assignments[second]) continue;
         [assignments[first], assignments[second]] = [assignments[second], assignments[first]];
         const next = scoreLayout(assignments, ids, teamCount);
@@ -624,8 +664,8 @@ function balancedAssignments(ids, teamCount, avoid = []) {
     }
     addCandidate(candidates, assignments, ids, teamCount, current);
     // Các đội hình lân cận (đổi chỗ 1 cặp) của phương án cục bộ tốt cũng là ứng viên "gần tốt nhất".
-    for (let a = 0; a < ids.length; a++) for (let b = a + 1; b < ids.length; b++) {
-      const first = ids[a], second = ids[b];
+    for (let a = 0; a < free.length; a++) for (let b = a + 1; b < free.length; b++) {
+      const first = free[a], second = free[b];
       if (assignments[first] === assignments[second]) continue;
       [assignments[first], assignments[second]] = [assignments[second], assignments[first]];
       addCandidate(candidates, { ...assignments }, ids, teamCount, scoreLayout(assignments, ids, teamCount));
@@ -651,7 +691,9 @@ function splitTeams() {
   const currentKey = state.selected.every(id => Number.isInteger(state.assignments[id]))
     ? layoutKey(state.assignments, state.selected, state.teamCount) : null;
   const avoid = [...recentLayouts, currentKey].filter(Boolean);
-  const { assignments, key } = balancedAssignments(state.selected, state.teamCount, avoid);
+  const { fixed, free } = splitFixed(state.selected);
+  if (lockCount() && !free.length) { showToast('Tất cả đã bị khóa, không còn ai để chia lại.'); return; }
+  const { assignments, key } = balancedAssignments(state.selected, state.teamCount, avoid, fixed, eligibleTeams());
   state.assignments = assignments;
   state.splitMode = 'balanced';
   resetRebalance();
@@ -672,15 +714,10 @@ function runSplit() { return splitMode === 'random' ? splitRandom() : splitTeams
 
 function splitRandom() {
   if (state.selected.length < state.teamCount) { showToast(`Cần ít nhất ${state.teamCount} người cho ${state.teamCount} đội.`); return; }
-  const order = [...state.selected];
-  for (let i = order.length - 1; i > 0; i--) {
-    const j = randomIndex(i + 1);
-    [order[i], order[j]] = [order[j], order[i]];
-  }
-  // Chia vòng tròn sau khi xáo trộn: quân số các đội chênh tối đa 1; chọn ngẫu nhiên đội nhận người dư.
-  const offset = randomIndex(state.teamCount);
-  const assignments = {};
-  order.forEach((id, index) => { assignments[id] = (index + offset) % state.teamCount; });
+  const { fixed, free } = splitFixed(state.selected);
+  if (lockCount() && !free.length) { showToast('Tất cả đã bị khóa, không còn ai để chia lại.'); return; }
+  // Xáo trộn rồi lần lượt đưa vào đội ít người nhất: quân số các đội chênh tối đa 1 (nếu các đội khóa cho phép).
+  const assignments = fillFree(shuffle(free), fixed, state.teamCount, eligibleTeams());
   state.assignments = assignments;
   state.splitMode = 'random';
   resetRebalance();
@@ -763,6 +800,31 @@ function applyRebalance() {
   showToast(`Đã cân lại: chuyển ${count} người.`);
 }
 
+function lockButton(locked, label, text, onClick) {
+  const button = document.createElement('button'); button.type = 'button'; button.className = `lock-button${locked ? ' on' : ''}`;
+  button.textContent = `${locked ? '🔒' : '🔓'}${text ? ` ${text}` : ''}`;
+  button.setAttribute('aria-pressed', String(locked)); button.setAttribute('aria-label', label); button.title = `${label}${locked ? '' : ' (giữ nguyên khi chia lại)'}`;
+  button.disabled = !cloudReady || !canEdit;
+  button.addEventListener('click', onClick);
+  return button;
+}
+function togglePlayerLock(id) {
+  const lock = !isPlayerLocked(id);
+  if (lock) state.lockedPlayers.push(id); else unlockPlayer(id);
+  save('session', lock ? 'lock' : 'unlock'); renderTeams(); updateLockUi();
+}
+function toggleTeamLock(team) {
+  const lock = !isTeamLocked(team);
+  state.lockedTeams = lock ? [...state.lockedTeams, team].sort() : state.lockedTeams.filter(t => t !== team);
+  save('session', lock ? 'lock' : 'unlock'); renderTeams(); updateLockUi();
+}
+function updateLockUi() {
+  $('#unlock-all').hidden = !(canEdit && lockCount());
+  $('#lock-hint').hidden = !canEdit || lockHintSeen;
+}
+let lockHintSeen = false;
+try { lockHintSeen = localStorage.getItem('asdn-lock-hint') === '1'; } catch {}
+
 function renderTeams() {
   const hasResult = state.selected.length > 0 && state.selected.every(id => Number.isInteger(state.assignments[id]));
   $('#results').hidden = !hasResult;
@@ -782,7 +844,12 @@ function renderTeams() {
     const head = document.createElement('div'); head.className = 'team-head';
     const title = document.createElement('h3'); title.textContent = `Đội ${String(index + 1).padStart(2, '0')}`;
     const count = document.createElement('span'); count.textContent = `${people.length} NGƯỜI · TB ${(people.reduce((sum, person) => sum + skill(person.id), 0) / (people.length || 1)).toFixed(1)} SKILL`;
+    const teamLocked = isTeamLocked(index);
+    card.classList.toggle('team-locked', teamLocked);
+    const lockTeam = lockButton(teamLocked, `${teamLocked ? 'Mở khóa' : 'Khóa'} Đội ${index + 1}`, teamLocked ? 'ĐÃ KHÓA' : 'KHÓA ĐỘI', () => toggleTeamLock(index));
+    lockTeam.classList.add('team-lock');
     head.append(title, count);
+    if (teamLocked || canEdit) head.append(lockTeam);
     const list = document.createElement('div'); list.className = 'team-list';
     if (!people.length) { const empty = document.createElement('p'); empty.className = 'team-empty'; empty.textContent = 'Chưa có thành viên.'; list.append(empty); }
     people.forEach(member => {
@@ -796,10 +863,18 @@ function renderTeams() {
       row.append(text);
       const style = document.createElement('span'); style.className = 'team-style'; style.textContent = styleFor(member.id) ? STYLES[styleFor(member.id)] : '—'; style.title = styleFor(member.id) ? 'Lối chơi' : 'Chưa chọn lối chơi'; row.append(style);
       const badge = document.createElement('span'); badge.className = 'team-skill'; badge.textContent = `★ ${skillText(member.id)}`; badge.title = hasSkill(member.id) ? 'Điểm tổng' : 'Chưa đánh giá, tính tạm là 3'; row.append(badge);
+      const playerLocked = isPlayerLocked(member.id), fixed = playerLocked || teamLocked;
+      row.classList.toggle('person-locked', fixed);
+      if (teamLocked && !playerLocked) { const mark = document.createElement('span'); mark.className = 'lock-mark'; mark.textContent = '🔒'; mark.title = `Cố định vì Đội ${index + 1} đã khóa`; row.append(mark); }
+      else if (playerLocked || canEdit) {
+        const lock = lockButton(playerLocked, `${playerLocked ? 'Mở khóa' : 'Khóa'} ${member.name}`, '', () => togglePlayerLock(member.id));
+        lock.classList.add('person-lock'); row.append(lock);
+      }
       const select = document.createElement('select'); select.setAttribute('aria-label', `Đổi đội cho ${member.name}`);
-      teams.forEach((_, teamIndex) => { const option = new Option(`Đội ${teamIndex + 1}`, String(teamIndex)); select.add(option); });
+      teams.forEach((_, teamIndex) => { const option = new Option(`Đội ${teamIndex + 1}${isTeamLocked(teamIndex) ? ' 🔒' : ''}`, String(teamIndex)); option.disabled = teamIndex !== index && isTeamLocked(teamIndex); select.add(option); });
       select.value = String(index);
-      select.disabled = !cloudReady || !canEdit;
+      select.disabled = !cloudReady || !canEdit || fixed;
+      select.title = fixed ? (playerLocked ? 'Mở khóa người này trước khi đổi đội' : 'Mở khóa đội này trước khi đổi đội') : '';
       select.hidden = !canEdit;
       select.addEventListener('change', () => { noteMove(member.id, state.assignments[member.id], Number(select.value)); state.assignments[member.id] = Number(select.value); save('session', 'manual'); renderTeams(); warnSeparatePairs(); });
       row.append(select); list.append(row);
@@ -835,6 +910,7 @@ function renderTeams() {
     if (unrated) info.push(`${unrated} người chưa chấm skill được tính 3`);
     if (info.length) { const note = document.createElement('div'); note.className = 'compare-note'; note.append(...info.flatMap((text, i) => [...(i ? [document.createElement('br')] : []), text])); compare.append(note); }
   }
+  updateLockUi();
   $('#result-summary').textContent = `${state.mode === 'cqb' ? 'CQB' : 'Sân ngoài trời'} · ${state.selected.length} người · ${state.teamCount} đội · ${state.selected.filter(hasSkill).length} người đã có skill`;
   const badge = $('#split-badge');
   badge.hidden = !state.splitMode;
@@ -939,7 +1015,7 @@ $('#select-all').addEventListener('click', () => {
   save('session', placed.length ? 'auto-place' : null); render();
   if (placed.length) announcePlacement(placed);
 });
-$('#clear-all').addEventListener('click', () => { state.selected = []; state.assignments = {}; delete state.splitMode; resetRebalance(); save(); render(); });
+$('#clear-all').addEventListener('click', () => { state.selected = []; state.assignments = {}; clearLocks(); delete state.splitMode; resetRebalance(); save(); render(); });
 $('#guest-form').addEventListener('submit', event => {
   event.preventDefault(); const input = $('#guest-name'); const name = input.value.trim();
   if (!name) return;
@@ -951,11 +1027,11 @@ $('#guest-form').addEventListener('submit', event => {
   if (placed) announcePlacement([id]); else showToast(`Đã thêm ${name}.`);
 });
 document.querySelectorAll('.team-count').forEach(button => button.addEventListener('click', () => {
-  state.teamCount = Number(button.dataset.count); state.assignments = {}; resetRebalance(); save(); render();
+  state.teamCount = Number(button.dataset.count); state.assignments = {}; clearLocks(); resetRebalance(); save(); render();
 }));
 document.querySelectorAll('.mode-button').forEach(button => button.addEventListener('click', () => {
   if (button.dataset.mode === state.mode) return;
-  state.mode = button.dataset.mode; state.assignments = {}; resetRebalance(); save(); render();
+  state.mode = button.dataset.mode; state.assignments = {}; clearLocks(); resetRebalance(); save(); render();
 }));
 $('#roster-toggle').addEventListener('click', () => {
   rosterTouched = true;
@@ -969,6 +1045,8 @@ $('#split-mode').addEventListener('change', event => {
   try { localStorage.setItem(SPLIT_MODE_KEY, splitMode); } catch {}
   render();
 });
+$('#unlock-all').addEventListener('click', () => { clearLocks(); save('session', 'unlockAll'); renderTeams(); showToast('Đã mở khóa tất cả.'); });
+$('#lock-hint-ok').addEventListener('click', () => { lockHintSeen = true; try { localStorage.setItem('asdn-lock-hint', '1'); } catch {} updateLockUi(); });
 $('#split-button').addEventListener('click', runSplit);
 $('#bar-split').addEventListener('click', runSplit);
 $('#reshuffle').addEventListener('click', runSplit);
@@ -1007,8 +1085,8 @@ $('#auth-button').addEventListener('click', async () => {
 render();
 initCloud();
 
-const PATH_LABELS = { selected: 'Điểm danh', guests: 'Khách mời', teamCount: 'Số đội', mode: 'Chế độ', assignments: 'Đội', ratings: 'Điểm đánh giá', styles: 'Lối chơi', stats: 'Chỉ số' };
-const ACTION_LABELS = { 'auto-place': 'Tự xếp người mới vào đội', 'rebalance-min': 'Cân lại tối thiểu', manual: 'Đổi đội thủ công' };
+const PATH_LABELS = { selected: 'Điểm danh', guests: 'Khách mời', teamCount: 'Số đội', mode: 'Chế độ', assignments: 'Đội', ratings: 'Điểm đánh giá', styles: 'Lối chơi', stats: 'Chỉ số', lockedPlayers: 'Khóa người', lockedTeams: 'Khóa đội' };
+const ACTION_LABELS = { 'auto-place': 'Tự xếp người mới vào đội', 'rebalance-min': 'Cân lại tối thiểu', manual: 'Đổi đội thủ công', lock: 'Khóa', unlock: 'Mở khóa', unlockAll: 'Mở khóa tất cả' };
 function describeChange({ path, before, after }) {
   const [group, a, b] = path.split('/');
   const modeIndex = group === 'ratings' || group === 'styles';
@@ -1018,6 +1096,8 @@ function describeChange({ path, before, after }) {
   const where = modeIndex ? ` (${a})` : '';
   const show = value => value === null ? '—' : group === 'stats' ? Object.entries(JSON.parse(value)).map(([k, v]) => `${k}:${v}`).join(' ') : String(value);
   if (group === 'action') return ACTION_LABELS[after] || `Kiểu chia: ${after === 'random' ? 'ngẫu nhiên hoàn toàn' : 'cân bằng'}`;
+  if (group === 'lockedPlayers') return `Khóa người: ${name} ${after ? 'khóa' : 'mở khóa'}`;
+  if (group === 'lockedTeams') return `Khóa đội: Đội ${Number(a) + 1} ${after ? 'khóa' : 'mở khóa'}`;
   if (group === 'selected') return `${label}: ${name} ${after ? 'tham gia' : 'bỏ chọn'}`;
   if (group === 'guests') return `${label}: ${after ? 'thêm' : 'xóa'} ${name}`;
   if (group === 'teamCount' || group === 'mode') return `${label}: ${show(before)} → ${show(after)}`;
