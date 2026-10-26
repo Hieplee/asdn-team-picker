@@ -159,3 +159,12 @@ body.has-results:not(.setup-open) #setup-section{display:none}
 .rb-btn{flex:1;min-height:52px;border:1px solid #668066;border-radius:12px;background:#233227;color:var(--lime);font:800 14px 'DM Sans',sans-serif;letter-spacing:.8px}
 .rb-btn.primary{background:var(--lime);border-color:var(--lime);color:#172016;flex:1.6}
 .rb-btn:active{transform:scale(.97)}
+
+/* Sửa lệch: hàng Kiểu chia + nút Chia đội cùng cao, canh đáy; thanh nổi 3 nút đều nhau, nhãn 1 dòng */
+.split-actions{align-items:flex-end}
+.split-mode select{height:52px}
+.split-actions .primary-button{height:52px;min-height:52px;align-self:flex-end}
+.result-actions .secondary-button{min-height:48px;padding:4px 2px;font-size:11px;letter-spacing:.2px;white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:5px}
+.result-actions .secondary-button .mode-icon{margin:0}
+body[data-tab="teams"] .results-section:not([hidden]){padding-bottom:96px}
+.split-actions .primary-button{white-space:nowrap;gap:8px;padding:0 12px}

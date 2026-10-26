@@ -11,6 +11,8 @@
     if (name === 'audit' && $('#tab-audit').hidden) name = 'roster';
     if (manual) userPicked = true;
     body.dataset.tab = name;
+    body.classList.remove('setup-open');
+    if (typeof toggle !== 'undefined' && toggle) setupLabel();
     tabs.forEach(function (b) { if (b.dataset.tab === name) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
     if (!mq.matches) return;
     if (name === 'audit' && $('#audit-panel').hidden) $('#audit-button').click();
@@ -41,7 +43,7 @@
     resultsShown = shown;
   }).observe(results, { attributes: true, attributeFilter: ['hidden'] });
   ['#bar-split', '#split-button'].forEach(function (id) {
-    $(id).addEventListener('click', function () { setTimeout(function () { if (mq.matches && !results.hidden) setTab('teams'); }, 80); });
+    $(id).addEventListener('click', function () { setTimeout(function () { if (mq.matches && !results.hidden) { setTab('teams'); if (typeof setupLabel === 'function') setupLabel(); } }, 80); });
   });
 
   // --- Thiết lập thu gọn ở tab Đội hình ---
@@ -63,6 +65,13 @@
   new MutationObserver(setupLabel).observe($('#team-total'), { childList: true, characterData: true, subtree: true });
   $('#split-mode').addEventListener('change', setupLabel);
   syncResults();
+
+  // Nhãn ngắn cho nút trên thanh nổi để không xuống 2 dòng
+  var rbFull = rbLabelSource();
+  function rbLabelSource() { return document.querySelector('#rebalance-min').innerHTML; }
+  function applyRbLabel() { var b = document.querySelector('#rebalance-min'), want = mq.matches ? '⇄ CÂN LẠI' : rbFull; if (b.innerHTML !== want) b.innerHTML = want; }
+  applyRbLabel();
+  if (mq.addEventListener) mq.addEventListener('change', applyRbLabel);
 
   // --- Gợi ý cân lại: nút ở thanh dưới, đánh dấu khi đội đang lệch; xem trước hiện ngay trong bottom sheet ---
   var rbBox = $('#rebalance-box'), rbBtn = $('#rebalance-min');
@@ -133,14 +142,15 @@
   syncRebalance();
   // select có pointer-events:none, nên tìm select nằm dưới ngón tay
   document.addEventListener('click', function (e) {
-    if (!mq.matches || !sheet.hidden || e.target.closest('.sheet')) return;
+    if (!mq.matches || !sheet.hidden || e.target.closest('.sheet, button, a, input, textarea')) return;
     var x = e.clientX, y = e.clientY, hit = null;
     document.querySelectorAll('select:not(:disabled)').forEach(function (s) {
       if (hit || s.hidden || !s.offsetParent) return;
       var r = s.getBoundingClientRect();
       if (x >= r.left - 4 && x <= r.right + 4 && y >= r.top - 4 && y <= r.bottom + 4) hit = s;
     });
-    if (hit) { e.preventDefault(); e.stopPropagation(); hit.blur(); buzz(6); openSheet(hit); }
+    // Chỉ nhận khi vùng chạm thật sự nằm trong khối chứa select, tránh bắt nhầm khi một lớp nổi (thanh nút, tab bar) phủ lên select.
+    if (hit && hit.parentElement.contains(e.target)) { e.preventDefault(); e.stopPropagation(); hit.blur(); buzz(6); openSheet(hit); }
   }, true);
 
   // --- Vuốt hàng người chơi: trái = khóa, phải = đổi đội ---
