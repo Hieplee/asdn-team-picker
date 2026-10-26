@@ -64,6 +64,19 @@
   $('#split-mode').addEventListener('change', setupLabel);
   syncResults();
 
+  // --- Gợi ý cân lại: nút ở thanh dưới, đánh dấu khi đội đang lệch; xem trước thì cuộn tới hộp Áp dụng/Hủy ---
+  var rbBox = $('#rebalance-box'), rbBtn = $('#rebalance-min');
+  function syncRebalance() {
+    var needs = !rbBox.hidden && !!rbBox.querySelector(':scope > span');
+    if (rbBtn.classList.contains('needs-rebalance') !== needs) rbBtn.classList.toggle('needs-rebalance', needs);
+    if (mq.matches && !rbBox.hidden && rbBox.querySelector('.rebalance-actions') && !rbBox.dataset.seen) {
+      rbBox.dataset.seen = '1'; rbBox.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+    if (!rbBox.querySelector('.rebalance-actions')) delete rbBox.dataset.seen;
+  }
+  new MutationObserver(syncRebalance).observe(rbBox, { childList: true, attributes: true, attributeFilter: ['hidden'] });
+  syncRebalance();
+
   // --- Bottom sheet thay <select> ---
   var sheet = $('#sheet'), optionsBox = $('#sheet-options'), titleEl = $('#sheet-title'), current = null;
   function closeSheet() {

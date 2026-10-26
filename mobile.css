@@ -140,3 +140,12 @@ body.has-results:not(.setup-open) #setup-section{display:none}
 .team-head .team-lock{min-height:40px;padding:0 8px;font-size:11px}
 .team-person select{min-width:64px;max-width:74px;padding:0 4px;font-size:12px}
 .person-lock{min-width:40px;padding:0}
+
+/* Gợi ý cân lại: nút nằm ở thanh dưới (CÂN LẠI), trong hộp chỉ còn dòng cảnh báo */
+.rebalance-box>.secondary-button{display:none}
+.rebalance-box:has(> span){padding:12px 14px}
+.result-actions #rebalance-min{position:relative}
+.result-actions #rebalance-min.needs-rebalance{border-color:#f4a45f;background:#3a2f1a;color:#ffd9a8}
+.result-actions #rebalance-min.needs-rebalance:after{content:'!';position:absolute;top:-7px;right:-4px;width:20px;height:20px;border-radius:50%;background:#f4a45f;color:#1b1608;font:800 12px/20px 'DM Sans',sans-serif;text-align:center;animation:rb-pulse 1.6s ease-in-out infinite}
+@keyframes rb-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}
+@media (prefers-reduced-motion:reduce){.result-actions #rebalance-min.needs-rebalance:after{animation:none}}
