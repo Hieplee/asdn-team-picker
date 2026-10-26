@@ -178,3 +178,5 @@ body.viewer #rebalance-min{display:none}
 #unlock-all{white-space:nowrap}
 body.viewer #unlock-all,body.viewer #lock-hint{display:none}
 .lock-hint[hidden],#unlock-all[hidden]{display:none}
+
+.tabbar,.sheet{display:none}

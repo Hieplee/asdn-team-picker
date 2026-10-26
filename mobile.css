@@ -1,0 +1,142 @@
+/* Giao diện kiểu app cho mobile (≤768px). File chỉ được nạp khi màn hình hẹp (media trong index.html); PC không bị ảnh hưởng. */
+:root{--tabbar-h:60px;--safe-b:env(safe-area-inset-bottom,0px)}
+html{scroll-behavior:auto;-webkit-tap-highlight-color:transparent}
+body{padding-bottom:calc(var(--tabbar-h) + var(--safe-b) + 84px);overscroll-behavior-y:contain}
+.app-shell{padding:0 14px}
+
+/* Header gọn, thay nav trên + hero lớn */
+.topbar{position:sticky;top:0;z-index:7;min-height:52px;padding:calc(6px + env(safe-area-inset-top,0px)) 0 6px;background:#101714f2;backdrop-filter:blur(8px);font-size:22px}
+.brand-mark{width:30px;height:30px;font-size:22px}
+#audit-button{display:none}
+.topbar-account{flex-direction:row;align-items:center;gap:8px}
+.sync-status{font-size:11px;max-width:150px;text-align:right;line-height:1.25}
+.auth-button{min-height:40px;padding:0 12px;font-size:12px}
+.section-nav,.workflow,.hero-art,.hero h1,.hero .eyebrow,.hero-description,.panel .eyebrow,.section-description,.setup-note,.footer-star,footer,.result-hint:not(.lock-hint){display:none!important}
+.hero{display:block;min-height:0}
+.hero-copy{padding:12px 0 4px}
+.hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.hero-stats>div{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:10px 12px;margin:0;border:1px solid var(--line);background:var(--panel);border-radius:12px}
+.hero-stats>div:last-child{border:1px solid var(--line)}
+.hero-stats strong{font-size:28px;line-height:1}
+.hero-stats span{font-size:10px}
+.panel{margin-top:12px;padding:16px 14px;border-radius:14px}
+.section-head h2,.results-heading h2{font-size:26px}
+.setup-panel{margin-top:12px}
+
+/* Mỗi tab một màn hình */
+body[data-tab="roster"] #setup-section,body[data-tab="roster"] #results,body[data-tab="roster"] #viewer-empty,body[data-tab="roster"] #audit-panel,
+body[data-tab="teams"] .hero,body[data-tab="teams"] #roster-section,body[data-tab="teams"] #audit-panel,
+body[data-tab="audit"] .hero,body[data-tab="audit"] main#top,body[data-tab="audit"] .mobile-bar{display:none!important}
+body[data-tab="teams"] .mobile-bar{display:none!important}
+
+/* Tab bar dưới */
+.tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:9;height:calc(var(--tabbar-h) + var(--safe-b));padding-bottom:var(--safe-b);background:#0e1611f7;backdrop-filter:blur(10px);border-top:1px solid var(--line)}
+.tabbar button{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-width:0;border:0;background:none;color:#8d9c90;font:700 11px 'DM Sans',sans-serif;letter-spacing:.3px;padding:0}
+.tabbar button[hidden]{display:none}
+.tabbar svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:transform .18s}
+.tabbar button[aria-current="page"]{color:var(--lime)}
+.tabbar button[aria-current="page"] svg{transform:translateY(-1px) scale(1.08)}
+.tabbar button:active svg{transform:scale(.88)}
+.tabbar b{position:absolute;top:6px;left:calc(50% + 8px);min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--lime);color:#172016;font:800 11px/18px 'DM Sans',sans-serif;text-align:center}
+
+/* Thanh hành động nổi: Chia đội (tab Chọn người) */
+.mobile-bar{bottom:calc(var(--tabbar-h) + var(--safe-b));padding:8px 14px;border-top:1px solid #3a5a2e;border-radius:14px 14px 0 0}
+.mobile-bar .primary-button{height:48px}
+.toast{bottom:calc(var(--tabbar-h) + var(--safe-b) + 76px)}
+
+/* Roster: thanh tìm kiếm dính, chạm ≥44px */
+.roster-toolbar{position:sticky;top:58px;z-index:5;margin:14px -14px 10px;padding:8px 14px;background:#19211dee;backdrop-filter:blur(8px)}
+.search-box{border-radius:12px}
+.toolbar-actions{gap:10px}
+.text-button{min-height:44px;padding:0 6px}
+.member-card{border-radius:12px;overflow:hidden}
+.member-card:active{transform:scale(.98)}
+.member-card.selected{box-shadow:0 0 0 1px var(--lime) inset}
+.member-name{font-size:14px}
+.member-id{font-size:11px}
+.style-footer label{font-size:10px}
+.style-footer .style-select{min-height:40px}
+
+/* Setup compact */
+.setup-content{display:flex;flex-direction:column;align-items:stretch;gap:14px;margin-top:14px}
+.split-actions{display:flex;flex-direction:row;align-items:stretch;gap:10px}
+.split-mode{flex:1}
+.split-mode select{height:48px}
+.split-actions .primary-button{flex:1.3;height:auto;min-height:48px;justify-content:center;gap:12px}
+.segmented button{min-height:48px;border-radius:8px}
+.segmented{border-radius:10px}
+
+/* Kết quả: header đội dính, hàng người to rõ, thanh hành động nổi */
+.results-section{padding:12px 0 0}
+.results-heading{display:block}
+.team-card{border-radius:12px}
+.teams-grid,.teams-grid.many{gap:14px;margin-top:14px}
+.team-head{position:sticky;top:52px;z-index:3;padding:12px 14px;border-radius:12px 12px 0 0}
+.team-head h3{font-size:24px}
+.team-person{min-height:56px;gap:10px;padding:8px 6px;touch-action:pan-y;position:relative;transition:transform .15s,background .15s}
+.team-person.swiping{transition:none;background:#26382b}
+.team-person.swipe-hint-lock{background:#34412b}
+.team-person.swipe-hint-move{background:#2a3a40}
+.team-avatar{width:42px;height:42px;border-radius:8px}
+.team-person-name{font-size:14px}
+.team-person select{min-height:44px;min-width:78px;max-width:96px;font-size:13px;border-radius:8px;pointer-events:none}
+.person-lock,.team-lock{min-height:44px;min-width:44px}
+.result-actions{position:fixed;left:0;right:0;bottom:calc(var(--tabbar-h) + var(--safe-b));z-index:6;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px;margin:0;padding:8px 10px;background:#0e1611f7;backdrop-filter:blur(10px);border-top:1px solid #3a5a2e;border-radius:14px 14px 0 0}
+.result-actions .secondary-button{height:auto;min-height:46px;padding:4px 4px;font-size:10px;line-height:1.25;letter-spacing:.3px;white-space:normal;text-align:center;border-radius:10px}
+.result-actions .secondary-button[hidden]{display:none}
+body.viewer #reshuffle,body.viewer #rebalance-min{display:none}
+body[data-tab="teams"] .results-section:not([hidden]){padding-bottom:70px}
+.team-compare{margin-top:14px}
+
+/* Lịch sử */
+.audit-panel{margin-top:12px}
+
+/* Mọi select: chạm mở bottom sheet (mobile.js), không dùng picker gốc */
+select:not(:disabled){pointer-events:none}
+
+/* Bottom sheet */
+.sheet{display:block;position:fixed;inset:0;z-index:20}
+.sheet[hidden]{display:none}
+.sheet-backdrop{position:absolute;inset:0;background:#0009;opacity:0;transition:opacity .22s}
+.sheet-panel{position:absolute;left:0;right:0;bottom:0;max-height:78vh;overflow:auto;padding:8px 14px calc(16px + var(--safe-b));background:#19211d;border-top:1px solid var(--lime);border-radius:18px 18px 0 0;transform:translateY(100%);transition:transform .24s cubic-bezier(.2,.8,.2,1)}
+.sheet.open .sheet-backdrop{opacity:1}
+.sheet.open .sheet-panel{transform:none}
+.sheet-handle{width:44px;height:5px;margin:4px auto 10px;border-radius:3px;background:#4a5d50}
+.sheet-title{margin:0 0 10px;font:700 22px 'Barlow Condensed',Impact,sans-serif;text-transform:uppercase;letter-spacing:.5px}
+.sheet-options{display:flex;flex-direction:column;gap:6px}
+.sheet-option{display:flex;align-items:center;justify-content:space-between;min-height:52px;padding:0 16px;border:1px solid #344737;border-radius:12px;background:#202c24;color:var(--text);font:600 16px 'DM Sans',sans-serif;text-align:left}
+.sheet-option[aria-checked="true"]{border-color:var(--lime);background:#2e432b;color:var(--lime)}
+.sheet-option[aria-checked="true"]:after{content:'✓';font-weight:800}
+.sheet-option:disabled{opacity:.4}
+.sheet-option:active{transform:scale(.98)}
+@media (prefers-reduced-motion:reduce){.sheet-panel,.sheet-backdrop,.tabbar svg,.team-person{transition:none}}
+
+/* Tinh chỉnh khoảng cách */
+.section-head h2{font-size:24px}
+.roster-head-actions{flex-wrap:nowrap;gap:8px;margin-top:10px}
+.roster-head-actions .selection-pill{padding:0 12px;min-height:44px;display:flex;align-items:center;font-size:11px}
+.roster-toggle{flex:1;min-height:44px;padding:0 8px;font-size:11px}
+.mode-control{margin-top:12px;padding:12px}
+.mode-note{display:none}
+.roster-toolbar{margin-top:10px}
+.roster-toolbar .search-box{height:44px}
+.toolbar-actions{justify-content:space-between}
+
+/* Tab Đội hình: thu gọn thiết lập khi đã có đội hình */
+.setup-toggle{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:48px;margin-top:12px;padding:0 14px;border:1px solid #344737;border-radius:12px;background:#19251e;color:var(--text);font:700 13px 'DM Sans',sans-serif}
+.setup-toggle span:last-child{color:var(--lime)}
+body[data-tab="roster"] .setup-toggle,body[data-tab="audit"] .setup-toggle,body.viewer .setup-toggle,body:not(.has-results) .setup-toggle{display:none}
+body.has-results:not(.setup-open) #setup-section{display:none}
+.results-heading .eyebrow{display:none}
+.results-heading h2{font-size:22px;margin-top:14px}
+.team-person-name{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.25}
+.team-skill{flex-shrink:0}
+
+/* Màn hẹp (≤400px) */
+.roster-head-actions .selection-pill{gap:6px}
+.team-head{padding:10px 12px;gap:8px}
+.team-head h3{font-size:22px}
+.team-head>span{font-size:10px;letter-spacing:.6px}
+.team-head .team-lock{min-height:40px;padding:0 8px;font-size:11px}
+.team-person select{min-width:64px;max-width:74px;padding:0 4px;font-size:12px}
+.person-lock{min-width:40px;padding:0}
