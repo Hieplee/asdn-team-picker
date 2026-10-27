@@ -155,7 +155,7 @@ export function initLive(ctx) {
     unsubTeam.push(listen(ref('teamMeta', teamId), snap => { captain = snap.exists() ? snap.data().captain : null; if (!isCaptainMe() && draw && draw.kind !== 'target') cancelDraw(); drawPlayers(); renderHud(); renderDraw(); }));
     unsubTeam.push(listen(col('teams', teamId, 'orders'), snap => {
       orders = {};
-      snap.forEach(d => { const data = d.data(); orders[d.id] = { type: data.type, pts: Array.isArray(data.pts) ? data.pts : [], by: data.by, mid: data.mid, ts: data.ts ? data.ts.toMillis() : Date.now() }; });
+      snap.forEach(d => { const data = d.data(); const slot = /^t_.*_([0-2])$/.exec(d.id); orders[d.id] = { type: data.type, pts: Array.isArray(data.pts) ? data.pts : [], by: data.by, mid: data.mid, ts: data.ts ? data.ts.toMillis() : Date.now(), num: slot ? Number(slot[1]) + 1 : null }; });
       drawOrders(); renderDraw();
     }));
     unsubTeam.push(listen(ref('config', 'live'), snap => {
@@ -577,10 +577,11 @@ export function initLive(ctx) {
     let hash = 0; for (const ch of String(mid)) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
     return MEMBER_COLORS[hash % MEMBER_COLORS.length];
   }
+  function orderLabel(order) { return order.type === 'target' && order.num ? `Mục tiêu ${order.num}` : (KIND_NAME[order.type] || 'Lệnh'); }
   function authorName(order) { return findMember(order.mid)?.name || 'Đồng đội'; }
   function canDeleteOrder(order) { return Boolean(user && (order.by === user.uid || isCaptainMe())); }
   function targetIcon(order) {
-    const el = h('div', { class: 'tgt-pin', style: `--c:${memberColor(order.mid)}` }, h('span', { class: 'tgt-mark', text: '⌖' }));
+    const el = h('div', { class: 'tgt-pin', style: `--c:${memberColor(order.mid)}` }, h('span', { class: 'tgt-mark', text: '⌖' }), order.num && h('b', { class: 'tgt-num', text: String(order.num) }));
     return window.L.divIcon({ className: '', iconSize: [44, 44], iconAnchor: [22, 22], html: el });
   }
   function clearOrderLayers() { orderLayers.forEach(entry => entry.group.remove()); orderLayers.clear(); }
@@ -589,7 +590,7 @@ export function initLive(ctx) {
     const L = window.L, color = teamColor(), seen = new Set();
     for (const [id, order] of Object.entries(orders)) {
       seen.add(id);
-      const sig = JSON.stringify([order.type, order.pts, order.mid, color, memberColor(order.mid)]);
+      const sig = JSON.stringify([order.type, order.pts, order.mid, color, memberColor(order.mid), order.num]);
       const existing = orderLayers.get(id);
       if (existing && existing.sig === sig) continue;
       if (existing) existing.group.remove();
@@ -678,7 +679,7 @@ export function initLive(ctx) {
     return entries.map(([id, order]) => h('div', { class: 'order-row' },
       h('button', { class: 'order-main', type: 'button', onclick: () => { close(); focusOrder(order); } },
         h('span', { class: 'order-icon ' + order.type, style: order.type === 'target' ? `color:${memberColor(order.mid)}` : '', text: order.type === 'target' ? '⌖' : order.type === 'arrow' ? '➚' : '⬠' }),
-        h('span', { class: 'pick-name' }, `${KIND_NAME[order.type] || 'Lệnh'} · ${authorName(order)}`, h('small', { text: ago(now - order.ts) }))),
+        h('span', { class: 'pick-name' }, `${orderLabel(order)} · ${authorName(order)}`, h('small', { text: ago(now - order.ts) }))),
       canDeleteOrder(order) && h('button', { class: 'icon-button', type: 'button', 'aria-label': 'Xóa lệnh này', onclick: () => { removeOrder(id); close(); } }, '✕')));
   }
   function openOrderSheet(id) {
@@ -688,7 +689,7 @@ export function initLive(ctx) {
       h('button', { class: 'secondary-button', type: 'button', onclick: () => { closeSheet(); focusOrder(order); } }, 'ĐI TỚI'),
       canDeleteOrder(order) && h('button', { class: 'danger-button', type: 'button', onclick: () => { closeSheet(); removeOrder(id); } }, 'XÓA'),
       h('button', { class: 'secondary-button', type: 'button', onclick: closeSheet }, 'ĐÓNG'));
-    openSheet(KIND_NAME[order.type] || 'Lệnh', body);
+    openSheet(orderLabel(order), body);
   }
   function openOrdersList() {
     let confirmAll = false;
