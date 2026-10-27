@@ -545,7 +545,7 @@ export function initLive(ctx) {
       const can = p && Number.isFinite(p.lat) && now - p.ts <= GONE_MS;
       return h('button', { class: 'team-row', type: 'button', disabled: !can, onclick: () => { closeSheet(); if (map) map.flyTo([p.lat, p.lng], Math.max(map.getZoom(), 19)); } },
         makeAvatar(member, 'pick-avatar'),
-        h('span', { class: 'pick-name' }, (id === captain ? '★ ' : '') + member.name, h('small', { text: status })),
+        h('span', { class: 'pick-name' }, h('i', { class: 'color-dot', style: `background:${memberColor(id)}` }), (id === captain ? '★ ' : '') + member.name, h('small', { text: status })),
         h('span', { class: 'pick-state', text: can ? 'Đi tới ›' : '' }));
     });
     openSheet(`Đội ${team + 1}`, h('div', { class: 'pick-list' }, rows));
@@ -568,10 +568,19 @@ export function initLive(ctx) {
     const y = Math.sin(dLng) * Math.cos(b[0] * rad), x = Math.cos(a[0] * rad) * Math.sin(b[0] * rad) - Math.sin(a[0] * rad) * Math.cos(b[0] * rad) * Math.cos(dLng);
     return (Math.atan2(y, x) / rad + 360) % 360;
   }
+  // Mỗi người một màu để nhìn là biết ai đặt mà không cần ghi tên. Màu theo thứ tự id trong đội nên mọi máy thấy giống nhau.
+  const MEMBER_COLORS = ['#ff4d4d', '#ffb020', '#ffe14d', '#4dff88', '#2ee6d6', '#4da3ff', '#b07bff', '#ff6bd6', '#ffffff', '#9aa5b1'];
+  function memberColor(mid) {
+    if (!me) return MEMBER_COLORS[0];
+    const roster = [...teamPlayers(Number(me.teamId))].sort(), index = roster.indexOf(mid);
+    if (index >= 0) return MEMBER_COLORS[index % MEMBER_COLORS.length];
+    let hash = 0; for (const ch of String(mid)) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
+    return MEMBER_COLORS[hash % MEMBER_COLORS.length];
+  }
   function authorName(order) { return findMember(order.mid)?.name || 'Đồng đội'; }
   function canDeleteOrder(order) { return Boolean(user && (order.by === user.uid || isCaptainMe())); }
   function targetIcon(order) {
-    const el = h('div', { class: 'tgt-pin' }, h('span', { class: 'tgt-mark', text: '⌖' }), h('small', { text: authorName(order) }));
+    const el = h('div', { class: 'tgt-pin', style: `--c:${memberColor(order.mid)}` }, h('span', { class: 'tgt-mark', text: '⌖' }));
     return window.L.divIcon({ className: '', iconSize: [44, 44], iconAnchor: [22, 22], html: el });
   }
   function clearOrderLayers() { orderLayers.forEach(entry => entry.group.remove()); orderLayers.clear(); }
@@ -580,7 +589,7 @@ export function initLive(ctx) {
     const L = window.L, color = teamColor(), seen = new Set();
     for (const [id, order] of Object.entries(orders)) {
       seen.add(id);
-      const sig = JSON.stringify([order.type, order.pts, order.mid, color]);
+      const sig = JSON.stringify([order.type, order.pts, order.mid, color, memberColor(order.mid)]);
       const existing = orderLayers.get(id);
       if (existing && existing.sig === sig) continue;
       if (existing) existing.group.remove();
@@ -589,13 +598,13 @@ export function initLive(ctx) {
       if (order.type === 'target' && ll.length >= 1) {
         group.addLayer(L.marker(ll[0], { icon: targetIcon(order), keyboard: false, zIndexOffset: 500 }).on('click', open));
       } else if (order.type === 'arrow' && ll.length >= 2) {
-        const end = ll[ll.length - 1], head = h('div', { class: 'ah', style: `transform:rotate(${bearing(ll[ll.length - 2], end)}deg);border-bottom-color:${color}` });
-        group.addLayer(L.polyline(ll, { color: '#000', weight: 9, opacity: .45, interactive: false }));
-        group.addLayer(L.polyline(ll, { color, weight: 5, opacity: .95, interactive: false }));
+        const end = ll[ll.length - 1], head = h('div', { class: 'ah', style: `transform:rotate(${bearing(ll[ll.length - 2], end)}deg)` });
+        group.addLayer(L.polyline(ll, { color: '#000', weight: 6, opacity: .65, lineCap: 'round', lineJoin: 'round', interactive: false }));
+        group.addLayer(L.polyline(ll, { color: '#fff', weight: 2.5, opacity: 1, lineCap: 'round', lineJoin: 'round', interactive: false }));
         group.addLayer(L.marker(end, { interactive: false, keyboard: false, icon: L.divIcon({ className: '', iconSize: [0, 0], html: head }) }));
         group.addLayer(L.polyline(ll, { color: '#000', weight: 36, opacity: 0 }).on('click', open)); // vùng chạm rộng cho ngón tay
       } else if (order.type === 'zone' && ll.length >= 3) {
-        group.addLayer(L.polygon(ll, { color, weight: 3, fillColor: color, fillOpacity: .18, dashArray: '8 6', interactive: false }));
+        group.addLayer(L.polygon(ll, { color, weight: 2, fillColor: color, fillOpacity: .14, dashArray: '7 5', interactive: false }));
         group.addLayer(L.polyline([...ll, ll[0]], { color: '#000', weight: 36, opacity: 0 }).on('click', open)); // chỉ viền bấm được, chạm trong vùng vẫn là kéo bản đồ
       } else { orderLayers.delete(id); continue; }
       group.addTo(map); orderLayers.set(id, { group, sig });
@@ -623,8 +632,8 @@ export function initLive(ctx) {
     const L = window.L, color = teamColor(), pts = draw.pts;
     draw.layer.clearLayers();
     if (pts.length >= 2) draw.layer.addLayer(draw.kind === 'zone' && pts.length >= 3
-      ? L.polygon(pts, { color, weight: 3, fillColor: color, fillOpacity: .15, dashArray: '6 6', interactive: false })
-      : L.polyline(pts, { color, weight: 4, dashArray: '6 6', interactive: false }));
+      ? L.polygon(pts, { color, weight: 2, fillColor: color, fillOpacity: .12, dashArray: '6 6', interactive: false })
+      : L.polyline(pts, { color: draw.kind === 'arrow' ? '#fff' : color, weight: 2.5, dashArray: '6 6', interactive: false }));
     pts.forEach((point, i) => draw.layer.addLayer(L.circleMarker(point, { radius: i === pts.length - 1 ? 10 : 7, color: '#000', weight: 2, fillColor: i === 0 ? '#ffd23f' : '#fff', fillOpacity: 1, interactive: false })));
   }
   function addDrawPoint(latlng) {
@@ -668,7 +677,7 @@ export function initLive(ctx) {
     if (!entries.length) return [h('p', { class: 'join-lead', text: isCaptainMe() ? 'Chưa có lệnh nào. Dùng Mục tiêu, Mũi tên, Vùng ở thanh dưới bản đồ.' : 'Chưa có lệnh nào. Bấm Mục tiêu để đánh dấu cho cả đội.' })];
     return entries.map(([id, order]) => h('div', { class: 'order-row' },
       h('button', { class: 'order-main', type: 'button', onclick: () => { close(); focusOrder(order); } },
-        h('span', { class: 'order-icon ' + order.type, text: order.type === 'target' ? '⌖' : order.type === 'arrow' ? '➚' : '⬠' }),
+        h('span', { class: 'order-icon ' + order.type, style: order.type === 'target' ? `color:${memberColor(order.mid)}` : '', text: order.type === 'target' ? '⌖' : order.type === 'arrow' ? '➚' : '⬠' }),
         h('span', { class: 'pick-name' }, `${KIND_NAME[order.type] || 'Lệnh'} · ${authorName(order)}`, h('small', { text: ago(now - order.ts) }))),
       canDeleteOrder(order) && h('button', { class: 'icon-button', type: 'button', 'aria-label': 'Xóa lệnh này', onclick: () => { removeOrder(id); close(); } }, '✕')));
   }
