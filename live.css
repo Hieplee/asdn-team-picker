@@ -30,6 +30,7 @@
 .pick-name small{display:block;margin-top:2px;color:#9fb0a2;font-weight:500;font-size:12px}
 .pick-state{flex:none;color:var(--lime);font-weight:800;font-size:12px}
 .pick-bar{position:sticky;bottom:0;z-index:2;margin-top:-84px;padding:12px 20px calc(12px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,#0b0f0c00,#0b0f0c 30%);max-width:520px;margin-left:auto;margin-right:auto}
+.pick-card{padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
 .pick-bar .primary-button{width:100%;height:56px;justify-content:space-between}
 
 /* ---- Bản đồ ---- */
