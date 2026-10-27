@@ -92,7 +92,6 @@ export function initLive(ctx) {
   let watchId = null, wakeLock = null, lastWrite = { at: 0, ll: null };
   let myPos = null;
   let sheetClose = null;
-  let autoFsPending = false;
   let orders = {}; // id -> { type, pts (phẳng), by, mid, ts }
   let draw = null; // đang vẽ: { kind, pts: [[lat, lng]], layer }
   const orderLayers = new Map();
@@ -101,7 +100,6 @@ export function initLive(ctx) {
   function openSheet(title, body, onClose) {
     closeSheet();
     const sheet = $('#live-sheet');
-    if (document.fullscreenElement) { autoFsPending = true; document.exitFullscreen().catch(() => {}); } // sheet nằm ngoài vùng toàn màn hình
     $('#live-sheet-title').textContent = title;
     const content = $('#live-sheet-body');
     content.replaceChildren(body);
@@ -384,8 +382,10 @@ export function initLive(ctx) {
   document.addEventListener('fullscreenchange', () => {
     const on = Boolean(document.fullscreenElement);
     $('#btn-full').setAttribute('aria-pressed', String(on));
-    const toastEl = $('#toast'); (on ? $('#map-section') : document.body).append(toastEl);
-    if (!on) { try { screen.orientation.unlock(); } catch {} if (autoFsPending) autoFsPending = false; else { try { sessionStorage.setItem(FS_OFF_KEY, '1'); } catch {} } }
+    // Sheet và toast phải nằm trong phần tử đang toàn màn hình thì mới hiện được; không thoát toàn màn hình (thoát là máy xoay lại dọc).
+    const host = on ? $('#map-section') : document.body;
+    host.append($('#toast'), $('#live-sheet'));
+    if (!on) { try { screen.orientation.unlock(); } catch {} try { sessionStorage.setItem(FS_OFF_KEY, '1'); } catch {} }
     if (map) setTimeout(() => { map.invalidateSize(); syncEdges(); }, 150);
   });
   function toggleSatellite() {

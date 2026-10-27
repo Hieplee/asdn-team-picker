@@ -158,3 +158,5 @@
 
 .map-hint.error{background:#ffb4b4f2;color:#2a0b0b}
 .map-section:fullscreen .toast{position:absolute;right:auto;left:10px;bottom:150px;z-index:2000}
+
+.map-section:fullscreen .sheet.live-sheet{z-index:3000}
