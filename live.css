@@ -18,7 +18,6 @@
 .join-code{display:block;width:100%;height:68px;margin:6px 0 4px;padding:0 12px;border:1px solid #4a6150;background:#111a15;color:var(--lime);text-align:center;font:800 34px 'Barlow Condensed',Impact,sans-serif;letter-spacing:.28em;text-transform:uppercase;border-radius:0}
 .join-code::placeholder{color:#5f7264;letter-spacing:.12em;font-size:24px}
 .join-next{width:100%;justify-content:space-between;margin-top:14px;height:56px}
-.pick-card{padding-bottom:100px}
 .pick-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
 .pick-team{padding:5px 10px;border-left:4px solid var(--c);background:#202c24;font:800 13px 'DM Sans',sans-serif;letter-spacing:1.2px}
 .pick-list{display:flex;flex-direction:column;gap:6px}
@@ -30,7 +29,8 @@
 .pick-name small{display:block;margin-top:2px;color:#9fb0a2;font-weight:500;font-size:12px}
 .pick-state{flex:none;color:var(--lime);font-weight:800;font-size:12px}
 .pick-bar{position:sticky;bottom:0;z-index:2;margin-top:-84px;padding:12px 20px calc(12px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg,#0b0f0c00,#0b0f0c 30%);max-width:520px;margin-left:auto;margin-right:auto}
-.pick-card{padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
+.join-card.pick-card{padding-bottom:calc(120px + env(safe-area-inset-bottom,0px))}
+.pick-list{scroll-margin-bottom:120px}
 .pick-bar .primary-button{width:100%;height:56px;justify-content:space-between}
 
 /* ---- Bản đồ ---- */
