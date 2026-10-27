@@ -134,28 +134,37 @@ export function initLive(ctx) {
   function stopTeamSubs() { unsubTeam.forEach(fn => fn()); unsubTeam = []; members = {}; positions = {}; orders = {}; captain = null; liveOn = false; cancelDraw(); clearMarkers(); clearOrderLayers(); }
   function startTeamSubs(teamId) {
     stopTeamSubs();
-    const onErr = () => {};
-    unsubTeam.push(onSnapshot(col('members'), snap => {
+    // Vừa bấm "Tôi là…" thì snapshot memberOf đến từ bộ nhớ máy, trước khi server nhận. Luồng đọc mở lúc đó bị rules từ chối
+    // (chưa là thành viên) và sẽ chết im lặng. Nên mỗi luồng tự mở lại với độ trễ tăng dần.
+    const listen = (target, onNext) => {
+      let stop = null, dead = false;
+      const open = attempt => {
+        stop = onSnapshot(target, onNext, () => { if (!dead && attempt < 6) setTimeout(() => { if (!dead) open(attempt + 1); }, 800 * (attempt + 1)); });
+      };
+      open(0);
+      return () => { dead = true; if (stop) stop(); };
+    };
+    unsubTeam.push(listen(col('members'), snap => {
       members = {};
       snap.forEach(d => { const data = d.data(); if (data.teamId === teamId) members[data.uid] = d.id; });
       drawPlayers(); renderHud();
-    }, onErr));
-    unsubTeam.push(onSnapshot(col('teams', teamId, 'positions'), snap => {
+    }));
+    unsubTeam.push(listen(col('teams', teamId, 'positions'), snap => {
       positions = {};
       snap.forEach(d => { const data = d.data(); positions[d.id] = { lat: data.lat, lng: data.lng, acc: data.acc, heading: data.heading, ts: data.ts ? data.ts.toMillis() : Date.now() }; });
       drawPlayers(); renderHud();
-    }, onErr));
-    unsubTeam.push(onSnapshot(ref('teamMeta', teamId), snap => { captain = snap.exists() ? snap.data().captain : null; if (!isCaptainMe() && draw && draw.kind !== 'target') cancelDraw(); drawPlayers(); renderHud(); renderDraw(); }, onErr));
-    unsubTeam.push(onSnapshot(col('teams', teamId, 'orders'), snap => {
+    }));
+    unsubTeam.push(listen(ref('teamMeta', teamId), snap => { captain = snap.exists() ? snap.data().captain : null; if (!isCaptainMe() && draw && draw.kind !== 'target') cancelDraw(); drawPlayers(); renderHud(); renderDraw(); }));
+    unsubTeam.push(listen(col('teams', teamId, 'orders'), snap => {
       orders = {};
       snap.forEach(d => { const data = d.data(); orders[d.id] = { type: data.type, pts: Array.isArray(data.pts) ? data.pts : [], by: data.by, mid: data.mid, ts: data.ts ? data.ts.toMillis() : Date.now() }; });
       drawOrders(); renderDraw();
-    }, onErr));
-    unsubTeam.push(onSnapshot(ref('config', 'live'), snap => {
+    }));
+    unsubTeam.push(listen(ref('config', 'live'), snap => {
       const was = liveOn; liveOn = snap.exists() && snap.data().live === true;
       if (was !== liveOn) { if (liveOn && wantShare) toast('Organizer đã bật chia sẻ vị trí.'); syncSharing(); lastWrite.at = 0; maybeWrite(); }
       renderHud();
-    }, onErr));
+    }));
   }
 
   function watchMe(nextUser) {
@@ -375,6 +384,7 @@ export function initLive(ctx) {
   document.addEventListener('fullscreenchange', () => {
     const on = Boolean(document.fullscreenElement);
     $('#btn-full').setAttribute('aria-pressed', String(on));
+    const toastEl = $('#toast'); (on ? $('#map-section') : document.body).append(toastEl);
     if (!on) { try { screen.orientation.unlock(); } catch {} if (autoFsPending) autoFsPending = false; else { try { sessionStorage.setItem(FS_OFF_KEY, '1'); } catch {} } }
     if (map) setTimeout(() => { map.invalidateSize(); syncEdges(); }, 150);
   });
@@ -634,7 +644,17 @@ export function initLive(ctx) {
     const { kind, pts } = draw, id = pickSlot(kind);
     cancelDraw();
     try { await setDoc(ref('teams', me.teamId, 'orders', id), { type: kind, pts: pts.flat(), by: user.uid, mid: me.memberId, ts: serverTimestamp() }); }
-    catch (error) { toast(`Không lưu được ${KIND_NAME[kind].toLowerCase()}: ${error.message}`); }
+    catch (error) {
+      console.error('order write failed', id, error);
+      notice(`Không lưu được ${KIND_NAME[kind].toLowerCase()}: ${error.code === 'permission-denied' ? 'không có quyền (bạn đã vào đội chưa?)' : error.message}`);
+    }
+  }
+  let noticeTimer = null;
+  function notice(text) {
+    const hint = $('#map-hint'); if (!hint) { toast(text); return; }
+    hint.hidden = false; hint.textContent = text; hint.classList.add('error');
+    clearTimeout(noticeTimer);
+    noticeTimer = setTimeout(() => { hint.classList.remove('error'); const bar = $('#draw-bar'); if (bar) delete bar.dataset.sig; renderDraw(); }, 7000);
   }
   async function removeOrder(id) {
     try { await deleteDoc(ref('teams', me.teamId, 'orders', id)); } catch (error) { toast(`Không xóa được: ${error.message}`); }
@@ -694,17 +714,17 @@ export function initLive(ctx) {
       hint.hidden = false;
       hint.textContent = draw.kind === 'target' ? 'Chạm lên bản đồ để đánh dấu mục tiêu'
         : n < need ? `${KIND_NAME[draw.kind]}: chạm ${need - n} điểm nữa (đã ${n})` : `${KIND_NAME[draw.kind]}: đã ${n} điểm. Chạm thêm hoặc bấm Xong`;
-      bar.replaceChildren(
+      bar.replaceChildren(...[
         toolButton('✕', 'Hủy', cancelDraw, { class: 'cancel' }),
         draw.kind !== 'target' && toolButton('↶', 'Lùi 1 điểm', undoDrawPoint, { disabled: n === 0 }),
-        draw.kind !== 'target' && toolButton('✓', `Xong (${n})`, finishDraw, { class: 'done', disabled: n < need, aria: 'Xong, lưu lệnh' }));
+        draw.kind !== 'target' && toolButton('✓', `Xong (${n})`, finishDraw, { class: 'done', disabled: n < need, aria: 'Xong, lưu lệnh' })].filter(Boolean));
     } else {
       hint.hidden = true;
-      bar.replaceChildren(
+      bar.replaceChildren(...[
         toolButton('⌖', 'Mục tiêu', () => startDraw('target')),
         isCaptainMe() && toolButton('➚', 'Mũi tên', () => startDraw('arrow')),
         isCaptainMe() && toolButton('⬠', 'Vùng', () => startDraw('zone')),
-        toolButton('☰', count ? `Lệnh (${count})` : 'Lệnh', openOrdersList));
+        toolButton('☰', count ? `Lệnh (${count})` : 'Lệnh', openOrdersList)].filter(Boolean));
     }
   }
 

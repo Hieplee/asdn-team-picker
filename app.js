@@ -150,7 +150,7 @@ async function initCloud() {
       import('https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js'),
       import('https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js'),
       import('https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js'),
-      import('./live.js?v=mob6').catch(error => { console.error('live.js', error); return null; }),
+      import('./live.js?v=mob7').catch(error => { console.error('live.js', error); return null; }),
     ]);
     const app = initializeApp(firebaseConfig);
     cloudAuth = getAuth(app);
