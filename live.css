@@ -160,3 +160,6 @@
 .map-section:fullscreen .toast{position:absolute;right:auto;left:10px;bottom:150px;z-index:2000}
 
 .map-section:fullscreen .sheet.live-sheet{z-index:3000}
+
+/* Nút chính trên mobile có width:100% (styles.css) nên làm khối "Chia sẻ vị trí toàn trận" bị ép chữ; ở đây nút phải gọn */
+.org-live .primary-button,.org-live .secondary-button{width:auto;flex:none;min-width:84px;justify-content:center;gap:0;padding:0 18px}
