@@ -168,3 +168,23 @@ body.has-results:not(.setup-open) #setup-section{display:none}
 .result-actions .secondary-button .mode-icon{margin:0}
 body[data-tab="teams"] .results-section:not([hidden]){padding-bottom:96px}
 .split-actions .primary-button{white-space:nowrap;gap:8px;padding:0 12px}
+
+/* Tab Bản đồ: bản đồ choán toàn bộ khoảng giữa header và tab bar, các nút chính nằm ở đáy (vùng ngón cái) */
+#map-section{margin:0 -14px;border:0;min-height:0;height:calc(100vh - 64px - env(safe-area-inset-top,0px) - var(--tabbar-h) - var(--safe-b));height:calc(100dvh - 64px - env(safe-area-inset-top,0px) - var(--tabbar-h) - var(--safe-b))}
+body[data-tab="roster"] #map-section,body[data-tab="teams"] #map-section,body[data-tab="audit"] #map-section{display:none!important}
+body[data-tab="map"] .hero,body[data-tab="map"] #roster-section,body[data-tab="map"] #setup-section,body[data-tab="map"] #results,body[data-tab="map"] #viewer-empty,body[data-tab="map"] #audit-panel,body[data-tab="map"] .mobile-bar,body[data-tab="map"] .setup-toggle{display:none!important}
+body[data-tab="map"]{padding-bottom:0}
+.join-card{padding:20px 16px 24px}
+.team-qr{min-height:40px}
+
+/* Điện thoại xoay ngang: bỏ header ở tab Bản đồ, tab bar gọn, bản đồ choán gần hết màn hình */
+@media (orientation:landscape) and (max-height:500px){
+  :root{--tabbar-h:46px}
+  .tabbar span{display:none}
+  .tabbar svg{width:22px;height:22px}
+  body[data-tab="map"] .topbar{display:none}
+  body[data-tab="map"] .app-shell{padding:0}
+  body[data-tab="map"] #map-section{margin:0;height:calc(100vh - var(--tabbar-h) - var(--safe-b));height:calc(100dvh - var(--tabbar-h) - var(--safe-b))}
+  .map-bottom{right:auto;width:min(380px,55vw)}
+  .join-card{padding-top:12px}
+}

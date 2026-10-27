@@ -1,6 +1,92 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isOrg() {
+      return request.auth != null
+        && request.auth.uid in ['57BKTGPZoDaIc2wChRWut3NBf6E3', 'kEkdLPY3kLWPCVBJG8112W1yDlB3', 'ig2pUINnEgZX4HzXbCRyjtvKQ2E3', 'ZCJPrmNKeXQBx6O56iUcwKoLupz2', '5QtTq81TTrbt0TPA5BujGMeBQ6N2'];
+    }
+    function signedIn() { return request.auth != null; }
+    function validTeam(t) { return t in ['0', '1', '2', '3', '4', '5']; }
+    // Người chơi thuộc đội teamId khi đã có memberOf/{uid} trỏ về đội đó.
+    function inTeam(teamId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/match/current/memberOf/$(request.auth.uid))
+        && get(/databases/$(database)/documents/match/current/memberOf/$(request.auth.uid)).data.teamId == teamId;
+    }
+    function num(v, lo, hi) { return (v is int || v is float) && v >= lo && v <= hi; }
+
+    // ===== Bản đồ trực tiếp: dữ liệu chỉ tồn tại trong lúc trận diễn ra, xóa khi kết thúc trận =====
+    // Bật/tắt chia sẻ vị trí toàn trận.
+    match /match/current/config/{doc} {
+      allow read: if signedIn();
+      allow create, update: if isOrg() && doc == 'live'
+        && request.resource.data.keys().hasOnly(['live', 'at'])
+        && request.resource.data.live is bool;
+      allow delete: if isOrg();
+    }
+    // Mã vào đội (6 ký tự, ký tự đầu là số đội). Chỉ organizer đọc/ghi; rules đọc bằng get().
+    match /match/current/teamKeys/{teamId} {
+      allow read, delete: if isOrg();
+      allow create, update: if isOrg() && validTeam(teamId)
+        && request.resource.data.keys().hasOnly(['code', 'at'])
+        && request.resource.data.code is string
+        && request.resource.data.code.size() == 6;
+    }
+    // Đội trưởng của từng đội (memberId).
+    match /match/current/teamMeta/{teamId} {
+      allow read: if signedIn();
+      allow create, update: if isOrg() && validTeam(teamId)
+        && request.resource.data.keys().hasOnly(['captain'])
+        && request.resource.data.captain is string
+        && request.resource.data.captain.size() <= 60;
+      allow delete: if isOrg();
+    }
+    // memberOf/{uid} và members/{memberId} luôn được tạo cùng một batch, kiểm tra chéo bằng getAfter().
+    // memberOf giữ mã đội nên chỉ chính chủ và organizer đọc được.
+    match /match/current/memberOf/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid || isOrg());
+      allow list: if isOrg();
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['memberId', 'teamId', 'code'])
+        && request.resource.data.memberId is string
+        && request.resource.data.memberId.size() <= 60
+        && request.resource.data.teamId is string
+        && validTeam(request.resource.data.teamId)
+        && request.resource.data.code is string
+        && int(request.resource.data.teamId) in get(/databases/$(database)/documents/public/current).data.get('lockedTeams', [])
+        && get(/databases/$(database)/documents/public/current).data.assignments[request.resource.data.memberId] == int(request.resource.data.teamId)
+        && get(/databases/$(database)/documents/match/current/teamKeys/$(request.resource.data.teamId)).data.code == request.resource.data.code
+        && !exists(/databases/$(database)/documents/match/current/members/$(request.resource.data.memberId))
+        && getAfter(/databases/$(database)/documents/match/current/members/$(request.resource.data.memberId)).data.uid == uid
+        && getAfter(/databases/$(database)/documents/match/current/members/$(request.resource.data.memberId)).data.teamId == request.resource.data.teamId;
+      allow update: if false;
+      allow delete: if isOrg();
+    }
+    // Ai vào trước giữ tên. Ai đăng nhập cũng đọc được để biết tên nào đã có người nhận.
+    match /match/current/members/{memberId} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['uid', 'teamId'])
+        && request.resource.data.uid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/match/current/memberOf/$(request.auth.uid)).data.memberId == memberId
+        && getAfter(/databases/$(database)/documents/match/current/memberOf/$(request.auth.uid)).data.teamId == request.resource.data.teamId;
+      allow update: if false;
+      allow delete: if isOrg();
+    }
+    // Vị trí của từng người, ghi đè một doc mỗi người, không lưu lịch sử. Chỉ đội mình đọc được.
+    match /match/current/teams/{teamId}/positions/{uid} {
+      allow read: if inTeam(teamId);
+      allow create, update: if signedIn() && request.auth.uid == uid && inTeam(teamId)
+        && get(/databases/$(database)/documents/match/current/config/live).data.live == true
+        && request.resource.data.keys().hasOnly(['lat', 'lng', 'acc', 'heading', 'ts'])
+        && num(request.resource.data.lat, -90, 90)
+        && num(request.resource.data.lng, -180, 180)
+        && num(request.resource.data.acc, 0, 100000)
+        && (request.resource.data.heading == null || num(request.resource.data.heading, 0, 360))
+        && request.resource.data.ts == request.time;
+      allow delete: if (signedIn() && request.auth.uid == uid) || isOrg();
+    }
+
     match /public/current {
       allow read: if true;
       allow create, update: if request.auth != null

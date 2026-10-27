@@ -1,5 +1,5 @@
 (function () {
-  var mq = window.matchMedia('(max-width: 768px)');
+  var mq = window.matchMedia('(max-width: 768px), (orientation: landscape) and (max-height: 500px)');
   var body = document.body;
   var tabs = Array.prototype.slice.call(document.querySelectorAll('#tabbar button'));
   var userPicked = false;

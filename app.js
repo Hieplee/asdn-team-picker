@@ -13,6 +13,7 @@ let state = cloudEnabled ? structuredClone(initial) : loadState();
 let canEdit = !cloudEnabled;
 let cloudReady = !cloudEnabled;
 let cloudAuth, cloudSignIn, cloudSignOut, cloudProvider, cloudSession, cloudAttributes, cloudDb, cloudFs;
+let live = null, joinLinkHandled = false;
 const auditBase = { session: null, attributes: null };
 const ready = { session: false, attributes: false };
 const writeQueue = { session: Promise.resolve(), attributes: Promise.resolve() };
@@ -145,10 +146,11 @@ async function initCloud() {
     return;
   }
   try {
-    const [{ initializeApp }, { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }, { initializeFirestore, doc, onSnapshot, writeBatch, collection, serverTimestamp, query, orderBy, limit, getDocs }] = await Promise.all([
+    const [{ initializeApp }, { getAuth, GoogleAuthProvider, signInWithPopup, signInAnonymously, signOut, onAuthStateChanged }, { initializeFirestore, doc, onSnapshot, writeBatch, collection, serverTimestamp, query, orderBy, limit, getDocs, getDoc, setDoc, deleteDoc }, liveModule] = await Promise.all([
       import('https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js'),
       import('https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js'),
       import('https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js'),
+      import('./live.js?v=mob5').catch(error => { console.error('live.js', error); return null; }),
     ]);
     const app = initializeApp(firebaseConfig);
     cloudAuth = getAuth(app);
@@ -157,19 +159,22 @@ async function initCloud() {
     cloudProvider = new GoogleAuthProvider();
     const db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
     cloudDb = db;
-    cloudFs = { doc, writeBatch, collection, serverTimestamp, query, orderBy, limit, getDocs };
+    cloudFs = { doc, writeBatch, collection, serverTimestamp, query, orderBy, limit, getDocs, getDoc, setDoc, deleteDoc, onSnapshot };
+    live = liveModule?.initLive({ auth: cloudAuth, db, fs: cloudFs, signInAnonymously, getState: () => state, findMember, makeAvatar, isOrganizer: () => canEdit, toast: showToast, teamColors: TEAM_COLORS });
     cloudSession = doc(db, 'public', 'current');
     cloudAttributes = doc(db, 'public', 'attributes');
     onAuthStateChanged(cloudAuth, user => {
-      canEdit = Boolean(user && organizerUids.includes(user.uid));
+      canEdit = Boolean(user && !user.isAnonymous && organizerUids.includes(user.uid));
       const button = $('#auth-button');
       button.hidden = false;
-      button.textContent = user ? (canEdit ? 'Đăng xuất' : 'Đổi tài khoản') : 'Đăng nhập';
+      const signedInGoogle = Boolean(user && !user.isAnonymous);
+      button.textContent = signedInGoogle ? (canEdit ? 'Đăng xuất' : 'Đổi tài khoản') : 'Đăng nhập';
       button.title = user?.uid || '';
       const isAdmin = Boolean(user && user.uid === adminUid);
       $('#audit-button').hidden = !isAdmin;
       if (!isAdmin) $('#audit-panel').hidden = true;
       render();
+      live?.onAuth(user);
     });
     const loadTimer = setTimeout(() => {
       if (!cloudReady) setSyncStatus('Chưa kết nối được dữ liệu chung, đang thử lại…', true);
@@ -185,6 +190,8 @@ async function initCloud() {
       cloudReady = ready.session && ready.attributes;
       if (cloudReady) clearTimeout(loadTimer);
       render();
+      live?.onState();
+      if (cloudReady && !joinLinkHandled) { joinLinkHandled = true; live?.consumeJoinLink(); }
       setSyncStatus(pendingWrites.session || pendingWrites.attributes ? 'Đang lưu…' : 'Đã đồng bộ');
     };
     const handleError = error => {
@@ -851,6 +858,7 @@ function renderTeams() {
     lockTeam.classList.add('team-lock');
     head.append(title, count);
     if (teamLocked || canEdit) head.append(lockTeam);
+    if (teamLocked && canEdit && live) { const qr = document.createElement('button'); qr.type = 'button'; qr.className = 'team-qr'; qr.textContent = 'QR VÀO ĐỘI'; qr.setAttribute('aria-label', `Mã QR vào Đội ${index + 1}`); qr.addEventListener('click', () => live.openOrganizer(index)); head.append(qr); }
     const list = document.createElement('div'); list.className = 'team-list';
     if (!people.length) { const empty = document.createElement('p'); empty.className = 'team-empty'; empty.textContent = 'Chưa có thành viên.'; list.append(empty); }
     people.forEach(member => {
@@ -1071,7 +1079,6 @@ $('#auth-button').addEventListener('click', async () => {
       await cloudSignOut(cloudAuth);
       showToast('Đã đăng xuất.');
     } else {
-      if (cloudAuth.currentUser) await cloudSignOut(cloudAuth);
       await cloudSignIn(cloudAuth, cloudProvider);
     }
   } catch (error) {
