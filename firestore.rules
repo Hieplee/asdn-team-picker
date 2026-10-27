@@ -87,6 +87,37 @@ service cloud.firestore {
       allow delete: if (signedIn() && request.auth.uid == uid) || isOrg();
     }
 
+    // Lệnh trên bản đồ. Id cố định để rules giới hạn số lượng và để organizer dọn được khi hết trận mà không cần đọc:
+    // mục tiêu t_{uid}_{0..2} (ai trong đội cũng đặt được), mũi tên a_{0..9} và vùng z_{0..9} (chỉ đội trưởng).
+    // pts là mảng phẳng [lat, lng, lat, lng, ...] vì Firestore không cho mảng lồng nhau.
+    function myMid() {
+      return get(/databases/$(database)/documents/match/current/memberOf/$(request.auth.uid)).data.memberId;
+    }
+    function isCaptain(teamId) {
+      return exists(/databases/$(database)/documents/match/current/teamMeta/$(teamId))
+        && get(/databases/$(database)/documents/match/current/teamMeta/$(teamId)).data.captain == myMid();
+    }
+    match /match/current/teams/{teamId}/orders/{oid} {
+      allow read: if inTeam(teamId);
+      allow create, update: if signedIn() && inTeam(teamId)
+        && request.resource.data.keys().hasOnly(['type', 'pts', 'by', 'mid', 'ts'])
+        && request.resource.data.by == request.auth.uid
+        && request.resource.data.mid == myMid()
+        && request.resource.data.ts == request.time
+        && request.resource.data.pts is list
+        && request.resource.data.pts.size() % 2 == 0
+        && (
+          (request.resource.data.type == 'target' && request.resource.data.pts.size() == 2
+            && oid.matches('t_' + request.auth.uid + '_[0-2]'))
+          || (request.resource.data.type == 'arrow' && request.resource.data.pts.size() >= 4 && request.resource.data.pts.size() <= 40
+            && oid.matches('a_[0-9]') && isCaptain(teamId))
+          || (request.resource.data.type == 'zone' && request.resource.data.pts.size() >= 6 && request.resource.data.pts.size() <= 40
+            && oid.matches('z_[0-9]') && isCaptain(teamId)));
+      allow delete: if isOrg()
+        || (signedIn() && resource.data.by == request.auth.uid)
+        || (inTeam(teamId) && isCaptain(teamId));
+    }
+
     match /public/current {
       allow read: if true;
       allow create, update: if request.auth != null

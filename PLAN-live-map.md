@@ -121,3 +121,12 @@ Opt-in từng người, nút tắt chia sẻ bất cứ lúc nào, chỉ gửi k
 - Rules: kiểm tra bằng Firebase emulator. Người ngoài đội không đọc/ghi được `positions` và `orders` của đội khác. Thành viên không ghi được `arrow` và `zone`. Tên đã nhận không bị nhận lại.
 - Giao diện: thử trên iPhone Safari và Android Chrome, gồm cả luồng từ chối GPS, khóa màn hình, đổi mã đội.
 - Thực địa: 1 buổi chơi thử với ít nhất 2 đội để đo độ trễ và pin.
+
+## 12. Tiến độ
+
+- Giai đoạn 1: đã làm xong và đã lên production.
+- Giai đoạn 2 (lệnh): đã làm trên nhánh `feature/live-map-orders`. Mục tiêu (mọi thành viên), mũi tên và vùng (đội trưởng).
+  - Thao tác chạm: chọn công cụ, chạm lên bản đồ đặt điểm, mũi tên/vùng bấm Xong. Không dùng kéo vì kéo là di chuyển bản đồ.
+  - Id lệnh cố định để rules giới hạn số lượng: `t_{uid}_{0..2}`, `a_{0..9}`, `z_{0..9}`. Hết chỗ thì thay lệnh cũ nhất.
+  - Organizer dọn lệnh khi kết thúc trận bằng id, không cần đọc.
+- Giai đoạn 3: chưa làm.

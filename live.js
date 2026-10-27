@@ -93,6 +93,9 @@ export function initLive(ctx) {
   let myPos = null;
   let sheetClose = null;
   let autoFsPending = false;
+  let orders = {}; // id -> { type, pts (phẳng), by, mid, ts }
+  let draw = null; // đang vẽ: { kind, pts: [[lat, lng]], layer }
+  const orderLayers = new Map();
 
   // ---------- Bottom sheet ----------
   function openSheet(title, body, onClose) {
@@ -128,7 +131,7 @@ export function initLive(ctx) {
     return auth.currentUser;
   }
 
-  function stopTeamSubs() { unsubTeam.forEach(fn => fn()); unsubTeam = []; members = {}; positions = {}; captain = null; liveOn = false; clearMarkers(); }
+  function stopTeamSubs() { unsubTeam.forEach(fn => fn()); unsubTeam = []; members = {}; positions = {}; orders = {}; captain = null; liveOn = false; cancelDraw(); clearMarkers(); clearOrderLayers(); }
   function startTeamSubs(teamId) {
     stopTeamSubs();
     const onErr = () => {};
@@ -142,7 +145,12 @@ export function initLive(ctx) {
       snap.forEach(d => { const data = d.data(); positions[d.id] = { lat: data.lat, lng: data.lng, acc: data.acc, heading: data.heading, ts: data.ts ? data.ts.toMillis() : Date.now() }; });
       drawPlayers(); renderHud();
     }, onErr));
-    unsubTeam.push(onSnapshot(ref('teamMeta', teamId), snap => { captain = snap.exists() ? snap.data().captain : null; renderHud(); }, onErr));
+    unsubTeam.push(onSnapshot(ref('teamMeta', teamId), snap => { captain = snap.exists() ? snap.data().captain : null; if (!isCaptainMe() && draw && draw.kind !== 'target') cancelDraw(); drawPlayers(); renderHud(); renderDraw(); }, onErr));
+    unsubTeam.push(onSnapshot(col('teams', teamId, 'orders'), snap => {
+      orders = {};
+      snap.forEach(d => { const data = d.data(); orders[d.id] = { type: data.type, pts: Array.isArray(data.pts) ? data.pts : [], by: data.by, mid: data.mid, ts: data.ts ? data.ts.toMillis() : Date.now() }; });
+      drawOrders(); renderDraw();
+    }, onErr));
     unsubTeam.push(onSnapshot(ref('config', 'live'), snap => {
       const was = liveOn; liveOn = snap.exists() && snap.data().live === true;
       if (was !== liveOn) { if (liveOn && wantShare) toast('Organizer đã bật chia sẻ vị trí.'); syncSharing(); lastWrite.at = 0; maybeWrite(); }
@@ -283,7 +291,8 @@ export function initLive(ctx) {
       buildGrid(L);
       map.on('zoomend', syncGridLabels);
       map.on('move zoom resize', syncEdges);
-      drawPlayers(); drawMe();
+      map.on('click', event => addDrawPoint(event.latlng));
+      drawPlayers(); drawMe(); drawOrders(); renderDraw();
     })();
     await mapBuilding; mapBuilding = null;
   }
@@ -354,14 +363,14 @@ export function initLive(ctx) {
     syncGridLabels(); syncEdges();
   }
   // Android Chrome: vào toàn màn hình rồi khóa ngang. iPhone không cho web khóa xoay: chỉ gợi ý xoay tay (giao diện tự thích ứng).
-  async function toggleFullscreen() {
+  async function toggleFullscreen(auto = false) {
     const el = $('#map-section');
     if (document.fullscreenElement) { try { await document.exitFullscreen(); } catch {} return; }
     try {
       try { sessionStorage.removeItem(FS_OFF_KEY); } catch {}
       await el.requestFullscreen({ navigationUI: 'hide' });
-      try { await screen.orientation.lock('landscape'); } catch { toast('Máy chưa tự xoay ngang được. Hãy xoay điện thoại.'); }
-    } catch { toast('Không vào được toàn màn hình. Hãy xoay ngang điện thoại.'); }
+      try { await screen.orientation.lock('landscape'); } catch { if (!auto) toast('Máy chưa tự xoay ngang được. Hãy xoay điện thoại.'); }
+    } catch { if (!auto) toast('Không vào được toàn màn hình. Hãy xoay ngang điện thoại.'); }
   }
   document.addEventListener('fullscreenchange', () => {
     const on = Boolean(document.fullscreenElement);
@@ -495,11 +504,16 @@ export function initLive(ctx) {
     const total = teamPlayers(Number(me.teamId)).length;
     const state = liveOn ? (wantShare ? 'live' : 'view') : 'off';
     const label = state === 'live' ? 'ĐANG CHIA SẺ' : state === 'view' ? 'ĐANG XEM' : 'CHƯA BẬT';
+    const hudSig = [me.teamId, active, total, myName(), state, teamColor()].join('|');
+    if (hud.dataset.sig !== hudSig) {
+    hud.dataset.sig = hudSig;
     hud.replaceChildren(
       h('button', { class: 'hud-chip', type: 'button', onclick: openTeamSheet, 'aria-label': 'Xem danh sách đội' },
         h('i', { class: 'team-dot', style: `background:${teamColor()}` }),
         h('span', { class: 'hud-main' }, h('b', { text: `Đội ${Number(me.teamId) + 1}` }), h('small', { text: `${active}/${total} đang hiện · ${myName()}` })),
         h('em', { class: 'hud-state ' + state, text: label })));
+    }
+    renderDraw();
     const share = $('#btn-share');
     share.className = 'share-button' + (wantShare ? ' on' : '');
     let text = wantShare ? 'ĐANG CHIA SẺ · BẤM ĐỂ TẮT' : 'BẬT CHIA SẺ VỊ TRÍ';
@@ -507,7 +521,8 @@ export function initLive(ctx) {
     if (wantShare && !liveOn) sub = 'Chờ organizer bật chia sẻ cho trận';
     else if (wantShare && myPos) sub = `Sai số ~${Math.round(myPos.acc)} m · ${inArea([myPos.lat, myPos.lng]) ? 'trong khu' : 'ngoài khu'}`;
     else if (wantShare) sub = 'Đang lấy tín hiệu GPS…';
-    share.replaceChildren(h('span', { class: 'share-main', text }), sub && h('small', { text: sub }));
+    const shareSig = text + '|' + sub;
+    if (share.dataset.sig !== shareSig) { share.dataset.sig = shareSig; share.replaceChildren(h('span', { class: 'share-main', text }), sub && h('small', { text: sub })); }
   }
   function openTeamSheet() {
     if (!me) return;
@@ -524,6 +539,173 @@ export function initLive(ctx) {
         h('span', { class: 'pick-state', text: can ? 'Đi tới ›' : '' }));
     });
     openSheet(`Đội ${team + 1}`, h('div', { class: 'pick-list' }, rows));
+  }
+
+  // ---------- Lệnh trên bản đồ: mục tiêu / mũi tên / vùng ----------
+  // Thao tác chạm: chạm nút công cụ, rồi chạm lên bản đồ để đặt điểm (không cần kéo, vì kéo là di chuyển bản đồ).
+  // Mục tiêu đặt một chạm. Mũi tên (>=2 điểm) và vùng (>=3 điểm) chạm nhiều điểm rồi bấm Xong.
+  const NEED = { target: 1, arrow: 2, zone: 3 };
+  const KIND_NAME = { target: 'Mục tiêu', arrow: 'Mũi tên', zone: 'Vùng' };
+  const buzz = ms => { try { if (navigator.vibrate) navigator.vibrate(ms || 10); } catch {} };
+  const isCaptainMe = () => Boolean(me && captain && captain === me.memberId);
+  function flatToLatLngs(flat) {
+    const out = [];
+    for (let i = 0; i + 1 < flat.length; i += 2) if (Number.isFinite(flat[i]) && Number.isFinite(flat[i + 1])) out.push([flat[i], flat[i + 1]]);
+    return out;
+  }
+  function bearing(a, b) {
+    const rad = Math.PI / 180, dLng = (b[1] - a[1]) * rad;
+    const y = Math.sin(dLng) * Math.cos(b[0] * rad), x = Math.cos(a[0] * rad) * Math.sin(b[0] * rad) - Math.sin(a[0] * rad) * Math.cos(b[0] * rad) * Math.cos(dLng);
+    return (Math.atan2(y, x) / rad + 360) % 360;
+  }
+  function authorName(order) { return findMember(order.mid)?.name || 'Đồng đội'; }
+  function canDeleteOrder(order) { return Boolean(user && (order.by === user.uid || isCaptainMe())); }
+  function targetIcon(order) {
+    const el = h('div', { class: 'tgt-pin' }, h('span', { class: 'tgt-mark', text: '⌖' }), h('small', { text: authorName(order) }));
+    return window.L.divIcon({ className: '', iconSize: [44, 44], iconAnchor: [22, 22], html: el });
+  }
+  function clearOrderLayers() { orderLayers.forEach(entry => entry.group.remove()); orderLayers.clear(); }
+  function drawOrders() {
+    if (!map || !window.L) return;
+    const L = window.L, color = teamColor(), seen = new Set();
+    for (const [id, order] of Object.entries(orders)) {
+      seen.add(id);
+      const sig = JSON.stringify([order.type, order.pts, order.mid, color]);
+      const existing = orderLayers.get(id);
+      if (existing && existing.sig === sig) continue;
+      if (existing) existing.group.remove();
+      const ll = flatToLatLngs(order.pts), group = L.layerGroup();
+      const open = () => { if (!draw) openOrderSheet(id); }; // đang vẽ thì chạm vào lệnh cũ chỉ là thêm điểm
+      if (order.type === 'target' && ll.length >= 1) {
+        group.addLayer(L.marker(ll[0], { icon: targetIcon(order), keyboard: false, zIndexOffset: 500 }).on('click', open));
+      } else if (order.type === 'arrow' && ll.length >= 2) {
+        const end = ll[ll.length - 1], head = h('div', { class: 'ah', style: `transform:rotate(${bearing(ll[ll.length - 2], end)}deg);border-bottom-color:${color}` });
+        group.addLayer(L.polyline(ll, { color: '#000', weight: 9, opacity: .45, interactive: false }));
+        group.addLayer(L.polyline(ll, { color, weight: 5, opacity: .95, interactive: false }));
+        group.addLayer(L.marker(end, { interactive: false, keyboard: false, icon: L.divIcon({ className: '', iconSize: [0, 0], html: head }) }));
+        group.addLayer(L.polyline(ll, { color: '#000', weight: 36, opacity: 0 }).on('click', open)); // vùng chạm rộng cho ngón tay
+      } else if (order.type === 'zone' && ll.length >= 3) {
+        group.addLayer(L.polygon(ll, { color, weight: 3, fillColor: color, fillOpacity: .18, dashArray: '8 6', interactive: false }));
+        group.addLayer(L.polyline([...ll, ll[0]], { color: '#000', weight: 36, opacity: 0 }).on('click', open)); // chỉ viền bấm được, chạm trong vùng vẫn là kéo bản đồ
+      } else { orderLayers.delete(id); continue; }
+      group.addTo(map); orderLayers.set(id, { group, sig });
+    }
+    for (const [id, entry] of orderLayers) if (!seen.has(id)) { entry.group.remove(); orderLayers.delete(id); }
+  }
+
+  function startDraw(kind) {
+    if (!me || !map) return;
+    if (kind !== 'target' && !isCaptainMe()) { toast('Chỉ đội trưởng vẽ được mũi tên và vùng.'); return; }
+    cancelDraw();
+    draw = { kind, pts: [], layer: window.L.layerGroup().addTo(map) };
+    map.doubleClickZoom.disable(); // chạm nhanh liên tiếp không bị phóng to nhầm
+    $('#map-canvas').classList.add('drawing'); $('#map-view').classList.add('drawing');
+    buzz(8); renderDraw();
+  }
+  function cancelDraw() {
+    if (!draw) return;
+    draw.layer.remove(); draw = null;
+    if (map) map.doubleClickZoom.enable();
+    $('#map-canvas').classList.remove('drawing'); $('#map-view').classList.remove('drawing');
+    renderDraw();
+  }
+  function drawPreview() {
+    const L = window.L, color = teamColor(), pts = draw.pts;
+    draw.layer.clearLayers();
+    if (pts.length >= 2) draw.layer.addLayer(draw.kind === 'zone' && pts.length >= 3
+      ? L.polygon(pts, { color, weight: 3, fillColor: color, fillOpacity: .15, dashArray: '6 6', interactive: false })
+      : L.polyline(pts, { color, weight: 4, dashArray: '6 6', interactive: false }));
+    pts.forEach((point, i) => draw.layer.addLayer(L.circleMarker(point, { radius: i === pts.length - 1 ? 10 : 7, color: '#000', weight: 2, fillColor: i === 0 ? '#ffd23f' : '#fff', fillOpacity: 1, interactive: false })));
+  }
+  function addDrawPoint(latlng) {
+    if (!draw) return;
+    draw.pts.push([latlng.lat, latlng.lng]); buzz(8);
+    if (draw.kind === 'target') { finishDraw(); return; }
+    drawPreview(); renderDraw();
+  }
+  function undoDrawPoint() { if (!draw || !draw.pts.length) return; draw.pts.pop(); drawPreview(); renderDraw(); }
+  function pickSlot(kind) {
+    const slots = kind === 'target' ? [0, 1, 2].map(n => `t_${user.uid}_${n}`) : Array.from({ length: 10 }, (_, n) => `${kind === 'arrow' ? 'a' : 'z'}_${n}`);
+    const free = slots.find(id => !orders[id]);
+    return free || [...slots].sort((x, y) => orders[x].ts - orders[y].ts)[0]; // hết chỗ thì thay lệnh cũ nhất
+  }
+  async function finishDraw() {
+    if (!draw || draw.pts.length < NEED[draw.kind] || !me || !user) return;
+    const { kind, pts } = draw, id = pickSlot(kind);
+    cancelDraw();
+    try { await setDoc(ref('teams', me.teamId, 'orders', id), { type: kind, pts: pts.flat(), by: user.uid, mid: me.memberId, ts: serverTimestamp() }); }
+    catch (error) { toast(`Không lưu được ${KIND_NAME[kind].toLowerCase()}: ${error.message}`); }
+  }
+  async function removeOrder(id) {
+    try { await deleteDoc(ref('teams', me.teamId, 'orders', id)); } catch (error) { toast(`Không xóa được: ${error.message}`); }
+  }
+  function focusOrder(order) {
+    const ll = flatToLatLngs(order.pts); if (!ll.length || !map) return;
+    if (ll.length === 1) map.flyTo(ll[0], Math.max(map.getZoom(), 19)); else map.fitBounds(window.L.latLngBounds(ll), { padding: [60, 60], maxZoom: 20 });
+  }
+  function orderRows(close) {
+    const entries = Object.entries(orders).sort((x, y) => y[1].ts - x[1].ts), now = Date.now();
+    if (!entries.length) return [h('p', { class: 'join-lead', text: isCaptainMe() ? 'Chưa có lệnh nào. Dùng Mục tiêu, Mũi tên, Vùng ở thanh dưới bản đồ.' : 'Chưa có lệnh nào. Bấm Mục tiêu để đánh dấu cho cả đội.' })];
+    return entries.map(([id, order]) => h('div', { class: 'order-row' },
+      h('button', { class: 'order-main', type: 'button', onclick: () => { close(); focusOrder(order); } },
+        h('span', { class: 'order-icon ' + order.type, text: order.type === 'target' ? '⌖' : order.type === 'arrow' ? '➚' : '⬠' }),
+        h('span', { class: 'pick-name' }, `${KIND_NAME[order.type] || 'Lệnh'} · ${authorName(order)}`, h('small', { text: ago(now - order.ts) }))),
+      canDeleteOrder(order) && h('button', { class: 'icon-button', type: 'button', 'aria-label': 'Xóa lệnh này', onclick: () => { removeOrder(id); close(); } }, '✕')));
+  }
+  function openOrderSheet(id) {
+    const order = orders[id]; if (!order) return;
+    const body = h('div', { class: 'sheet-actions' },
+      h('p', { class: 'join-lead', text: `${authorName(order)} · ${ago(Date.now() - order.ts)}` }),
+      h('button', { class: 'secondary-button', type: 'button', onclick: () => { closeSheet(); focusOrder(order); } }, 'ĐI TỚI'),
+      canDeleteOrder(order) && h('button', { class: 'danger-button', type: 'button', onclick: () => { closeSheet(); removeOrder(id); } }, 'XÓA'),
+      h('button', { class: 'secondary-button', type: 'button', onclick: closeSheet }, 'ĐÓNG'));
+    openSheet(KIND_NAME[order.type] || 'Lệnh', body);
+  }
+  function openOrdersList() {
+    let confirmAll = false;
+    const body = h('div', { class: 'live-sheet-stack' });
+    const paint = () => {
+      const rows = orderRows(closeSheet);
+      body.replaceChildren(h('div', { class: 'pick-list' }, rows),
+        isCaptainMe() && Object.keys(orders).length > 0 && h('button', { class: 'danger-button', type: 'button', onclick: async () => {
+          if (!confirmAll) { confirmAll = true; paint(); return; }
+          closeSheet();
+          try { const batch = writeBatch(db); Object.keys(orders).forEach(id => batch.delete(ref('teams', me.teamId, 'orders', id))); await batch.commit(); toast('Đã xóa hết lệnh của đội.'); }
+          catch (error) { toast(`Không xóa được: ${error.message}`); }
+        } }, confirmAll ? 'BẤM LẠI ĐỂ XÁC NHẬN XÓA HẾT' : 'XÓA TẤT CẢ LỆNH'));
+    };
+    paint();
+    openSheet('Lệnh của đội', body);
+  }
+
+  // Thanh công cụ ở đáy (vùng ngón cái). Chỉ dựng lại khi nội dung đổi để không làm mất cú chạm đang diễn ra.
+  function toolButton(icon, label, onclick, extra = {}) {
+    return h('button', { class: 'draw-btn' + (extra.class ? ' ' + extra.class : ''), type: 'button', disabled: extra.disabled, onclick, 'aria-label': extra.aria || label },
+      h('span', { class: 'draw-icon', text: icon }), h('span', { text: label }));
+  }
+  function renderDraw() {
+    const bar = $('#draw-bar'), hint = $('#map-hint'); if (!bar || !hint) return;
+    const count = Object.keys(orders).length;
+    const sig = draw ? `d|${draw.kind}|${draw.pts.length}` : `i|${isCaptainMe()}|${count}`;
+    if (bar.dataset.sig === sig) return;
+    bar.dataset.sig = sig;
+    if (draw) {
+      const n = draw.pts.length, need = NEED[draw.kind];
+      hint.hidden = false;
+      hint.textContent = draw.kind === 'target' ? 'Chạm lên bản đồ để đánh dấu mục tiêu'
+        : n < need ? `${KIND_NAME[draw.kind]}: chạm ${need - n} điểm nữa (đã ${n})` : `${KIND_NAME[draw.kind]}: đã ${n} điểm. Chạm thêm hoặc bấm Xong`;
+      bar.replaceChildren(
+        toolButton('✕', 'Hủy', cancelDraw, { class: 'cancel' }),
+        draw.kind !== 'target' && toolButton('↶', 'Lùi 1 điểm', undoDrawPoint, { disabled: n === 0 }),
+        draw.kind !== 'target' && toolButton('✓', `Xong (${n})`, finishDraw, { class: 'done', disabled: n < need, aria: 'Xong, lưu lệnh' }));
+    } else {
+      hint.hidden = true;
+      bar.replaceChildren(
+        toolButton('⌖', 'Mục tiêu', () => startDraw('target')),
+        isCaptainMe() && toolButton('➚', 'Mũi tên', () => startDraw('arrow')),
+        isCaptainMe() && toolButton('⬠', 'Vùng', () => startDraw('zone')),
+        toolButton('☰', count ? `Lệnh (${count})` : 'Lệnh', openOrdersList));
+    }
   }
 
   // ---------- Organizer ----------
@@ -580,19 +762,30 @@ export function initLive(ctx) {
     try {
       const batch = writeBatch(db);
       batch.delete(ref('members', memberId)); batch.delete(ref('memberOf', entry.uid)); batch.delete(ref('teams', entry.teamId, 'positions', entry.uid));
+      for (let n = 0; n < 3; n++) batch.delete(ref('teams', entry.teamId, 'orders', `t_${entry.uid}_${n}`));
       await batch.commit(); toast(`Đã gỡ ${findMember(memberId)?.name || 'người chơi'}. Họ có thể vào lại.`);
     } catch (error) { toast(`Không gỡ được: ${error.message}`); }
   }
   async function endMatch() {
     try {
-      const batch = writeBatch(db);
+      // Id lệnh cố định nên xóa được mà không cần đọc (organizer không đọc được lệnh của đội). Chia nhiều batch vì giới hạn 500 thao tác.
+      const targets = [];
       for (const [memberId, entry] of Object.entries(orgMembers)) {
-        batch.delete(ref('teams', entry.teamId, 'positions', entry.uid)); batch.delete(ref('memberOf', entry.uid)); batch.delete(ref('members', memberId));
+        targets.push(ref('teams', entry.teamId, 'positions', entry.uid), ref('memberOf', entry.uid), ref('members', memberId));
+        for (let n = 0; n < 3; n++) targets.push(ref('teams', entry.teamId, 'orders', `t_${entry.uid}_${n}`));
       }
-      for (let team = 0; team < 6; team++) { batch.delete(ref('teamKeys', String(team))); batch.delete(ref('teamMeta', String(team))); }
-      batch.delete(ref('config', 'live'));
-      await batch.commit(); codes = {}; confirmEnd = false;
-      toast('Đã kết thúc trận và xóa dữ liệu vị trí.'); renderOrganizer();
+      for (let team = 0; team < 6; team++) {
+        targets.push(ref('teamKeys', String(team)), ref('teamMeta', String(team)));
+        for (let n = 0; n < 10; n++) targets.push(ref('teams', String(team), 'orders', `a_${n}`), ref('teams', String(team), 'orders', `z_${n}`));
+      }
+      targets.push(ref('config', 'live'));
+      for (let i = 0; i < targets.length; i += 400) {
+        const batch = writeBatch(db);
+        targets.slice(i, i + 400).forEach(target => batch.delete(target));
+        await batch.commit();
+      }
+      codes = {}; confirmEnd = false;
+      toast('Đã kết thúc trận và xóa dữ liệu vị trí, lệnh.'); renderOrganizer();
     } catch (error) { toast(`Không kết thúc được: ${error.message}`); }
   }
   function renderOrganizer() {
@@ -679,10 +872,10 @@ export function initLive(ctx) {
     if (!me || !phone.matches) return;
     let off = false; try { off = sessionStorage.getItem(FS_OFF_KEY) === '1'; } catch {}
     if (off) return;
-    if ($('#map-section').requestFullscreen) { if (!document.fullscreenElement) toggleFullscreen(); }
+    if ($('#map-section').requestFullscreen) { if (!document.fullscreenElement) toggleFullscreen(true); }
     else { let seen = false; try { seen = sessionStorage.getItem(HINT_KEY) === '1'; sessionStorage.setItem(HINT_KEY, '1'); } catch {} if (!seen) toast('Xoay ngang điện thoại để xem bản đồ rộng hơn.'); }
   });
-  if ($('#map-section').requestFullscreen) { $('#btn-full').hidden = false; $('#btn-full').addEventListener('click', toggleFullscreen); }
+  if ($('#map-section').requestFullscreen) { $('#btn-full').hidden = false; $('#btn-full').addEventListener('click', () => toggleFullscreen()); }
   $('#btn-share').addEventListener('click', () => { if (wantShare) stopSharing(true); else startSharing(); });
 
   // ---------- API cho app.js ----------

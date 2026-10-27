@@ -17,12 +17,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
-  <link rel="stylesheet" href="styles.css?v=mob5">
-  <link rel="stylesheet" href="live.css?v=mob5">
-  <link rel="stylesheet" href="mobile.css?v=mob5" media="(max-width:768px), (orientation:landscape) and (max-height:500px)">
-  <script type="module" src="app.js?v=mob5"></script>
-  <script defer src="nav.js?v=mob5"></script>
-  <script defer src="mobile.js?v=mob5"></script>
+  <link rel="stylesheet" href="styles.css?v=mob6">
+  <link rel="stylesheet" href="live.css?v=mob6">
+  <link rel="stylesheet" href="mobile.css?v=mob6" media="(max-width:768px), (orientation:landscape) and (max-height:500px)">
+  <script type="module" src="app.js?v=mob6"></script>
+  <script defer src="nav.js?v=mob6"></script>
+  <script defer src="mobile.js?v=mob6"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -75,6 +75,7 @@
           <div id="map-canvas" class="map-canvas"></div>
           <div id="edge-top" class="edge edge-top" hidden></div><div id="edge-left" class="edge edge-left" hidden></div>
           <div id="map-hud" class="map-hud"></div>
+          <div id="map-hint" class="map-hint" role="status" hidden></div>
           <div class="map-tools" role="group" aria-label="Công cụ bản đồ">
             <button id="btn-fit" type="button" aria-label="Căn bản đồ vào khu chơi">⌖</button>
             <button id="btn-grid" type="button" aria-label="Bật tắt lưới" aria-pressed="false">#</button>
@@ -82,7 +83,7 @@
             <button id="btn-full" type="button" aria-label="Toàn màn hình, xoay ngang" hidden>⛶</button>
             <button id="btn-org" type="button" aria-label="Điều khiển trận" hidden>⚙</button>
           </div>
-          <div class="map-bottom"><button id="btn-share" class="share-button" type="button">BẬT CHIA SẺ VỊ TRÍ</button></div>
+          <div class="map-bottom"><div id="draw-bar" class="draw-bar" role="toolbar" aria-label="Công cụ lệnh"></div><button id="btn-share" class="share-button" type="button">BẬT CHIA SẺ VỊ TRÍ</button></div>
         </div>
       </section>
 

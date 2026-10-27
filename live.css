@@ -67,7 +67,7 @@
 .leaflet-container{background:#0b0f0c;font-family:'DM Sans',Arial,sans-serif}
 .leaflet-control-attribution{font-size:9px!important;background:rgba(14,22,15,.6)!important;color:#9fb0a2!important}
 .leaflet-control-attribution a{color:#c8f36b!important}
-.leaflet-bottom.leaflet-left{margin-bottom:76px}
+.leaflet-bottom.leaflet-left{margin-bottom:150px}
 
 /* ---- Bottom sheet riêng cho bản đồ (tự đủ style để chạy cả desktop) ---- */
 .sheet.live-sheet{position:fixed;inset:0;z-index:30}
@@ -124,6 +124,34 @@
   .map-tools button{width:44px;height:44px}
   .map-hud{right:calc(10px + env(safe-area-inset-right,0px));max-width:340px}
   .share-button{min-height:50px}
-  .leaflet-bottom.leaflet-left{margin-bottom:70px}
+  .leaflet-bottom.leaflet-left{margin-bottom:132px}
   .live-sheet .sheet-panel{max-height:94vh;max-height:94dvh}
+}
+
+/* ---- Lệnh trên bản đồ (mục tiêu / mũi tên / vùng): nút ≥56px ở đáy, chạm để đặt điểm ---- */
+.map-bottom{display:flex;flex-direction:column;gap:8px}
+.draw-bar{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:8px}
+.draw-bar:empty{display:none}
+.draw-btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:58px;padding:6px 4px;border:1px solid #3d5a3d;border-radius:14px;background:rgba(14,22,15,.94);color:#e5efdf;font:700 11px 'DM Sans',sans-serif;letter-spacing:.3px;box-shadow:0 4px 18px #0007;touch-action:manipulation}
+.draw-btn:active{transform:scale(.96)}
+.draw-btn:disabled{opacity:.4}
+.draw-icon{font-size:22px;line-height:22px}
+.draw-btn.done{background:var(--lime);border-color:var(--lime);color:#172016}
+.draw-btn.cancel{color:#ffb4b4;border-color:#6a3a3a}
+.map-view.drawing #btn-share{display:none}
+.map-canvas.drawing{cursor:crosshair}
+.map-hint{position:absolute;z-index:1000;top:68px;left:calc(10px + env(safe-area-inset-left,0px));right:68px;padding:9px 12px;border-radius:10px;background:#ffd23ff0;color:#1b1b0a;font:700 13px/1.35 'DM Sans',sans-serif;pointer-events:none;box-shadow:0 4px 18px #0007}
+.map-hint[hidden]{display:none}
+.tgt-pin{position:relative;width:44px;height:44px;display:grid;place-items:center}
+.tgt-mark{font-size:40px;line-height:40px;color:#ff4d4d;text-shadow:0 0 3px #000,0 0 3px #000,0 0 6px #000;font-weight:700}
+.tgt-pin small{position:absolute;top:44px;left:50%;transform:translateX(-50%);max-width:110px;padding:1px 6px;border-radius:6px;background:rgba(14,22,15,.85);border-left:3px solid #ff4d4d;color:#fff;font:600 11px 'DM Sans',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ah{width:0;height:0;border-left:12px solid transparent;border-right:12px solid transparent;border-bottom:24px solid;margin:-12px 0 0 -12px;filter:drop-shadow(0 0 2px #000) drop-shadow(0 0 2px #000)}
+.order-row{display:flex;align-items:center;gap:8px}
+.order-main{flex:1;min-width:0;display:flex;align-items:center;gap:12px;min-height:56px;padding:6px 12px;border:1px solid #344739;background:#202c24;color:var(--text);text-align:left}
+.order-icon{width:34px;height:34px;display:grid;place-items:center;border-radius:8px;background:#111a15;font-size:22px;flex:none}
+.order-icon.target{color:#ff4d4d}.order-icon.arrow,.order-icon.zone{color:var(--lime)}
+.live-sheet-stack{display:flex;flex-direction:column;gap:12px}
+@media (orientation:landscape) and (max-height:500px){
+  .draw-btn{min-height:50px}
+  .map-hint{top:64px;max-width:340px}
 }
