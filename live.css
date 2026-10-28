@@ -221,3 +221,4 @@
 .dead-row{align-items:stretch}.dead-row .team-row{opacity:.7}.dead-row .dn{text-decoration:line-through;text-decoration-color:#ffffff88}.dead-row small{display:block}
 .dead-row .revive-btn{width:auto;flex:none;min-width:84px;padding:0 14px}
 .team-row.sel{border-color:var(--lime);background:#2a3d2c}
+.org-danger .secondary-button{width:100%}

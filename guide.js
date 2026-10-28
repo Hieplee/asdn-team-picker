@@ -16,7 +16,7 @@
 
   function figure(b) {
     var fig = el('div', 'g-fig');
-    var shot = el('div', 'g-shot'); var img = el('img'); img.src = 'guide/' + b.shot + '.jpg?v=6'; img.alt = b.alt || b.caption || ''; img.loading = 'lazy'; shot.append(img);
+    var shot = el('div', 'g-shot'); var img = el('img'); img.src = 'guide/' + b.shot + '.jpg?v=7'; img.alt = b.alt || b.caption || ''; img.loading = 'lazy'; shot.append(img);
     var legend = el('ol', 'g-legend');
     b.marks.forEach(function (m) {
       var box = el('div', 'g-mk'); box.dataset.role = m.role || ''; box.style.cssText = 'left:' + m.x + '%;top:' + m.y + '%;width:' + m.w + '%;height:' + m.h + '%'; box.append(el('i'));

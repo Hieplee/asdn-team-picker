@@ -1856,6 +1856,42 @@ window.GUIDE={
     },
     {
      "t": "fig",
+     "shot": "m25-org-round",
+     "caption": "Giữa các ván: ván mới và hồi sinh",
+     "role": "org",
+     "marks": [
+      {
+       "title": "☠ Hồi sinh cả đội",
+       "desc": "Xóa báo chết của đội đó. Dùng khi chỉ một đội chơi lại.",
+       "role": "org",
+       "x": 8.21,
+       "y": 62.94,
+       "w": 27.44,
+       "h": 5.21
+      },
+      {
+       "title": "VÁN MỚI",
+       "desc": "Xóa báo chết và mọi lệnh, giữ nguyên người đã vào đội, đội trưởng, khu vực và vị trí. Bấm 2 lần để xác nhận.",
+       "role": "org",
+       "x": 7.44,
+       "y": 80.91,
+       "w": 85.13,
+       "h": 5.21
+      },
+      {
+       "title": "KẾT THÚC TRẬN",
+       "desc": "Xóa toàn bộ dữ liệu của trận, kể cả danh sách vào đội.",
+       "role": "org",
+       "x": 7.44,
+       "y": 90.62,
+       "w": 85.13,
+       "h": 6.16
+      }
+     ],
+     "alt": "Điều khiển trận: Ván mới và Hồi sinh cả đội"
+    },
+    {
+     "t": "fig",
      "shot": "m19-org-end",
      "caption": "Kết thúc trận",
      "marks": [
