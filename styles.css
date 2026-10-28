@@ -186,3 +186,4 @@ body.viewer #unlock-all,body.viewer #lock-hint{display:none}
 .audit-list li.audit-card{border:1px solid var(--line,#2c3a33);border-left:3px solid #8a8f8c;border-radius:8px;padding:9px 11px;display:grid;gap:5px}
 .audit-card.audit-lock{border-left-color:var(--lime)}.audit-card.audit-split{border-left-color:#5aa9e6}.audit-card.audit-members{border-left-color:#6fcf97}.audit-card.audit-stats{border-left-color:#bb86fc}
 .audit-head{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline}.audit-tag{font-weight:700}.audit-meta{font-size:11px;opacity:.65}.audit-line{line-height:1.4}
+.setup-toggle{display:none}
