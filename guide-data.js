@@ -1457,7 +1457,7 @@ window.GUIDE={
      "t": "steps",
      "items": [
       "Chia đội xong, bấm <b>KHÓA ĐỘI</b> ở từng đội. Chỉ đội đã khóa mới có mã và nút <b>QR VÀO ĐỘI</b>.",
-      "Trong tab <b>Đội hình</b>, mục <b>Khu vực chơi</b> chọn Núi hoặc Phố (cả trận dùng chung).",
+      "Trong tab <b>Đội hình</b>, bấm <b>Chỉnh ▾</b> để mở phần thiết lập, rồi ở mục <b>Khu vực chơi</b> chọn Núi hoặc Phố (cả trận dùng chung). Cũng đổi được trong <b>⚙ Điều khiển trận</b> ở bước sau.",
       "Mở <b>⚙ Điều khiển trận</b> trên bản đồ, đưa mã/QR cho từng đội, đặt đội trưởng.",
       "Cuối buổi: <b>KẾT THÚC TRẬN</b> để xóa dữ liệu."
      ],
@@ -1487,31 +1487,31 @@ window.GUIDE={
      "caption": "Chọn khu vực chơi",
      "marks": [
       {
-       "title": "Khu vực chơi",
-       "desc": "Thẻ chọn khu, chỉ người tổ chức thấy.",
+       "title": "Chỉnh ▾",
+       "desc": "Ở tab Đội hình, bấm để mở phần thiết lập; mục Khu vực chơi nằm ở cuối (chỉ người tổ chức thấy).",
        "role": "org",
-       "x": 0,
-       "y": 0,
-       "w": 0,
-       "h": 0
+       "x": 3.59,
+       "y": 7.7,
+       "w": 92.82,
+       "h": 5.69
       },
       {
        "title": "Núi",
        "desc": "Chọn khu Núi.",
        "role": "org",
-       "x": 0,
-       "y": 0,
-       "w": 0,
-       "h": 0
+       "x": 8.46,
+       "y": 47.16,
+       "w": 40,
+       "h": 5.69
       },
       {
        "title": "Phố",
        "desc": "Chọn khu Phố. Bản đồ của mọi người đổi theo ngay.",
        "role": "org",
-       "x": 0,
-       "y": 0,
-       "w": 0,
-       "h": 0
+       "x": 48.46,
+       "y": 47.16,
+       "w": 40,
+       "h": 5.69
       }
      ],
      "alt": "Chọn khu vực chơi",

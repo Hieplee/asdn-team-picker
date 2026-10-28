@@ -150,7 +150,7 @@
 .order-row{display:flex;align-items:center;gap:8px}
 .order-main{flex:1;min-width:0;display:flex;align-items:center;gap:12px;min-height:56px;padding:6px 12px;border:1px solid #344739;background:#202c24;color:var(--text);text-align:left}
 .order-icon{width:34px;height:34px;display:grid;place-items:center;border-radius:8px;background:#111a15;font-size:22px;flex:none}
-.order-icon.target{color:#ff4d4d}.order-icon.arrow,.order-icon.zone{color:var(--lime)}
+.order-icon.target{color:#ff4d4d}.order-icon.arrow,.order-icon.zone{color:var(--lime)}.order-icon.attack{color:#ff5a4d}.order-icon.defend{color:#4da3ff}
 .live-sheet-stack{display:flex;flex-direction:column;gap:12px}
 @media (orientation:landscape) and (max-height:500px){
   .draw-btn{min-height:50px}
@@ -203,3 +203,11 @@
 /* Nút chia sẻ gọn hơn: thấp 44px (vẫn đủ vùng chạm), chữ nhỏ, không che nhiều bản đồ */
 .share-button{min-height:44px;padding:6px 12px;font-size:12.5px;letter-spacing:.6px;border-radius:12px;box-shadow:0 4px 18px #0007;touch-action:manipulation}
 .share-button small{font-size:11px;line-height:1.1}
+
+/* Tấn công / Phòng thủ: ký hiệu nhỏ hơn mục tiêu, màu cố định */
+.svg-ic{display:inline-grid;place-items:center;width:1em;height:1em;color:inherit}.svg-ic svg{width:100%;height:100%}
+.tgt-pin.fixed .tgt-mark{font-size:34px;line-height:34px;filter:drop-shadow(0 0 2px #000)}
+.draw-btn .svg-ic{font-size:22px;color:inherit}.draw-btn .svg-ic svg{width:22px;height:22px}
+.order-icon .svg-ic{font-size:22px}
+.draw-btn:has(.svg-ic) .draw-icon{display:grid;place-items:center}
+.svg-ic.attack{color:#ff5a4d}.svg-ic.defend{color:#4da3ff}

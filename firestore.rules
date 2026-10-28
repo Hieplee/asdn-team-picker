@@ -110,6 +110,10 @@ service cloud.firestore {
         && (
           (request.resource.data.type == 'target' && request.resource.data.pts.size() == 2
             && oid.matches('t_' + request.auth.uid + '_[0-2]'))
+          || (request.resource.data.type == 'attack' && request.resource.data.pts.size() == 2
+            && oid.matches('atk_[0-4]') && isCaptain(teamId))
+          || (request.resource.data.type == 'defend' && request.resource.data.pts.size() == 2
+            && oid.matches('def_[0-4]') && isCaptain(teamId))
           || (request.resource.data.type == 'arrow' && request.resource.data.pts.size() >= 4 && request.resource.data.pts.size() <= 40
             && oid.matches('a_[0-9]') && isCaptain(teamId))
           || (request.resource.data.type == 'zone' && request.resource.data.pts.size() >= 6 && request.resource.data.pts.size() <= 40

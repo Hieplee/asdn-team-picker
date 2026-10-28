@@ -581,8 +581,19 @@ export function initLive(ctx) {
   // ---------- Lệnh trên bản đồ: mục tiêu / mũi tên / vùng ----------
   // Thao tác chạm: chạm nút công cụ, rồi chạm lên bản đồ để đặt điểm (không cần kéo, vì kéo là di chuyển bản đồ).
   // Mục tiêu đặt một chạm. Mũi tên (>=2 điểm) và vùng (>=3 điểm) chạm nhiều điểm rồi bấm Xong.
-  const NEED = { target: 1, arrow: 2, zone: 3 };
-  const KIND_NAME = { target: 'Mục tiêu', arrow: 'Mũi tên', zone: 'Vùng' };
+  const NEED = { target: 1, attack: 1, defend: 1, arrow: 2, zone: 3 };
+  const KIND_NAME = { target: 'Mục tiêu', attack: 'Tấn công', defend: 'Phòng thủ', arrow: 'Mũi tên', zone: 'Vùng' };
+  // Tấn công / Phòng thủ: đội trưởng đánh dấu một chạm như mục tiêu, màu cố định (đỏ / xanh) để phân biệt với mục tiêu của từng người.
+  const FIXED_MARK = { attack: { color: '#ff5a4d' }, defend: { color: '#4da3ff' } };
+  const ORDER_ICON = { target: '⌖', arrow: '➚', zone: '⬠' };
+  // Biểu tượng cách điệu kiểu bản đồ chỉ huy trong Squad: mũi tên chevron (tấn công), khiên (phòng thủ). Tô bằng currentColor.
+  const SVG_ICON = {
+    attack: '<svg viewBox="0 0 24 24"><path d="M12 2 21 21 12 16 3 21Z" fill="currentColor" stroke="#000" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 8 15.5 15.5 12 13.5 8.5 15.5Z" fill="#000" fill-opacity=".55"/></svg>',
+    defend: '<svg viewBox="0 0 24 24"><path d="M12 2 20.5 5.5V12C20.5 17 16.5 20.5 12 22 7.5 20.5 3.5 17 3.5 12V5.5Z" fill="currentColor" stroke="#000" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 6 17 8V12C17 15 14.8 17.2 12 18.3 9.2 17.2 7 15 7 12V8Z" fill="#000" fill-opacity=".55"/></svg>'
+  };
+  const svgIcon = kind => { const el = h('span', { class: 'svg-ic ' + kind }); el.innerHTML = SVG_ICON[kind]; return el; };
+  const iconFor = type => SVG_ICON[type] ? svgIcon(type) : ORDER_ICON[type] || '⬠';
+  const isPoint = kind => NEED[kind] === 1;
   const buzz = ms => { try { if (navigator.vibrate) navigator.vibrate(ms || 10); } catch {} };
   const isCaptainMe = () => Boolean(me && captain && captain === me.memberId);
   function flatToLatLngs(flat) {
@@ -608,7 +619,8 @@ export function initLive(ctx) {
   function authorName(order) { return findMember(order.mid)?.name || 'Đồng đội'; }
   function canDeleteOrder(order) { return Boolean(user && (order.by === user.uid || isCaptainMe())); }
   function targetIcon(order) {
-    const el = h('div', { class: 'tgt-pin', style: `--c:${memberColor(order.mid)}` }, h('span', { class: 'tgt-mark', text: '⌖' }), order.num && h('b', { class: 'tgt-num', text: String(order.num) }));
+    const fixed = FIXED_MARK[order.type];
+    const el = h('div', { class: 'tgt-pin' + (fixed ? ' fixed' : ''), style: `--c:${fixed ? fixed.color : memberColor(order.mid)}` }, h('span', { class: 'tgt-mark' }, fixed ? svgIcon(order.type) : '⌖'), !fixed && order.num && h('b', { class: 'tgt-num', text: String(order.num) }));
     return window.L.divIcon({ className: '', iconSize: [44, 44], iconAnchor: [22, 22], html: el });
   }
   function clearOrderLayers() { orderLayers.forEach(entry => entry.group.remove()); orderLayers.clear(); }
@@ -623,7 +635,7 @@ export function initLive(ctx) {
       if (existing) existing.group.remove();
       const ll = flatToLatLngs(order.pts), group = L.layerGroup();
       const open = () => { if (!draw) openOrderSheet(id); }; // đang vẽ thì chạm vào lệnh cũ chỉ là thêm điểm
-      if (order.type === 'target' && ll.length >= 1) {
+      if (isPoint(order.type) && ll.length >= 1) {
         group.addLayer(L.marker(ll[0], { icon: targetIcon(order), keyboard: false, zIndexOffset: 500 }).on('click', open));
       } else if (order.type === 'arrow' && ll.length >= 2) {
         const end = ll[ll.length - 1], head = h('div', { class: 'ah', style: `transform:rotate(${bearing(ll[ll.length - 2], end)}deg)` });
@@ -642,7 +654,7 @@ export function initLive(ctx) {
 
   function startDraw(kind) {
     if (!me || !map) return;
-    if (kind !== 'target' && !isCaptainMe()) { toast('Chỉ đội trưởng vẽ được mũi tên và vùng.'); return; }
+    if (kind !== 'target' && !isCaptainMe()) { toast('Chỉ đội trưởng đánh dấu được tấn công, phòng thủ, mũi tên và vùng.'); return; }
     cancelDraw();
     draw = { kind, pts: [], layer: window.L.layerGroup().addTo(map) };
     map.doubleClickZoom.disable(); // chạm nhanh liên tiếp không bị phóng to nhầm
@@ -667,12 +679,14 @@ export function initLive(ctx) {
   function addDrawPoint(latlng) {
     if (!draw) return;
     draw.pts.push([latlng.lat, latlng.lng]); buzz(8);
-    if (draw.kind === 'target') { finishDraw(); return; }
+    if (isPoint(draw.kind)) { finishDraw(); return; }
     drawPreview(); renderDraw();
   }
   function undoDrawPoint() { if (!draw || !draw.pts.length) return; draw.pts.pop(); drawPreview(); renderDraw(); }
   function pickSlot(kind) {
-    const slots = kind === 'target' ? [0, 1, 2].map(n => `t_${user.uid}_${n}`) : Array.from({ length: 10 }, (_, n) => `${kind === 'arrow' ? 'a' : 'z'}_${n}`);
+    const slots = kind === 'target' ? [0, 1, 2].map(n => `t_${user.uid}_${n}`)
+      : kind === 'attack' || kind === 'defend' ? Array.from({ length: 5 }, (_, n) => `${kind === 'attack' ? 'atk' : 'def'}_${n}`)
+      : Array.from({ length: 10 }, (_, n) => `${kind === 'arrow' ? 'a' : 'z'}_${n}`);
     const free = slots.find(id => !orders[id]);
     return free || [...slots].sort((x, y) => orders[x].ts - orders[y].ts)[0]; // hết chỗ thì thay lệnh cũ nhất
   }
@@ -702,10 +716,10 @@ export function initLive(ctx) {
   }
   function orderRows(close) {
     const entries = Object.entries(orders).sort((x, y) => y[1].ts - x[1].ts), now = Date.now();
-    if (!entries.length) return [h('p', { class: 'join-lead', text: isCaptainMe() ? 'Chưa có lệnh nào. Dùng Mục tiêu, Mũi tên, Vùng ở thanh dưới bản đồ.' : 'Chưa có lệnh nào. Bấm Mục tiêu để đánh dấu cho cả đội.' })];
+    if (!entries.length) return [h('p', { class: 'join-lead', text: isCaptainMe() ? 'Chưa có lệnh nào. Dùng Mục tiêu, Tấn công, Phòng thủ, Mũi tên, Vùng ở thanh dưới bản đồ.' : 'Chưa có lệnh nào. Bấm Mục tiêu để đánh dấu cho cả đội.' })];
     return entries.map(([id, order]) => h('div', { class: 'order-row' },
       h('button', { class: 'order-main', type: 'button', onclick: () => { close(); focusOrder(order); } },
-        h('span', { class: 'order-icon ' + order.type, style: order.type === 'target' ? `color:${memberColor(order.mid)}` : '', text: order.type === 'target' ? '⌖' : order.type === 'arrow' ? '➚' : '⬠' }),
+        h('span', { class: 'order-icon ' + order.type, style: order.type === 'target' ? `color:${memberColor(order.mid)}` : '', }, iconFor(order.type)),
         h('span', { class: 'pick-name' }, `${orderLabel(order)} · ${authorName(order)}`, h('small', { text: ago(now - order.ts) }))),
       canDeleteOrder(order) && h('button', { class: 'icon-button', type: 'button', 'aria-label': 'Xóa lệnh này', onclick: () => { removeOrder(id); close(); } }, '✕')));
   }
@@ -738,7 +752,7 @@ export function initLive(ctx) {
   // Thanh công cụ ở đáy (vùng ngón cái). Chỉ dựng lại khi nội dung đổi để không làm mất cú chạm đang diễn ra.
   function toolButton(icon, label, onclick, extra = {}) {
     return h('button', { class: 'draw-btn' + (extra.class ? ' ' + extra.class : ''), type: 'button', disabled: extra.disabled, onclick, 'aria-label': extra.aria || label },
-      h('span', { class: 'draw-icon', text: icon }), h('span', { text: label }));
+      h('span', { class: 'draw-icon' }, icon), h('span', { text: label }));
   }
   function renderDraw() {
     const bar = $('#draw-bar'), hint = $('#map-hint'); if (!bar || !hint) return;
@@ -749,16 +763,18 @@ export function initLive(ctx) {
     if (draw) {
       const n = draw.pts.length, need = NEED[draw.kind];
       hint.hidden = false;
-      hint.textContent = draw.kind === 'target' ? 'Chạm lên bản đồ để đánh dấu mục tiêu'
+      hint.textContent = isPoint(draw.kind) ? `Chạm lên bản đồ để đánh dấu ${KIND_NAME[draw.kind].toLowerCase()}`
         : n < need ? `${KIND_NAME[draw.kind]}: chạm ${need - n} điểm nữa (đã ${n})` : `${KIND_NAME[draw.kind]}: đã ${n} điểm. Chạm thêm hoặc bấm Xong`;
       bar.replaceChildren(...[
         toolButton('✕', 'Hủy', cancelDraw, { class: 'cancel' }),
-        draw.kind !== 'target' && toolButton('↶', 'Lùi 1 điểm', undoDrawPoint, { disabled: n === 0 }),
-        draw.kind !== 'target' && toolButton('✓', `Xong (${n})`, finishDraw, { class: 'done', disabled: n < need, aria: 'Xong, lưu lệnh' })].filter(Boolean));
+        !isPoint(draw.kind) && toolButton('↶', 'Lùi 1 điểm', undoDrawPoint, { disabled: n === 0 }),
+        !isPoint(draw.kind) && toolButton('✓', `Xong (${n})`, finishDraw, { class: 'done', disabled: n < need, aria: 'Xong, lưu lệnh' })].filter(Boolean));
     } else {
       hint.hidden = true;
       bar.replaceChildren(...[
         toolButton('⌖', 'Mục tiêu', () => startDraw('target')),
+        isCaptainMe() && toolButton(svgIcon('attack'), 'Tấn công', () => startDraw('attack')),
+        isCaptainMe() && toolButton(svgIcon('defend'), 'Phòng thủ', () => startDraw('defend')),
         isCaptainMe() && toolButton('➚', 'Mũi tên', () => startDraw('arrow')),
         isCaptainMe() && toolButton('⬠', 'Vùng', () => startDraw('zone')),
         toolButton('☰', count ? `Lệnh (${count})` : 'Lệnh', openOrdersList)].filter(Boolean));
@@ -836,6 +852,7 @@ export function initLive(ctx) {
       for (let team = 0; team < 6; team++) {
         targets.push(ref('teamKeys', String(team)), ref('teamMeta', String(team)));
         for (let n = 0; n < 10; n++) targets.push(ref('teams', String(team), 'orders', `a_${n}`), ref('teams', String(team), 'orders', `z_${n}`));
+        for (let n = 0; n < 5; n++) targets.push(ref('teams', String(team), 'orders', `atk_${n}`), ref('teams', String(team), 'orders', `def_${n}`));
       }
       targets.push(ref('config', 'map'));
       for (let i = 0; i < targets.length; i += 400) {
