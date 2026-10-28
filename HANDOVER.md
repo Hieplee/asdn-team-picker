@@ -72,7 +72,7 @@ Chạy local: `python3 -m http.server 8000` rồi mở `http://localhost:8000` (
 2. Thêm UID vào **cả hai chỗ**: `organizerUids` trong `cloud-config.js` **và** 2 chỗ `request.auth.uid in [...]` trong `firestore.rules`.
 3. Copy nội dung `firestore.rules` dán vào Firebase Console → Firestore → Rules → Publish. (Chỉ push git là **chưa** đủ.)
 
-Organizer hiện tại (xem comment trong `cloud-config.js`): hiepbrse@gmail.com, khanhtrandhp@gmail.com, highlandart89@gmail.com, writewin@gmail.com, nguyenkhoi0708@gmail.com.
+Organizer hiện tại (xem comment trong `cloud-config.js`): hiepbrse@gmail.com, khanhtrandhp@gmail.com, highlandart89@gmail.com, writewin@gmail.com, nguyenkhoi0708@gmail.com, trungkien7111@gmail.com.
 
 ### Deploy
 Push `main` → GitHub Pages tự cập nhật (Settings → Pages: Deploy from branch, `main`, `/ (root)`). Chờ ~1 phút, hard refresh nếu chưa thấy đổi.
