@@ -26,7 +26,7 @@ body{padding-bottom:calc(var(--tabbar-h) + var(--safe-b) + 84px);overscroll-beha
 /* Mỗi tab một màn hình */
 body[data-tab="roster"] #setup-section,body[data-tab="roster"] #results,body[data-tab="roster"] #viewer-empty,body[data-tab="roster"] #audit-panel,
 body[data-tab="teams"] .hero,body[data-tab="teams"] #roster-section,body[data-tab="teams"] #audit-panel,
-body[data-tab="audit"] .hero,body[data-tab="audit"] main#top,body[data-tab="audit"] .mobile-bar{display:none!important}
+body[data-tab="audit"] .hero,body[data-tab="audit"] main#top,body[data-tab="audit"] .mobile-bar,body[data-tab="guide"] main#top,body[data-tab="guide"] #audit-panel,body[data-tab="guide"] .mobile-bar,body[data-tab="guide"] .setup-toggle,body:not([data-tab="guide"]) #guide-section{display:none!important}
 body[data-tab="teams"] .mobile-bar{display:none!important}
 
 /* Tab bar dưới */

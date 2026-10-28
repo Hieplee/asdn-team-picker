@@ -32,6 +32,10 @@ Trên màn hình ≤768px, app dùng giao diện riêng nằm trong `mobile.css`
 - **PWA**: `manifest.webmanifest` + `icons/icon-*.png`; mở trên điện thoại rồi "Thêm vào Màn hình chính" để chạy toàn màn hình. Chưa có service worker (không dùng offline).
 - Không đổi logic chia đội, dữ liệu hay `firestore.rules`.
 
+## Tab Hướng dẫn
+
+Tab **Hướng dẫn** (tab bar dưới trên mobile, nút trên thanh điều hướng ở PC) gồm `guide.js`, `guide.css`, `guide-data.js` và ảnh chụp mobile trong `guide/`. Nội dung chia 6 phần (Bắt đầu, Chọn người, Chia đội, Đội hình, Bản đồ, Hỏi đáp) và tự đổi theo vai trò: người chơi chỉ thấy phần xem, người tổ chức thấy đủ (có nút chuyển vai trò để xem trước). Mỗi nút trên ảnh được đánh số, khớp với chú thích bên cạnh. Sửa nội dung trong `guide-data.js`; đổi giao diện app thì chụp lại ảnh và cập nhật toạ độ đánh dấu (phần trăm theo ảnh).
+
 ## Firebase
 
 1. Tạo Firebase project và web app, rồi chép web config vào `cloud-config.js`. Các giá trị này là mã định danh công khai, không phải khoá bí mật.
