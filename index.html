@@ -17,12 +17,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
-  <link rel="stylesheet" href="styles.css?v=mob16">
-  <link rel="stylesheet" href="live.css?v=mob16">
-  <link rel="stylesheet" href="mobile.css?v=mob16" media="(max-width:768px), (orientation:landscape) and (max-height:500px)">
-  <script type="module" src="app.js?v=mob16"></script>
-  <script defer src="nav.js?v=mob16"></script>
-  <script defer src="mobile.js?v=mob16"></script>
+  <link rel="stylesheet" href="styles.css?v=mob17">
+  <link rel="stylesheet" href="live.css?v=mob17">
+  <link rel="stylesheet" href="mobile.css?v=mob17" media="(max-width:768px), (orientation:landscape) and (max-height:500px)">
+  <script type="module" src="app.js?v=mob17"></script>
+  <script defer src="nav.js?v=mob17"></script>
+  <script defer src="mobile.js?v=mob17"></script>
 </head>
 <body>
   <div class="app-shell">
@@ -61,7 +61,7 @@
         <form id="guest-form" class="guest-form"><label for="guest-name">THÊM KHÁCH MỜI</label><div class="guest-input"><input id="guest-name" name="guest-name" maxlength="50" placeholder="Nhập tên người mới..." autocomplete="off" required><button type="submit" aria-label="Thêm khách mời">+ THÊM</button></div></form>
       </section>
 
-      <section id="setup-section" class="panel setup-panel" aria-labelledby="setup-heading"><div class="section-head"><div><p class="eyebrow">02 / SETUP</p><h2 id="setup-heading">Thiết lập trận đấu</h2><p class="section-description">Chọn số đội. App sẽ cân quân số, skill và lối chơi.</p></div></div><div class="setup-content"><div class="setup-field"><span class="field-label">SỐ ĐỘI</span><div class="segmented" role="group" aria-label="Số đội"><button type="button" class="team-count active" data-count="2" aria-pressed="true">02</button><button type="button" class="team-count" data-count="3" aria-pressed="false">03</button><button type="button" class="team-count" data-count="4" aria-pressed="false">04</button><button type="button" class="team-count" data-count="5" aria-pressed="false">05</button><button type="button" class="team-count" data-count="6" aria-pressed="false">06</button></div></div><div class="setup-note"><span class="note-icon">i</span><p>Skill chưa đánh giá được tính tạm là 3; lối chơi chưa chọn sẽ không ảnh hưởng cách chia. Mỗi đội chênh tối đa 1 người.</p></div><div class="split-actions"><label class="split-mode"><span class="field-label">KIỂU CHIA</span><select id="split-mode" aria-label="Kiểu chia đội"><option value="balanced">⚖ Cân bằng</option><option value="random">⚄ Ngẫu nhiên</option></select></label><button id="split-button" class="primary-button" type="button" disabled><span>CHIA ĐỘI</span><span id="split-icon" class="arrow mode-icon">⚖</span></button></div></div><p id="setup-message" class="setup-message" role="status">Chọn ít nhất 2 người để bắt đầu.</p></section>
+      <section id="setup-section" class="panel setup-panel" aria-labelledby="setup-heading"><div class="section-head"><div><p class="eyebrow">02 / SETUP</p><h2 id="setup-heading">Thiết lập trận đấu</h2><p class="section-description">Chọn số đội. App sẽ cân quân số, skill và lối chơi.</p></div></div><div class="setup-content"><div class="setup-field"><span class="field-label">SỐ ĐỘI</span><div class="segmented" role="group" aria-label="Số đội"><button type="button" class="team-count active" data-count="2" aria-pressed="true">02</button><button type="button" class="team-count" data-count="3" aria-pressed="false">03</button><button type="button" class="team-count" data-count="4" aria-pressed="false">04</button><button type="button" class="team-count" data-count="5" aria-pressed="false">05</button><button type="button" class="team-count" data-count="6" aria-pressed="false">06</button></div></div><div class="setup-note"><span class="note-icon">i</span><p>Skill chưa đánh giá được tính tạm là 3; lối chơi chưa chọn sẽ không ảnh hưởng cách chia. Mỗi đội chênh tối đa 1 người.</p></div><div class="split-actions"><label class="split-mode"><span class="field-label">KIỂU CHIA</span><select id="split-mode" aria-label="Kiểu chia đội"><option value="balanced">⚖ Cân bằng</option><option value="random">⚄ Ngẫu nhiên</option></select></label><button id="split-button" class="primary-button" type="button" disabled><span>CHIA ĐỘI</span><span id="split-icon" class="arrow mode-icon">⚖</span></button></div></div><div id="map-pick" class="setup-field map-pick" hidden><span class="field-label">KHU VỰC CHƠI</span><div id="map-pick-buttons" class="segmented" role="group" aria-label="Khu vực chơi"></div></div><p id="setup-message" class="setup-message" role="status">Chọn ít nhất 2 người để bắt đầu.</p></section>
 
       <p id="viewer-empty" class="viewer-empty" hidden>Chưa có đội hình. Người tổ chức sẽ chia đội và cập nhật tại đây.</p>
 

@@ -323,6 +323,7 @@ export function initLive(ctx) {
     if (map) { buildArea(window.L); toast(`Organizer đã chọn khu: ${MAPS[id].label}.`); }
     if (orgOpen()) renderOrganizer();
     renderHud();
+    if (api.onMapChange) api.onMapChange(mapId);
   }
   const orgOpen = () => !$('#live-sheet').hidden && $('#live-sheet-title').textContent === 'Điều khiển trận';
   function fitArea() { if (map) map.fitBounds(boundsArea, { paddingTopLeft: [16, 70], paddingBottomRight: [64, 96] }); }
@@ -777,6 +778,7 @@ export function initLive(ctx) {
     try { await setDoc(ref('teamKeys', String(team)), { code, at: serverTimestamp() }); codes[team] = code; toast(`Đã đổi mã Đội ${team + 1}. Mã cũ không dùng được nữa.`); renderOrganizer(); }
     catch (error) { toast(`Không đổi được mã: ${error.message}`); }
   }
+  let mapWatch = null;
   let orgUnsubs = [], orgMembers = {}, orgCaptains = {}, orgFocus = null, qrOpen = new Set(), confirmEnd = false;
 
   async function openOrganizer(focusTeam = null) {
@@ -940,6 +942,15 @@ export function initLive(ctx) {
     },
     onState() { if (join.step === 'pick') render(); else if (!me) render(); renderHud(); if (!$('#live-sheet').hidden) renderOrganizer(); },
     openOrganizer,
+    // Chọn khu ngay ở màn Chia đội: app.js đọc danh sách khu, khu hiện tại và nghe thay đổi.
+    maps: Object.entries(MAPS).map(([id, m]) => ({ id, label: m.label })),
+    getMapId: () => mapId,
+    setMap,
+    onMapChange: null,
+    watchMap() {
+      if (mapWatch) return;
+      mapWatch = onSnapshot(ref('config', 'map'), snap => { applyMapId(snap.exists() ? snap.data().map : DEFAULT_MAP); }, () => {});
+    },
     // Mở link ?join=… : chuyển sang tab Bản đồ và điền mã.
     consumeJoinLink() {
       if (!pending.code) return;

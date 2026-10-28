@@ -130,6 +130,7 @@ async function initCloud() {
     cloudDb = db;
     cloudFs = { doc, writeBatch, collection, serverTimestamp, query, orderBy, limit, getDocs, getDoc, setDoc, deleteDoc, onSnapshot };
     live = liveModule?.initLive({ auth: cloudAuth, db, fs: cloudFs, signInAnonymously, getState: () => state, findMember, makeAvatar, isOrganizer: () => canEdit, toast: showToast, teamColors: TEAM_COLORS });
+    if (live) live.onMapChange = renderMapPick;
     cloudSession = doc(db, 'public', 'current');
     cloudAttributes = doc(db, 'public', 'attributes');
     onAuthStateChanged(cloudAuth, user => {
@@ -953,7 +954,28 @@ function teamAverage(people) {
   }
   return result;
 }
+function renderMapPick() {
+  const box = $('#map-pick'), list = $('#map-pick-buttons');
+  const show = Boolean(live?.maps) && canEdit && cloudReady;
+  box.hidden = !show;
+  if (!show) return;
+  live.watchMap();
+  const current = live.getMapId();
+  if (list.childElementCount !== live.maps.length) {
+    list.replaceChildren(...live.maps.map(m => {
+      const button = document.createElement('button');
+      button.type = 'button'; button.dataset.map = m.id; button.textContent = m.label;
+      button.addEventListener('click', () => live.setMap(m.id));
+      return button;
+    }));
+  }
+  list.querySelectorAll('button').forEach(button => {
+    const active = button.dataset.map === current;
+    button.classList.toggle('active', active); button.setAttribute('aria-pressed', String(active));
+  });
+}
 function render() {
+  renderMapPick();
   document.querySelectorAll('.mode-button, .team-count, #select-all, #clear-all, #guest-name, #guest-form button, #reshuffle, #rebalance-min').forEach(control => { control.disabled = !cloudReady || !canEdit; });
   $('#roster-total').textContent = allMembers().length;
   $('#selected-total').textContent = state.selected.length;
