@@ -182,7 +182,7 @@ html.fs-lock,html.fs-lock body{overflow:hidden}
 
 /* Mục tiêu: màu theo người đặt (không ghi tên). Mũi tên: mảnh, trắng viền đen cho dễ đọc trên ảnh vệ tinh. */
 .tgt-pin small{display:none}
-.tgt-mark{color:var(--c,#ff4d4d);text-shadow:0 0 2px #000,0 0 2px #000,0 0 5px #000,0 0 5px #000}
+.tgt-mark{color:var(--c,#ff4d4d);text-shadow:0 0 1.5px #000,0 0 1.5px #000,0 0 3px #000}
 .ah{border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:15px solid #ff7a1a;margin:-8px 0 0 -5px;filter:drop-shadow(0 0 1.5px #000) drop-shadow(0 0 1.5px #000)}
 .color-dot{display:inline-block;width:11px;height:11px;margin-right:8px;border-radius:50%;border:2px solid #000;box-shadow:0 0 0 1px #fff8;vertical-align:-1px}
 @media (orientation:landscape) and (max-height:500px){

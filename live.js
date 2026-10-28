@@ -625,9 +625,9 @@ export function initLive(ctx) {
   const ORDER_ICON = { target: '⌖', arrow: '➚', zone: '⬠' };
   // Biểu tượng cách điệu kiểu bản đồ chỉ huy trong Squad: mũi tên chevron (tấn công), khiên (phòng thủ). Tô bằng currentColor.
   const SVG_ICON = {
-    death: '<svg viewBox="0 0 24 24"><path d="M12 2.500C7 2.500 4 6 4 10.500c0 3 1.800 5 3.500 6V21h9v-4.500c1.700-1 3.500-3 3.500-6C20 6 17 2.500 12 2.500z" fill="currentColor" stroke="#000" stroke-width="1.4" stroke-linejoin="round"/><circle cx="9" cy="10.500" r="2.200" fill="#000"/><circle cx="15" cy="10.500" r="2.200" fill="#000"/><path d="M12 13l-1.500 3h3z" fill="#000"/></svg>',
-    attack: '<svg viewBox="0 0 24 24"><path d="M12 2 21 21 12 16 3 21Z" fill="currentColor" stroke="#000" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 8 15.5 15.5 12 13.5 8.5 15.5Z" fill="#000" fill-opacity=".55"/></svg>',
-    defend: '<svg viewBox="0 0 24 24"><path d="M12 2 20.5 5.5V12C20.5 17 16.5 20.5 12 22 7.5 20.5 3.5 17 3.5 12V5.5Z" fill="currentColor" stroke="#000" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 6 17 8V12C17 15 14.8 17.2 12 18.3 9.2 17.2 7 15 7 12V8Z" fill="#000" fill-opacity=".55"/></svg>'
+    death: '<svg viewBox="0 0 24 24"><path d="M12 2.500C7 2.500 4 6 4 10.500c0 3 1.800 5 3.500 6V21h9v-4.500c1.700-1 3.500-3 3.500-6C20 6 17 2.500 12 2.500z" fill="currentColor" stroke="#000" stroke-width="0.9" stroke-linejoin="round"/><circle cx="9" cy="10.500" r="2.200" fill="#000"/><circle cx="15" cy="10.500" r="2.200" fill="#000"/><path d="M12 13l-1.500 3h3z" fill="#000"/></svg>',
+    attack: '<svg viewBox="0 0 24 24"><path d="M12 2 21 21 12 16 3 21Z" fill="currentColor" stroke="#000" stroke-width="1" stroke-linejoin="round"/><path d="M12 8 15.5 15.5 12 13.5 8.5 15.5Z" fill="#000" fill-opacity=".55"/></svg>',
+    defend: '<svg viewBox="0 0 24 24"><path d="M12 2 20.5 5.5V12C20.5 17 16.5 20.5 12 22 7.5 20.5 3.5 17 3.5 12V5.5Z" fill="currentColor" stroke="#000" stroke-width="1" stroke-linejoin="round"/><path d="M12 6 17 8V12C17 15 14.8 17.2 12 18.3 9.2 17.2 7 15 7 12V8Z" fill="#000" fill-opacity=".55"/></svg>'
   };
   const svgIcon = kind => { const el = h('span', { class: 'svg-ic ' + kind }); el.innerHTML = SVG_ICON[kind]; return el; };
   const iconFor = type => SVG_ICON[type] ? svgIcon(type) : ORDER_ICON[type] || '⬠';
