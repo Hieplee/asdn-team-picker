@@ -1328,11 +1328,11 @@ window.GUIDE={
     },
     {
      "t": "h",
-     "text": "4 · Đội trưởng: mũi tên và vùng"
+     "text": "4 · Đội trưởng: tấn công, phòng thủ, mũi tên, vùng"
     },
     {
      "t": "p",
-     "html": "Mỗi đội có 1 đội trưởng do người tổ chức đặt. Chỉ đội trưởng có thêm nút <b>➚ Mũi tên</b> và <b>⬠ Vùng</b>."
+     "html": "Mỗi đội có 1 đội trưởng do người tổ chức đặt. Chỉ đội trưởng có thêm nút <b>Tấn công</b> (đỏ), <b>Phòng thủ</b> (xanh), <b>➚ Mũi tên</b> và <b>⬠ Vùng</b>. Tấn công và Phòng thủ chạm 1 điểm là xong, mỗi loại tối đa 5 dấu; hết chỗ thì thay dấu cũ nhất."
     },
     {
      "t": "fig",
@@ -1344,39 +1344,84 @@ window.GUIDE={
        "desc": "Như thành viên thường.",
        "role": null,
        "x": 2.56,
-       "y": 85.78,
-       "w": 22.18,
-       "h": 6.87
+       "y": 84.83,
+       "w": 14.1,
+       "h": 7.82
+      },
+      {
+       "title": "Tấn công",
+       "desc": "Đánh dấu hướng/điểm tấn công: chạm 1 điểm trên bản đồ (đỏ, tối đa 5).",
+       "role": null,
+       "x": 18.72,
+       "y": 84.83,
+       "w": 14.1,
+       "h": 7.82
+      },
+      {
+       "title": "Phòng thủ",
+       "desc": "Đánh dấu vị trí phòng thủ: chạm 1 điểm (xanh, tối đa 5).",
+       "role": null,
+       "x": 34.87,
+       "y": 84.83,
+       "w": 14.1,
+       "h": 7.82
       },
       {
        "title": "➚ Mũi tên",
        "desc": "Chỉ hướng đẩy/di chuyển: chạm ít nhất 2 điểm.",
        "role": null,
-       "x": 26.79,
-       "y": 85.78,
-       "w": 22.18,
-       "h": 6.87
+       "x": 51.03,
+       "y": 84.83,
+       "w": 14.1,
+       "h": 7.82
       },
       {
        "title": "⬠ Vùng",
        "desc": "Khoanh một khu vực: chạm ít nhất 3 điểm.",
        "role": null,
-       "x": 51.03,
-       "y": 85.78,
-       "w": 22.18,
-       "h": 6.87
+       "x": 67.18,
+       "y": 84.83,
+       "w": 14.1,
+       "h": 7.82
       },
       {
        "title": "☰ Lệnh",
        "desc": "Danh sách lệnh, và nút XÓA TẤT CẢ LỆNH (bấm 2 lần để xác nhận).",
        "role": null,
-       "x": 75.26,
-       "y": 85.78,
-       "w": 22.18,
-       "h": 6.87
+       "x": 83.33,
+       "y": 84.83,
+       "w": 14.1,
+       "h": 7.82
       }
      ],
      "alt": "Thanh lệnh của đội trưởng"
+    },
+    {
+     "t": "fig",
+     "shot": "m21-attack-defend",
+     "caption": "Dấu Tấn công và Phòng thủ trên bản đồ",
+     "marks": [
+      {
+       "title": "Tấn công",
+       "desc": "Dấu đỏ: cả đội thấy trên bản đồ.",
+       "role": null,
+       "x": 25.13,
+       "y": 63.74,
+       "w": 11.28,
+       "h": 5.21
+      },
+      {
+       "title": "Phòng thủ",
+       "desc": "Dấu xanh: cả đội thấy trên bản đồ.",
+       "role": null,
+       "x": 66.15,
+       "y": 54.27,
+       "w": 11.28,
+       "h": 5.21
+      }
+     ],
+     "alt": "Dấu Tấn công và Phòng thủ",
+     "role": null
     },
     {
      "t": "fig",
