@@ -420,10 +420,11 @@ export function initLive(ctx) {
   // ---------- Marker đồng đội ----------
   function teamColor() { return me ? teamColors[Number(me.teamId) % teamColors.length] : '#c8f36b'; }
   function nameOfUid(uid) { const id = members[uid]; return (id && findMember(id)?.name) || 'Đồng đội'; }
+  function initials(name) { return String(name).trim().split(/\s+/).map(w => Array.from(w)[0] || '').join('').toUpperCase(); }
   function clearMarkers() { markers.forEach(m => m.remove()); markers.clear(); }
   function playerIcon(uid, stale) {
     const color = memberColor(members[uid]), isCaptain = members[uid] && members[uid] === captain;
-    const el = h('div', { class: 'pl' + (stale ? ' stale' : ''), style: `--c:${color}` }, h('i', { style: `background:${color}` }), h('b', { text: (isCaptain ? '★ ' : '') + nameOfUid(uid) }));
+    const el = h('div', { class: 'pl' + (stale ? ' stale' : ''), style: `--c:${color}` }, h('i', { style: `background:${color}` }), h('b', { text: (isCaptain ? '★ ' : '') + initials(nameOfUid(uid)) }));
     return window.L.divIcon({ className: '', iconSize: [0, 0], html: el });
   }
   function drawPlayers() {
