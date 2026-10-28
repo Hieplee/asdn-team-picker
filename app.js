@@ -1082,7 +1082,7 @@ function showInAppBrowserHelp() {
   const copy = document.createElement('button');
   copy.textContent = 'Sao chép link';
   const close = document.createElement('button');
-  close.textContent = 'Đóng';
+  close.textContent = 'Tiếp tục ở đây';
   close.style.marginLeft = '8px';
   copy.addEventListener('click', async () => {
     try { await navigator.clipboard.writeText(location.href); copy.textContent = 'Đã sao chép ✓'; }
@@ -1093,6 +1093,19 @@ function showInAppBrowserHelp() {
   overlay.append(box);
   document.body.append(overlay);
 }
+
+function openInExternalBrowser() {
+  if (!isInAppBrowser()) return;
+  let tried = false;
+  try { tried = sessionStorage.getItem('inapp-redirect') === '1'; sessionStorage.setItem('inapp-redirect', '1'); } catch { /* ignore */ }
+  if (!tried && /Android/i.test(navigator.userAgent)) {
+    const url = new URL(location.href);
+    const rest = url.pathname + url.search + url.hash;
+    location.replace(`intent://${url.host}${rest}#Intent;scheme=${url.protocol.replace(':', '')};package=com.android.chrome;S.browser_fallback_url=${encodeURIComponent(location.href)};end`);
+  }
+  showInAppBrowserHelp();
+}
+openInExternalBrowser();
 
 $('#auth-button').addEventListener('click', async () => {
   if (!cloudAuth || authBusy) return;
