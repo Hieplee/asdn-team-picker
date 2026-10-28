@@ -423,7 +423,7 @@ export function initLive(ctx) {
   function nameOfUid(uid) { const id = members[uid]; return (id && findMember(id)?.name) || 'Đồng đội'; }
   function clearMarkers() { markers.forEach(m => m.remove()); markers.clear(); }
   function playerIcon(uid, stale) {
-    const color = teamColor(), isCaptain = members[uid] && members[uid] === captain;
+    const color = memberColor(members[uid]), isCaptain = members[uid] && members[uid] === captain;
     const el = h('div', { class: 'pl' + (stale ? ' stale' : ''), style: `--c:${color}` }, h('i', { style: `background:${color}` }), h('b', { text: (isCaptain ? '★ ' : '') + nameOfUid(uid) }));
     return window.L.divIcon({ className: '', iconSize: [0, 0], html: el });
   }
