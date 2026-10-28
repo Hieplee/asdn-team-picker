@@ -1190,7 +1190,7 @@ window.GUIDE={
       },
       {
        "title": "Nhãn ô",
-       "desc": "Ô lớn gọi A1, B2… Chia nhỏ bằng bàn phím số: 7-8-9 / 4-5-6 / 1-2-3. Phóng to để thấy cấp nhỏ hơn. Báo vị trí qua bộ đàm theo kiểu ô lớn rồi số, ví dụ \"A1 4\" hoặc \"B3 5\" (không cần nói chữ phím).",
+       "desc": "Ô lớn gọi A1, B2… Chia nhỏ bằng bàn phím số: 7-8-9 / 4-5-6 / 1-2-3. Phóng to để thấy cấp nhỏ hơn. Báo vị trí qua bộ đàm theo kiểu ô lớn rồi số, ví dụ \"A1 4\" hoặc \"B3 5\".",
        "role": null,
        "x": 16.41,
        "y": 28.2,
