@@ -302,12 +302,13 @@ export function initLive(ctx) {
     mapBuilding = (async () => {
       try { await loadLeaflet(); } catch (error) { $('#map-canvas').replaceChildren(h('p', { class: 'map-fail', text: error.message })); mapBuilding = null; return; }
       const L = window.L;
-      map = L.map('map-canvas', { zoomControl: false, maxZoom: 21, zoomSnap: 0.25, attributionControl: true });
+      map = L.map('map-canvas', { zoomControl: false, maxZoom: 21, zoomSnap: 0.25, zoomDelta: 0.5, attributionControl: true });
       L.control.scale({ imperial: false, position: 'bottomleft' }).addTo(map);
       esri = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: 18, maxZoom: 21, attribution: 'Esri, Maxar, Earthstar' });
       clarity = L.tileLayer('https://clarity.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: 19, maxZoom: 21, attribution: 'Esri, Maxar, Earthstar' });
       clarity.addTo(map);
       buildArea(L);
+      watchLayout();
       map.on('dragstart', () => { userMoved = true; });
       const cv = map.getContainer();
       ['wheel', 'touchstart', 'dblclick'].forEach(ev => cv.addEventListener(ev, () => { userMoved = true; }, { passive: true }));
@@ -342,30 +343,60 @@ export function initLive(ctx) {
     if (api.onMapChange) api.onMapChange(mapId);
   }
   const orgOpen = () => !$('#live-sheet').hidden && $('#live-sheet-title').textContent === 'Điều khiển trận';
-  // Fit khu chơi vào vùng nhìn thấy, trừ phần bị thanh trên / hàng nút dưới / nút bên phải che (đo từ DOM nên đúng cả dọc, ngang, PC).
+  // Fit khu chơi: tìm zoom lớn nhất (lẻ theo zoomSnap) và vị trí sao cho 4 góc + cạnh khu không bị thanh UI nào đang hiện che.
+  // Mọi thứ đo từ DOM tại thời điểm fit (không hard-code), nên đúng cho dọc/ngang/PC/fullscreen/bàn phím.
   let userMoved = false;
+  const UI_SELECTORS = ['.map-hud', '.map-tools', '.map-bottom', '.map-hint'];
   function fitArea(force = true) {
     if (!map || !boundsArea) return;
     if (!force && userMoved) return;
-    userMoved = false;
     map.invalidateSize();
-    const box = $('#map-canvas').getBoundingClientRect();
-    if (!box.width || !box.height) return;
-    const M = 14;
-    let top = M, bottom = M, left = M, right = M;
-    const rect = sel => { const el = document.querySelector(sel); if (!el || el.hidden) return null; const r = el.getBoundingClientRect(); return r.width && r.height ? r : null; };
-    const hud = rect('.map-hud'), tools = rect('.map-tools'), bot = rect('.map-bottom');
-    if (hud) top = Math.max(top, hud.bottom - box.top + M);
-    if (bot) bottom = Math.max(bottom, box.bottom - bot.top + M);
-    if (tools) {
-      if (tools.top - box.top > box.height / 2) bottom = Math.max(bottom, box.bottom - tools.top + M);
-      else right = Math.max(right, box.right - tools.left + M);
+    const canvas = $('#map-canvas'); const box = canvas.getBoundingClientRect();
+    const W = box.width, H = box.height;
+    if (W < 50 || H < 50) return;
+    userMoved = false;
+    const M = 12;
+    const obstacles = UI_SELECTORS.map(sel => document.querySelector(sel)).filter(el => el && !el.hidden)
+      .flatMap(el => el.children.length ? [...el.children].filter(c => !c.hidden) : [el]).map(el => el.getBoundingClientRect())
+      .filter(r => r.width > 0 && r.height > 0)
+      .map(r => ({ x0: r.left - box.left - M, y0: r.top - box.top - M, x1: r.right - box.left + M, y1: r.bottom - box.top + M }))
+      .filter(o => o.x1 > 0 && o.y1 > 0 && o.x0 < W && o.y0 < H);
+    const hit = (x, y) => obstacles.some(o => x > o.x0 && x < o.x1 && y > o.y0 && y < o.y1);
+    const c0 = boundsArea.getCenter();
+    const minZ = 8, maxZ = map.getMaxZoom(), step = 0.05;
+    for (let z = maxZ; z >= minZ; z -= step) {
+      const cp = map.project(c0, z);
+      const off = CORNERS.map(c => map.project(c.ll, z).subtract(cp));
+      const xs = off.map(p => p.x), ys = off.map(p => p.y);
+      const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+      if (maxX - minX > W - 2 * M || maxY - minY > H - 2 * M) continue;
+      // điểm mẫu trên viền khu (góc + 10 điểm mỗi cạnh), tọa độ tương đối tâm
+      const pts = [];
+      off.forEach((p, i) => { const q = off[(i + 1) % off.length]; for (let t = 0; t < 1; t += 0.1) pts.push([p.x + (q.x - p.x) * t, p.y + (q.y - p.y) * t]); });
+      const loX = M - minX, hiX = W - M - maxX, loY = M - minY, hiY = H - M - maxY;
+      let best = null, bestD = Infinity;
+      const nx = Math.max(1, Math.ceil((hiX - loX) / 12)), ny = Math.max(1, Math.ceil((hiY - loY) / 12));
+      for (let i = 0; i <= nx; i++) for (let j = 0; j <= ny; j++) {
+        const px = loX + (hiX - loX) * i / nx, py = loY + (hiY - loY) * j / ny;
+        const d = (px - W / 2) ** 2 + (py - H / 2) ** 2;
+        if (d >= bestD) continue;
+        if (pts.some(p => hit(px + p[0], py + p[1]))) continue;
+        best = [px, py]; bestD = d;
+      }
+      if (best) {
+        const center = map.unproject(cp.subtract([best[0] - W / 2, best[1] - H / 2]), z);
+        map.setView(center, z, { animate: false });
+        return;
+      }
     }
-    // không để phần đệm nuốt hết khung nhìn (màn hình rất thấp)
-    const capV = box.height * 0.6, capH = box.width * 0.5;
-    if (top + bottom > capV) { const k = capV / (top + bottom); top *= k; bottom *= k; }
-    if (left + right > capH) { const k = capH / (left + right); left *= k; right *= k; }
-    map.fitBounds(boundsArea, { paddingTopLeft: [left, top], paddingBottomRight: [right, bottom], maxZoom: 20, animate: false });
+    map.fitBounds(boundsArea, { padding: [M, M], animate: false });
+  }
+  let fitTimer = null;
+  const refitSoon = () => { clearTimeout(fitTimer); fitTimer = setTimeout(() => fitArea(false), 120); };
+  function watchLayout() {
+    if (typeof ResizeObserver !== 'function') return;
+    const ro = new ResizeObserver(refitSoon);
+    ['#map-canvas', ...UI_SELECTORS].forEach(sel => { const el = document.querySelector(sel); if (el) ro.observe(el); });
   }
 
   // Lưới kiểu Squad: ô lớn A1, B2…, chia 3x3 theo bàn phím số (7 8 9 / 4 5 6 / 1 2 3) thành cấp 2, rồi 3x3 nữa thành cấp 3.
