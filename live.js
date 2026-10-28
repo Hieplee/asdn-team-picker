@@ -1055,9 +1055,17 @@ export function initLive(ctx) {
       await batch.commit();
     }
   }
+  // Đội trưởng báo chết hộ được cả người chưa vào đội (doc theo phân đội), nên xóa theo cả phân đội lẫn danh sách đã vào đội.
   function deathTargets(onlyTeam = null) {
-    return Object.entries(orgMembers).filter(([, entry]) => onlyTeam == null || String(entry.teamId) === String(onlyTeam))
-      .map(([memberId, entry]) => ref('teams', entry.teamId, 'deaths', memberId));
+    const byKey = new Map();
+    for (const [memberId, entry] of Object.entries(orgMembers)) if (onlyTeam == null || String(entry.teamId) === String(onlyTeam)) byKey.set(`${entry.teamId}/${memberId}`, [String(entry.teamId), memberId]);
+    const s = getState();
+    for (const id of s.selected) {
+      const team = s.assignments[id];
+      if (team == null || (onlyTeam != null && String(team) !== String(onlyTeam))) continue;
+      byKey.set(`${team}/${id}`, [String(team), id]);
+    }
+    return [...byKey.values()].map(([team, memberId]) => ref('teams', team, 'deaths', memberId));
   }
   function orderTargets() {
     const targets = [];
