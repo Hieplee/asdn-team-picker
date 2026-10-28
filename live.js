@@ -393,10 +393,14 @@ export function initLive(ctx) {
   }
   let fitTimer = null;
   const refitSoon = () => { clearTimeout(fitTimer); fitTimer = setTimeout(() => fitArea(false), 120); };
+  // Chỉ fit lại khi KHUNG bản đồ đổi kích thước (xoay, fullscreen, bàn phím). Thẻ UI đổi trong lúc thao tác (mark/vẽ) thì không đụng tới view.
   function watchLayout() {
     if (typeof ResizeObserver !== 'function') return;
-    const ro = new ResizeObserver(refitSoon);
-    ['#map-canvas', ...UI_SELECTORS].forEach(sel => { const el = document.querySelector(sel); if (el) ro.observe(el); });
+    const canvas = $('#map-canvas'); let w = canvas.clientWidth, hh = canvas.clientHeight;
+    new ResizeObserver(() => {
+      if (Math.abs(canvas.clientWidth - w) < 2 && Math.abs(canvas.clientHeight - hh) < 2) return;
+      w = canvas.clientWidth; hh = canvas.clientHeight; refitSoon();
+    }).observe(canvas);
   }
 
   // Lưới kiểu Squad: ô lớn A1, B2…, chia 3x3 theo bàn phím số (7 8 9 / 4 5 6 / 1 2 3) thành cấp 2, rồi 3x3 nữa thành cấp 3.
