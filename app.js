@@ -14,7 +14,6 @@ let canEdit = !cloudEnabled;
 let cloudReady = !cloudEnabled;
 let cloudAuth, cloudSignIn, cloudSignOut, cloudProvider, cloudSession, cloudAttributes, cloudDb, cloudFs;
 let live = null, joinLinkHandled = false;
-const auditBase = { session: null, attributes: null };
 const ready = { session: false, attributes: false };
 const writeQueue = { session: Promise.resolve(), attributes: Promise.resolve() };
 const pendingWrites = { session: 0, attributes: 0 };
@@ -79,36 +78,7 @@ function setSyncStatus(message, error = false) {
   status.classList.toggle('sync-error', error);
 }
 
-function snapshotFlat(kind, snap) {
-  const flat = {};
-  if (kind === 'attributes') {
-    for (const mode of MODES) {
-      for (const [id, value] of Object.entries(snap.ratings?.[mode] || {})) flat[`ratings/${mode}/${id}`] = value;
-      for (const [id, value] of Object.entries(snap.styles?.[mode] || {})) flat[`styles/${mode}/${id}`] = value;
-    }
-    for (const [id, value] of Object.entries(snap.stats || {})) flat[`stats/${id}`] = JSON.stringify(value);
-  } else {
-    snap.selected.forEach(id => { flat[`selected/${id}`] = true; });
-    snap.guests.forEach(guest => { flat[`guests/${guest.id}`] = guest.name; });
-    flat.teamCount = snap.teamCount;
-    flat.mode = snap.mode;
-    flat.splitMode = snap.splitMode ?? null;
-    for (const [id, value] of Object.entries(snap.assignments || {})) flat[`assignments/${id}`] = value;
-    (snap.lockedPlayers || []).forEach(id => { flat[`lockedPlayers/${id}`] = true; });
-    (snap.lockedTeams || []).forEach(index => { flat[`lockedTeams/${index}`] = true; });
-  }
-  return flat;
-}
-function diffChanges(before, after) {
-  if (!before) return [];
-  const changes = [];
-  for (const path of new Set([...Object.keys(before), ...Object.keys(after)])) {
-    if (before[path] !== after[path]) changes.push({ path, before: before[path] ?? null, after: after[path] ?? null });
-  }
-  return changes;
-}
-
-function save(kind = 'session', action = null) {
+function save(kind = 'session', auditChanges = null) {
   if (!cloudEnabled) { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); return; }
   if (!cloudReady || !canEdit) return;
   const snapshot = kind === 'attributes'
@@ -116,9 +86,8 @@ function save(kind = 'session', action = null) {
     : { selected: [...state.selected], guests: structuredClone(state.guests), teamCount: state.teamCount, mode: state.mode, assignments: structuredClone(state.assignments), lockedPlayers: [...state.lockedPlayers], lockedTeams: [...state.lockedTeams], ...(state.splitMode && { splitMode: state.splitMode }) };
   pendingWrites[kind]++;
   setSyncStatus('Đang lưu…');
-  const changes = diffChanges(auditBase[kind], snapshotFlat(kind, snapshot));
-  if (action && changes.length) changes.unshift({ path: 'action', before: null, after: action });
-  auditBase[kind] = snapshotFlat(kind, snapshot);
+  // Lịch sử chỉ ghi khi khóa đội (auditChanges do nơi gọi dựng); mọi lần lưu khác không ghi log.
+  const changes = auditChanges || [];
   writeQueue[kind] = writeQueue[kind].catch(() => {}).then(() => {
     const { doc, writeBatch, collection, serverTimestamp } = cloudFs;
     const batch = writeBatch(cloudDb);
@@ -185,7 +154,6 @@ async function initCloud() {
         const data = snapshot.exists() ? snapshot.data() : {};
         state = normalizeState({ ...state, ...(kind === 'attributes' ? {} : { splitMode: undefined, lockedPlayers: undefined, lockedTeams: undefined }), ...data });
         const key = kind === 'attributes' ? 'attributes' : 'session';
-        auditBase[key] = snapshotFlat(key, key === 'attributes' ? { ratings: state.ratings, styles: state.styles, stats: state.stats } : state);
       }
       cloudReady = ready.session && ready.attributes;
       if (cloudReady) clearTimeout(loadTimer);
@@ -382,7 +350,7 @@ function toggleMember(id) {
     state.selected.push(id);
     const placed = Object.keys(state.assignments).length > 0;
     if (placed) placeMember(id);
-    save('session', placed ? 'auto-place' : null); render();
+    save('session'); render();
     if (placed) announcePlacement([id]);
     return;
   }
@@ -707,7 +675,7 @@ function splitTeams() {
   resetRebalance();
   recentLayouts.push(key);
   if (recentLayouts.length > RECENT_LAYOUTS) recentLayouts.shift();
-  save('session', 'balanced'); render();
+  save('session'); render();
   warnSeparatePairs();
   $('#results').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -729,7 +697,7 @@ function splitRandom() {
   state.assignments = assignments;
   state.splitMode = 'random';
   resetRebalance();
-  save('session', 'random'); render();
+  save('session'); render();
   warnSeparatePairs();
   $('#results').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
@@ -803,7 +771,7 @@ function applyRebalance() {
   for (const { id, from, to } of pendingRebalance.result.moved) { noteMove(id, from, to); state.assignments[id] = to; }
   const count = pendingRebalance.result.moved.length;
   pendingRebalance = null;
-  save('session', 'rebalance-min'); render();
+  save('session'); render();
   warnSeparatePairs();
   showToast(`Đã cân lại: chuyển ${count} người.`);
 }
@@ -819,12 +787,17 @@ function lockButton(locked, label, text, onClick) {
 function togglePlayerLock(id) {
   const lock = !isPlayerLocked(id);
   if (lock) state.lockedPlayers.push(id); else unlockPlayer(id);
-  save('session', lock ? 'lock' : 'unlock'); renderTeams(); updateLockUi();
+  save('session'); renderTeams(); updateLockUi();
 }
 function toggleTeamLock(team) {
   const lock = !isTeamLocked(team);
   state.lockedTeams = lock ? [...state.lockedTeams, team].sort() : state.lockedTeams.filter(t => t !== team);
-  save('session', lock ? 'lock' : 'unlock'); renderTeams(); updateLockUi();
+  save('session', lock ? lockTeamAudit(team) : null); renderTeams(); updateLockUi();
+}
+// Bản ghi lịch sử khi khóa đội: đội hình tại thời điểm khóa.
+function lockTeamAudit(team) {
+  const members = Object.keys(state.assignments).filter(id => state.assignments[id] === team);
+  return [{ path: 'action', before: null, after: 'lock-team' }, { path: `lockedTeams/${team}`, before: null, after: true }, ...members.map(id => ({ path: `lockedRoster/${team}/${id}`, before: null, after: true }))];
 }
 function updateLockUi() {
   $('#unlock-all').hidden = !(canEdit && lockCount());
@@ -885,7 +858,7 @@ function renderTeams() {
       select.disabled = !cloudReady || !canEdit || fixed;
       select.title = fixed ? (playerLocked ? 'Mở khóa người này trước khi đổi đội' : 'Mở khóa đội này trước khi đổi đội') : '';
       select.hidden = !canEdit;
-      select.addEventListener('change', () => { noteMove(member.id, state.assignments[member.id], Number(select.value)); state.assignments[member.id] = Number(select.value); save('session', 'manual'); renderTeams(); warnSeparatePairs(); });
+      select.addEventListener('change', () => { noteMove(member.id, state.assignments[member.id], Number(select.value)); state.assignments[member.id] = Number(select.value); save('session'); renderTeams(); warnSeparatePairs(); });
       row.append(select); list.append(row);
     });
     const color = TEAM_COLORS[index % TEAM_COLORS.length];
@@ -1021,7 +994,7 @@ $('#select-all').addEventListener('click', () => {
   const ids = allMembers().map(m => m.id);
   const placed = [];
   for (const id of ids) if (!state.selected.includes(id)) { state.selected.push(id); if (Object.keys(state.assignments).length) { placeMember(id); placed.push(id); } }
-  save('session', placed.length ? 'auto-place' : null); render();
+  save('session'); render();
   if (placed.length) announcePlacement(placed);
 });
 $('#clear-all').addEventListener('click', () => { state.selected = []; state.assignments = {}; clearLocks(); delete state.splitMode; resetRebalance(); save(); render(); });
@@ -1032,7 +1005,7 @@ $('#guest-form').addEventListener('submit', event => {
   state.guests.push({ id, name }); state.selected.push(id);
   const placed = Object.keys(state.assignments).length > 0;
   if (placed) placeMember(id);
-  input.value = ''; save('session', placed ? 'auto-place' : null); render();
+  input.value = ''; save('session'); render();
   if (placed) announcePlacement([id]); else showToast(`Đã thêm ${name}.`);
 });
 document.querySelectorAll('.team-count').forEach(button => button.addEventListener('click', () => {
@@ -1054,7 +1027,7 @@ $('#split-mode').addEventListener('change', event => {
   try { localStorage.setItem(SPLIT_MODE_KEY, splitMode); } catch {}
   render();
 });
-$('#unlock-all').addEventListener('click', () => { clearLocks(); save('session', 'unlockAll'); renderTeams(); showToast('Đã mở khóa tất cả.'); });
+$('#unlock-all').addEventListener('click', () => { clearLocks(); save('session'); renderTeams(); showToast('Đã mở khóa tất cả.'); });
 $('#lock-hint-ok').addEventListener('click', () => { lockHintSeen = true; try { localStorage.setItem('asdn-lock-hint', '1'); } catch {} updateLockUi(); });
 $('#split-button').addEventListener('click', runSplit);
 $('#bar-split').addEventListener('click', runSplit);
@@ -1093,7 +1066,7 @@ $('#auth-button').addEventListener('click', async () => {
 render();
 initCloud();
 
-const PATH_LABELS = { selected: 'Điểm danh', guests: 'Khách mời', teamCount: 'Số đội', mode: 'Chế độ', assignments: 'Đội', ratings: 'Điểm đánh giá', styles: 'Lối chơi', stats: 'Chỉ số', lockedPlayers: 'Khóa người', lockedTeams: 'Khóa đội' };
+const PATH_LABELS = { selected: 'Điểm danh', guests: 'Khách mời', teamCount: 'Số đội', mode: 'Chế độ', assignments: 'Đội', ratings: 'Điểm đánh giá', styles: 'Lối chơi', stats: 'Chỉ số', lockedPlayers: 'Khóa người', lockedTeams: 'Khóa đội', lockedRoster: 'Đội hình khóa' };
 const ACTION_LABELS = { 'auto-place': 'Tự xếp người mới vào đội', 'rebalance-min': 'Cân lại tối thiểu', manual: 'Đổi đội thủ công', lock: 'Khóa', unlock: 'Mở khóa', unlockAll: 'Mở khóa tất cả' };
 function describeChange({ path, before, after }) {
   const [group, a, b] = path.split('/');
@@ -1103,6 +1076,8 @@ function describeChange({ path, before, after }) {
   const label = PATH_LABELS[group] || group;
   const where = modeIndex ? ` (${a})` : '';
   const show = value => value === null ? '—' : group === 'stats' ? Object.entries(JSON.parse(value)).map(([k, v]) => `${k}:${v}`).join(' ') : String(value);
+  if (group === 'action' && after === 'lock-team') return 'Khóa đội';
+  if (group === 'lockedRoster') return `Đội ${Number(a) + 1}: ${name}`;
   if (group === 'action') return ACTION_LABELS[after] || `Kiểu chia: ${after === 'random' ? 'ngẫu nhiên hoàn toàn' : 'cân bằng'}`;
   if (group === 'lockedPlayers') return `Khóa người: ${name} ${after ? 'khóa' : 'mở khóa'}`;
   if (group === 'lockedTeams') return `Khóa đội: Đội ${Number(a) + 1} ${after ? 'khóa' : 'mở khóa'}`;
@@ -1112,27 +1087,68 @@ function describeChange({ path, before, after }) {
   if (group === 'assignments') return `${label}: ${name} ${before === null ? '' : `Đội ${before + 1} `}→ ${after === null ? '—' : `Đội ${after + 1}`}`;
   return `${label}${where}: ${name} ${show(before)} → ${show(after)}`;
 }
-let auditLoading = false, auditLoaded = false;
+const AUDIT_CATS = {
+  lock: { label: 'Khóa đội', icon: '🔒' },
+  split: { label: 'Chia đội', icon: '🎲' },
+  members: { label: 'Thành viên', icon: '👥' },
+  stats: { label: 'Chỉ số', icon: '📊' },
+  other: { label: 'Khác', icon: '⚙️' }
+};
+// Bản ghi cũ ghi mọi thay đổi nên phân loại theo nội dung; bản ghi mới chỉ có 'lock-team'.
+function auditCategory(data) {
+  const groups = new Set(data.changes.map(c => c.path.split('/')[0]));
+  const action = data.changes.find(c => c.path === 'action')?.after;
+  if (action === 'lock-team' || groups.has('lockedTeams') || groups.has('lockedRoster')) return 'lock';
+  if (groups.has('ratings') || groups.has('styles') || groups.has('stats')) return 'stats';
+  if (groups.has('selected') || groups.has('guests')) return 'members';
+  if (groups.has('assignments') || action) return 'split';
+  return 'other';
+}
+function describeAudit(data, cat) {
+  if (cat === 'lock') {
+    const roster = {};
+    data.changes.filter(c => c.path.startsWith('lockedRoster/')).forEach(c => { const [, t, id] = c.path.split('/'); (roster[t] ||= []).push(findMember(id)?.name || id); });
+    const teams = Object.keys(roster);
+    if (teams.length) return teams.map(t => `Đội ${Number(t) + 1}: ${roster[t].join(', ')}`);
+  }
+  return [data.changes.map(describeChange).join('; ')];
+}
+let auditLoading = false, auditLoaded = false, auditCat = 'all', auditEntries = [];
+function renderAudit() {
+  const list = $('#audit-list'), bar = $('#audit-filters');
+  const counts = { all: auditEntries.length };
+  auditEntries.forEach(e => { counts[e.cat] = (counts[e.cat] || 0) + 1; });
+  bar.replaceChildren(...[['all', 'Tất cả'], ...Object.entries(AUDIT_CATS).map(([k, v]) => [k, v.label])].filter(([k]) => k === 'all' || counts[k]).map(([k, label]) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = `audit-chip${auditCat === k ? ' on' : ''}`;
+    b.textContent = `${label} ${counts[k] || 0}`; b.addEventListener('click', () => { auditCat = k; renderAudit(); }); return b;
+  }));
+  list.replaceChildren();
+  const shown = auditEntries.filter(e => auditCat === 'all' || e.cat === auditCat);
+  if (!shown.length) { list.textContent = 'Chưa có lịch sử.'; return; }
+  let day = null;
+  for (const e of shown) {
+    const when = e.data.at?.toDate();
+    const dayLabel = when ? when.toLocaleDateString('vi-VN', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric' }) : '…';
+    if (dayLabel !== day) { day = dayLabel; const h = document.createElement('li'); h.className = 'audit-day'; h.textContent = dayLabel; list.append(h); }
+    const item = document.createElement('li'); item.className = `audit-card audit-${e.cat}`;
+    const head = document.createElement('div'); head.className = 'audit-head';
+    const tag = document.createElement('span'); tag.className = 'audit-tag'; tag.textContent = `${AUDIT_CATS[e.cat].icon} ${AUDIT_CATS[e.cat].label}`;
+    const meta = document.createElement('span'); meta.className = 'audit-meta'; meta.textContent = `${when ? when.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '…'} · ${e.data.email || e.data.uid}`;
+    head.append(tag, meta); item.append(head);
+    describeAudit(e.data, e.cat).forEach(line => { const p = document.createElement('div'); p.className = 'audit-line'; p.textContent = line; item.append(p); });
+    list.append(item);
+  }
+}
 async function loadAudit() {
   if (auditLoading) return;
   auditLoading = true;
   const list = $('#audit-list'); list.textContent = 'Đang tải…';
   try {
     const { query, collection, orderBy, limit, getDocs } = cloudFs;
-    const snap = await getDocs(query(collection(cloudDb, 'auditLog'), orderBy('at', 'desc'), limit(100)));
-    list.replaceChildren();
+    const snap = await getDocs(query(collection(cloudDb, 'auditLog'), orderBy('at', 'desc'), limit(200)));
     auditLoaded = true;
-    if (snap.empty) list.textContent = 'Chưa có lịch sử.';
-    snap.forEach(entry => {
-      const data = entry.data();
-      const item = document.createElement('li');
-      const head = document.createElement('strong');
-      head.textContent = `${data.at?.toDate().toLocaleString('vi-VN') || '…'} · ${data.email || data.uid}`;
-      const body = document.createElement('div');
-      body.textContent = data.changes.map(describeChange).join('; ');
-      item.append(head, body);
-      list.append(item);
-    });
+    auditEntries = []; snap.forEach(entry => { const data = entry.data(); auditEntries.push({ data, cat: auditCategory(data) }); });
+    renderAudit();
   } catch (error) { list.textContent = `Không tải được lịch sử: ${error.message}. Bấm "Tải lại" để thử lại.`; }
   finally { auditLoading = false; }
 }
