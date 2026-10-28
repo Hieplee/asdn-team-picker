@@ -520,9 +520,21 @@ export function initLive(ctx) {
     if (error.code === 1) { stopSharing(true); toast('Bạn đã từ chối quyền vị trí. Bật lại trong cài đặt trình duyệt rồi thử lại.'); }
     else if (error.code === 2) toast('Chưa lấy được tín hiệu GPS. Ra chỗ thoáng hơn.');
   }
+  let wakeWarned = false;
   async function acquireWakeLock() {
-    try { if ('wakeLock' in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } } catch { wakeLock = null; }
+    if (wakeLock || document.visibilityState !== 'visible') return;
+    try {
+      if (!('wakeLock' in navigator)) throw new Error('unsupported');
+      const lock = await navigator.wakeLock.request('screen');
+      wakeLock = lock;
+      lock.addEventListener('release', () => { if (wakeLock === lock) wakeLock = null; });
+    } catch {
+      wakeLock = null;
+      if (!wakeWarned) { wakeWarned = true; toast('Không giữ được màn hình sáng. Hãy tắt Chế độ năng lượng thấp (Low Power Mode) và chạm vào màn hình để thử lại.'); }
+    }
   }
+  // iOS có lúc chỉ cấp wake lock khi có thao tác chạm; thử lại ở lần chạm kế tiếp nếu chưa giữ được
+  document.addEventListener('pointerdown', () => { if (wantShare && !wakeLock) acquireWakeLock(); }, { passive: true });
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && wantShare) acquireWakeLock(); });
 
   function startSharing() {
