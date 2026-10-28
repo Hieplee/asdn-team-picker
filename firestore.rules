@@ -19,9 +19,11 @@ service cloud.firestore {
     // Bật/tắt chia sẻ vị trí toàn trận.
     match /match/current/config/{doc} {
       allow read: if signedIn();
-      allow create, update: if isOrg() && doc == 'live'
-        && request.resource.data.keys().hasOnly(['live', 'at'])
-        && request.resource.data.live is bool;
+      allow create, update: if isOrg() && (
+        (doc == 'live' && request.resource.data.keys().hasOnly(['live', 'at'])
+          && request.resource.data.live is bool)
+        || (doc == 'map' && request.resource.data.keys().hasOnly(['map', 'at'])
+          && request.resource.data.map in ['nui', 'pho']));
       allow delete: if isOrg();
     }
     // Mã vào đội (6 ký tự, ký tự đầu là số đội). Chỉ organizer đọc/ghi; rules đọc bằng get().

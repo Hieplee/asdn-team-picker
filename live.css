@@ -193,3 +193,9 @@
 
 /* Số bám sát dấu ngắm: nằm đè lên mép dưới bên phải của vòng ngắm */
 .tgt-num{right:9px;bottom:9px;min-width:16px;height:16px;padding:0 3px;border-width:1.5px;font-size:11px;line-height:12px}
+
+.org-map{display:flex;flex-direction:column;gap:10px;padding:12px;border:1px solid #3d5a3d;background:#1e2923}
+.org-map b{display:block}.org-map small{display:block;margin-top:2px;color:#9fb0a2;font-size:12px}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.seg-btn{min-height:48px;border:1px solid #3d5a3d;background:#16201a;color:#dbe7dd;font:inherit;font-weight:700;letter-spacing:.04em;cursor:pointer}
+.seg-btn.on{background:#c8f36b;color:#0d140f;border-color:#c8f36b}

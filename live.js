@@ -9,13 +9,22 @@ const ASKED_KEY = 'asdn-live-asked';
 const FS_OFF_KEY = 'asdn-live-fs-off';
 const HINT_KEY = 'asdn-live-rotate-hint';
 
-// 4 góc khu vực chơi, thứ tự theo vòng quanh khu.
-const CORNERS = [
-  { name: 'A', ll: [16.119303, 108.060201] },
-  { name: 'B', ll: [16.119244, 108.061203] },
-  { name: 'C', ll: [16.118512, 108.061179] },
-  { name: 'D', ll: [16.118600, 108.060200] },
-];
+// Các khu vực chơi. Mỗi khu có 4 góc, thứ tự theo vòng quanh khu. Organizer chọn khu, cả trận dùng chung (config/map).
+const MAPS = {
+  nui: { label: 'Núi', corners: [
+    { name: 'A', ll: [16.119303, 108.060201] },
+    { name: 'B', ll: [16.119244, 108.061203] },
+    { name: 'C', ll: [16.118512, 108.061179] },
+    { name: 'D', ll: [16.118600, 108.060200] },
+  ] },
+  pho: { label: 'Phố', corners: [
+    { name: 'A', ll: [16.029560, 108.219011] },
+    { name: 'B', ll: [16.029717, 108.220572] },
+    { name: 'C', ll: [16.028682, 108.220734] },
+    { name: 'D', ll: [16.028483, 108.219264] },
+  ] },
+};
+const DEFAULT_MAP = 'nui';
 const GRID_CELL_M = 60;
 const MIN_WRITE_GAP_MS = 5000; // ghi tối đa 1 lần / 5 giây
 const MOVE_WRITE_M = 5; // hoặc khi di chuyển hơn 5 m
@@ -88,6 +97,8 @@ export function initLive(ctx) {
   let positions = {}; // uid -> { lat, lng, acc, heading, ts }
   let captain = null;
   let liveOn = false;
+  let mapId = DEFAULT_MAP;
+  let CORNERS = MAPS[DEFAULT_MAP].corners;
   let wantShare = false;
   let watchId = null, wakeLock = null, lastWrite = { at: 0, ll: null };
   let myPos = null;
@@ -129,7 +140,7 @@ export function initLive(ctx) {
     return auth.currentUser;
   }
 
-  function stopTeamSubs() { unsubTeam.forEach(fn => fn()); unsubTeam = []; members = {}; positions = {}; orders = {}; captain = null; liveOn = false; cancelDraw(); clearMarkers(); clearOrderLayers(); }
+  function stopTeamSubs() { unsubTeam.forEach(fn => fn()); unsubTeam = []; members = {}; positions = {}; orders = {}; captain = null; liveOn = false; mapId = DEFAULT_MAP; CORNERS = MAPS[DEFAULT_MAP].corners; cancelDraw(); clearMarkers(); clearOrderLayers(); }
   function startTeamSubs(teamId) {
     stopTeamSubs();
     // Vừa bấm "Tôi là…" thì snapshot memberOf đến từ bộ nhớ máy, trước khi server nhận. Luồng đọc mở lúc đó bị rules từ chối
@@ -158,6 +169,7 @@ export function initLive(ctx) {
       snap.forEach(d => { const data = d.data(); const slot = /^t_.*_([0-2])$/.exec(d.id); orders[d.id] = { type: data.type, pts: Array.isArray(data.pts) ? data.pts : [], by: data.by, mid: data.mid, ts: data.ts ? data.ts.toMillis() : Date.now(), num: slot ? Number(slot[1]) + 1 : null }; });
       drawOrders(); renderDraw();
     }));
+    unsubTeam.push(listen(ref('config', 'map'), snap => { applyMapId(snap.exists() ? snap.data().map : DEFAULT_MAP); }));
     unsubTeam.push(listen(ref('config', 'live'), snap => {
       const was = liveOn; liveOn = snap.exists() && snap.data().live === true;
       if (was !== liveOn) { if (liveOn && wantShare) toast('Organizer đã bật chia sẻ vị trí.'); syncSharing(); lastWrite.at = 0; maybeWrite(); }
@@ -287,15 +299,7 @@ export function initLive(ctx) {
       esri = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: 18, maxZoom: 21, attribution: 'Esri, Maxar, Earthstar' });
       clarity = L.tileLayer('https://clarity.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: 19, maxZoom: 21, attribution: 'Esri, Maxar, Earthstar' });
       clarity.addTo(map);
-      const ring = CORNERS.map(c => c.ll);
-      areaLayer = L.polygon(ring, { color: '#ffd23f', weight: 3, fillColor: '#ffd23f', fillOpacity: 0.08, dashArray: '8 6' }).addTo(map);
-      CORNERS.forEach(c => {
-        L.circleMarker(c.ll, { radius: 6, color: '#000', weight: 2, fillColor: '#ffd23f', fillOpacity: 1 }).addTo(map);
-        L.marker(c.ll, { interactive: false, icon: L.divIcon({ className: 'corner', html: c.name, iconSize: [0, 0], iconAnchor: [-10, 22] }) }).addTo(map);
-      });
-      boundsArea = areaLayer.getBounds();
-      fitArea();
-      buildGrid(L);
+      buildArea(L);
       map.on('zoomend', syncGridLabels);
       map.on('move zoom resize', syncEdges);
       map.on('click', event => addDrawPoint(event.latlng));
@@ -303,6 +307,30 @@ export function initLive(ctx) {
     })();
     await mapBuilding; mapBuilding = null;
   }
+  // Vẽ khu chơi hiện tại (viền, 4 góc, lưới). Gọi lại khi organizer đổi khu.
+  function buildArea(L) {
+    if (areaLayer) map.removeLayer(areaLayer);
+    if (gridLayer) map.removeLayer(gridLayer);
+    areaLayer = L.layerGroup().addTo(map);
+    const poly = L.polygon(CORNERS.map(c => c.ll), { color: '#ffd23f', weight: 3, fillColor: '#ffd23f', fillOpacity: 0.08, dashArray: '8 6' }).addTo(areaLayer);
+    CORNERS.forEach(c => {
+      L.circleMarker(c.ll, { radius: 6, color: '#000', weight: 2, fillColor: '#ffd23f', fillOpacity: 1 }).addTo(areaLayer);
+      L.marker(c.ll, { interactive: false, icon: L.divIcon({ className: 'corner', html: c.name, iconSize: [0, 0], iconAnchor: [-10, 22] }) }).addTo(areaLayer);
+    });
+    boundsArea = poly.getBounds();
+    buildGrid(L);
+    if (gridOn) gridLayer.addTo(map);
+    fitArea(); syncGridLabels(); syncEdges();
+  }
+  function applyMapId(id) {
+    if (!MAPS[id]) id = DEFAULT_MAP;
+    if (id === mapId) return;
+    mapId = id; CORNERS = MAPS[id].corners;
+    if (map) { buildArea(window.L); toast(`Organizer đã chọn khu: ${MAPS[id].label}.`); }
+    if (orgOpen()) renderOrganizer();
+    renderHud();
+  }
+  const orgOpen = () => !$('#live-sheet').hidden && $('#live-sheet-title').textContent === 'Điều khiển trận';
   function fitArea() { if (map) map.fitBounds(boundsArea, { paddingTopLeft: [16, 70], paddingBottomRight: [64, 96] }); }
 
   // Lưới kiểu Squad: ô lớn A1, B2…, chia 3x3 theo bàn phím số (7 8 9 / 4 5 6 / 1 2 3) thành cấp 2, rồi 3x3 nữa thành cấp 3.
@@ -514,13 +542,13 @@ export function initLive(ctx) {
     const total = teamPlayers(Number(me.teamId)).length;
     const state = liveOn ? (wantShare ? 'live' : 'view') : 'off';
     const label = state === 'live' ? 'ĐANG CHIA SẺ' : state === 'view' ? 'ĐANG XEM' : 'CHƯA BẬT';
-    const hudSig = [me.teamId, active, total, myName(), state, teamColor()].join('|');
+    const hudSig = [me.teamId, active, total, myName(), state, teamColor(), mapId].join('|');
     if (hud.dataset.sig !== hudSig) {
     hud.dataset.sig = hudSig;
     hud.replaceChildren(
       h('button', { class: 'hud-chip', type: 'button', onclick: openTeamSheet, 'aria-label': 'Xem danh sách đội' },
         h('i', { class: 'team-dot', style: `background:${teamColor()}` }),
-        h('span', { class: 'hud-main' }, h('b', { text: `Đội ${Number(me.teamId) + 1}` }), h('small', { text: `${active}/${total} đang hiện · ${myName()}` })),
+        h('span', { class: 'hud-main' }, h('b', { text: `Đội ${Number(me.teamId) + 1}` }), h('small', { text: `${active}/${total} đang hiện · ${myName()} · ${MAPS[mapId].label}` })),
         h('em', { class: 'hud-state ' + state, text: label })));
     }
     renderDraw();
@@ -765,6 +793,7 @@ export function initLive(ctx) {
     orgUnsubs.push(onSnapshot(col('members'), snap => { orgMembers = {}; snap.forEach(d => { orgMembers[d.id] = d.data(); }); renderOrganizer(); }, () => {}));
     orgUnsubs.push(onSnapshot(col('teamMeta'), snap => { orgCaptains = {}; snap.forEach(d => { orgCaptains[d.id] = d.data().captain; }); renderOrganizer(); }, () => {}));
     orgUnsubs.push(onSnapshot(ref('config', 'live'), snap => { orgLive = snap.exists() && snap.data().live === true; renderOrganizer(); }, () => {}));
+    orgUnsubs.push(onSnapshot(ref('config', 'map'), snap => { applyMapId(snap.exists() ? snap.data().map : DEFAULT_MAP); }, () => {}));
     await loadCodes();
     renderOrganizer();
   }
@@ -780,6 +809,11 @@ export function initLive(ctx) {
   async function setLive(on) {
     try { await setDoc(ref('config', 'live'), { live: on, at: serverTimestamp() }); toast(on ? 'Đã bật chia sẻ vị trí cho cả trận.' : 'Đã tắt chia sẻ vị trí.'); }
     catch (error) { toast(`Không đổi được: ${error.message}`); }
+  }
+  async function setMap(id) {
+    if (id === mapId) return;
+    try { await setDoc(ref('config', 'map'), { map: id, at: serverTimestamp() }); toast(`Đã chọn khu ${MAPS[id].label} cho cả trận.`); }
+    catch (error) { toast(`Không đổi được khu: ${error.message}`); }
   }
   async function setCaptain(team, memberId) {
     try {
@@ -808,7 +842,7 @@ export function initLive(ctx) {
         targets.push(ref('teamKeys', String(team)), ref('teamMeta', String(team)));
         for (let n = 0; n < 10; n++) targets.push(ref('teams', String(team), 'orders', `a_${n}`), ref('teams', String(team), 'orders', `z_${n}`));
       }
-      targets.push(ref('config', 'live'));
+      targets.push(ref('config', 'live'), ref('config', 'map'));
       for (let i = 0; i < targets.length; i += 400) {
         const batch = writeBatch(db);
         targets.slice(i, i + 400).forEach(target => batch.delete(target));
@@ -824,6 +858,10 @@ export function initLive(ctx) {
     blocks.push(h('div', { class: 'org-live' },
       h('div', {}, h('b', { text: 'Chia sẻ vị trí toàn trận' }), h('small', { text: orgLive ? 'Đang bật: người chơi gửi vị trí cho đội mình' : 'Đang tắt: chưa ai gửi vị trí' })),
       h('button', { class: orgLive ? 'secondary-button' : 'primary-button', type: 'button', onclick: () => setLive(!orgLive) }, orgLive ? 'TẮT' : 'BẬT')));
+    blocks.push(h('div', { class: 'org-map' },
+      h('div', {}, h('b', { text: 'Khu vực chơi' }), h('small', { text: 'Cả trận dùng chung. Đổi là bản đồ của mọi người đổi theo.' })),
+      h('div', { class: 'seg', role: 'radiogroup', 'aria-label': 'Chọn khu vực chơi' },
+        ...Object.entries(MAPS).map(([id, m]) => h('button', { class: 'seg-btn' + (id === mapId ? ' on' : ''), type: 'button', role: 'radio', 'aria-checked': String(id === mapId), onclick: () => setMap(id) }, m.label)))));
     for (let team = 0; team < s.teamCount; team++) {
       const locked = lockedTeam(team), players = teamPlayers(team), code = codes[team];
       const open = qrOpen.has(team), color = teamColors[team % teamColors.length];
