@@ -1065,6 +1065,35 @@ $('#copy-result').addEventListener('click', async () => {
   catch { showToast('Không sao chép được. Hãy dùng HTTPS hoặc localhost.'); }
 });
 
+function isInAppBrowser() {
+  return /FBAN|FBAV|FB_IAB|FBIOS|Messenger|Instagram|Zalo|Line\/|TikTok|musical_ly|Snapchat/i.test(navigator.userAgent);
+}
+function showInAppBrowserHelp() {
+  if ($('#inapp-help')) return;
+  const overlay = document.createElement('div');
+  overlay.id = 'inapp-help';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:16px';
+  const box = document.createElement('div');
+  box.style.cssText = 'background:#fff;color:#222;border-radius:12px;padding:20px;max-width:360px;width:100%;font:15px/1.5 system-ui,sans-serif';
+  const title = document.createElement('strong');
+  title.textContent = 'Hãy mở bằng Chrome hoặc Safari';
+  const text = document.createElement('p');
+  text.textContent = 'Trình duyệt trong Messenger/Zalo/Facebook không hỗ trợ đăng nhập Google. Bấm ⋯ hoặc nút chia sẻ → "Mở bằng trình duyệt", hoặc sao chép link rồi dán vào Chrome/Safari. (Vào đội bằng link mời không cần đăng nhập Google.)';
+  const copy = document.createElement('button');
+  copy.textContent = 'Sao chép link';
+  const close = document.createElement('button');
+  close.textContent = 'Đóng';
+  close.style.marginLeft = '8px';
+  copy.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(location.href); copy.textContent = 'Đã sao chép ✓'; }
+    catch { window.prompt('Sao chép link này:', location.href); }
+  });
+  close.addEventListener('click', () => overlay.remove());
+  box.append(title, text, copy, close);
+  overlay.append(box);
+  document.body.append(overlay);
+}
+
 $('#auth-button').addEventListener('click', async () => {
   if (!cloudAuth || authBusy) return;
   authBusy = true;
@@ -1074,7 +1103,8 @@ $('#auth-button').addEventListener('click', async () => {
       await cloudSignOut(cloudAuth);
       showToast('Đã đăng xuất.');
     } else {
-      await cloudSignIn(cloudAuth, cloudProvider);
+      if (isInAppBrowser()) showInAppBrowserHelp();
+      else await cloudSignIn(cloudAuth, cloudProvider);
     }
   } catch (error) {
     showToast(`Đăng nhập thất bại: ${error.message}`);
