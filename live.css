@@ -225,3 +225,23 @@ html.fs-lock,html.fs-lock body{overflow:hidden}
 .team-row.sel{border-color:var(--lime);background:#2a3d2c}
 .org-danger .secondary-button{width:100%}
 .zone-num{width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;border:2px solid #000;background:var(--c,#ff4d4d);color:#000;font:800 13px/20px 'DM Sans',sans-serif;text-align:center;box-sizing:border-box}
+
+/* Điện thoại xoay ngang / màn thấp: dồn nút gọn để nhường chỗ cho bản đồ.
+   Công cụ thành cột dọc bên phải, nút lệnh thành lưới 2 cột chỉ icon ở góc trái dưới, nút chia sẻ thành pill. */
+@media (orientation:landscape) and (max-height:500px){
+  .map-tools{top:calc(10px + env(safe-area-inset-top,0px));bottom:auto;flex-direction:column;gap:6px}
+  .map-tools button{width:44px;height:44px;font-size:20px}
+  .map-hud{right:calc(64px + env(safe-area-inset-right,0px))}
+  .map-hint{right:calc(64px + env(safe-area-inset-right,0px))}
+  .map-bottom{width:auto;max-width:none;right:auto;align-items:flex-start;gap:6px}
+  .draw-bar{display:grid;grid-auto-flow:row;grid-template-columns:repeat(2,44px);grid-auto-columns:auto;gap:6px}
+  .map-bottom .draw-btn{width:44px;min-height:44px;height:44px;padding:0;border-radius:12px}
+  .map-bottom .draw-btn>span:not(.draw-icon){position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .map-bottom .draw-icon{font-size:20px;line-height:20px}
+  .map-bottom .draw-icon svg{width:22px;height:22px}
+  .draw-bar:has(.cancel){display:flex;gap:6px}
+  .draw-bar:has(.cancel) .draw-btn{width:auto;padding:0 12px;gap:6px;flex-direction:row}
+  .draw-bar:has(.cancel) .draw-btn>span:not(.draw-icon){position:static;width:auto;height:auto;clip:auto;font-size:12px}
+  .map-bottom .share-button{width:auto;min-height:44px;padding:0 16px;border-radius:999px;font-size:12px;letter-spacing:.3px}
+  .leaflet-bottom.leaflet-left{left:auto;right:180px;margin-bottom:0}
+}
