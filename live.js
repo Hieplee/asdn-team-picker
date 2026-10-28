@@ -405,9 +405,28 @@ export function initLive(ctx) {
     $('#btn-grid').setAttribute('aria-pressed', String(gridOn));
     syncGridLabels(); syncEdges();
   }
-  // Android Chrome: vào toàn màn hình rồi khóa ngang. iPhone không cho web khóa xoay: chỉ gợi ý xoay tay (giao diện tự thích ứng).
+  // Android Chrome: vào toàn màn hình rồi khóa ngang. iPhone Safari không có Fullscreen API cho phần tử thường:
+  // dùng "toàn màn hình giả" (phủ kín khung nhìn bằng CSS), còn xoay ngang thì người dùng tự xoay (giao diện tự thích ứng).
+  const nativeFs = Boolean($('#map-section').requestFullscreen);
+  const isFs = () => Boolean(document.fullscreenElement) || $('#map-section').classList.contains('pseudo-fs');
+  function applyFs(on) {
+    $('#btn-full').setAttribute('aria-pressed', String(on));
+    document.documentElement.classList.toggle('fs-lock', on && !document.fullscreenElement);
+    // Sheet và toast phải nằm trong phần tử đang toàn màn hình thì mới hiện được; không thoát toàn màn hình (thoát là máy xoay lại dọc).
+    const host = on ? $('#map-section') : document.body;
+    host.append($('#toast'), $('#live-sheet'));
+    if (!on) { try { screen.orientation.unlock(); } catch {} try { sessionStorage.setItem(FS_OFF_KEY, '1'); } catch {} }
+    if (map) setTimeout(() => { map.invalidateSize(); syncEdges(); }, 150);
+  }
   async function toggleFullscreen(auto = false) {
     const el = $('#map-section');
+    if (!nativeFs) {
+      const on = !el.classList.contains('pseudo-fs');
+      el.classList.toggle('pseudo-fs', on);
+      if (on) { try { sessionStorage.removeItem(FS_OFF_KEY); } catch {} window.scrollTo(0, 0); }
+      applyFs(on);
+      return;
+    }
     if (document.fullscreenElement) { try { await document.exitFullscreen(); } catch {} return; }
     try {
       try { sessionStorage.removeItem(FS_OFF_KEY); } catch {}
@@ -415,15 +434,7 @@ export function initLive(ctx) {
       try { await screen.orientation.lock('landscape'); } catch { if (!auto) toast('Máy chưa tự xoay ngang được. Hãy xoay điện thoại.'); }
     } catch { if (!auto) toast('Không vào được toàn màn hình. Hãy xoay ngang điện thoại.'); }
   }
-  document.addEventListener('fullscreenchange', () => {
-    const on = Boolean(document.fullscreenElement);
-    $('#btn-full').setAttribute('aria-pressed', String(on));
-    // Sheet và toast phải nằm trong phần tử đang toàn màn hình thì mới hiện được; không thoát toàn màn hình (thoát là máy xoay lại dọc).
-    const host = on ? $('#map-section') : document.body;
-    host.append($('#toast'), $('#live-sheet'));
-    if (!on) { try { screen.orientation.unlock(); } catch {} try { sessionStorage.setItem(FS_OFF_KEY, '1'); } catch {} }
-    if (map) setTimeout(() => { map.invalidateSize(); syncEdges(); }, 150);
-  });
+  document.addEventListener('fullscreenchange', () => applyFs(Boolean(document.fullscreenElement)));
   function toggleSatellite() {
     if (!map) return;
     satClarity = !satClarity;
@@ -1080,10 +1091,10 @@ export function initLive(ctx) {
     if (!me || !phone.matches) return;
     let off = false; try { off = sessionStorage.getItem(FS_OFF_KEY) === '1'; } catch {}
     if (off) return;
-    if ($('#map-section').requestFullscreen) { if (!document.fullscreenElement) toggleFullscreen(true); }
+    if (nativeFs) { if (!document.fullscreenElement) toggleFullscreen(true); }
     else { let seen = false; try { seen = sessionStorage.getItem(HINT_KEY) === '1'; sessionStorage.setItem(HINT_KEY, '1'); } catch {} if (!seen) toast('Xoay ngang điện thoại để xem bản đồ rộng hơn.'); }
   });
-  if ($('#map-section').requestFullscreen) { $('#btn-full').hidden = false; $('#btn-full').addEventListener('click', () => toggleFullscreen()); }
+  $('#btn-full').hidden = false; $('#btn-full').addEventListener('click', () => toggleFullscreen());
   $('#btn-share').addEventListener('click', () => { if (wantShare) stopSharing(true); else startSharing(); });
 
   // ---------- API cho app.js ----------
