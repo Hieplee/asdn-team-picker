@@ -309,7 +309,6 @@ export function initLive(ctx) {
     const poly = L.polygon(CORNERS.map(c => c.ll), { color: '#ffd23f', weight: 3, fillColor: '#ffd23f', fillOpacity: 0.08, dashArray: '8 6' }).addTo(areaLayer);
     CORNERS.forEach(c => {
       L.circleMarker(c.ll, { radius: 6, color: '#000', weight: 2, fillColor: '#ffd23f', fillOpacity: 1 }).addTo(areaLayer);
-      L.marker(c.ll, { interactive: false, icon: L.divIcon({ className: 'corner', html: c.name, iconSize: [0, 0], iconAnchor: [-10, 22] }) }).addTo(areaLayer);
     });
     boundsArea = poly.getBounds();
     buildGrid(L);
