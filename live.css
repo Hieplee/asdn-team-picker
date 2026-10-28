@@ -211,3 +211,13 @@
 .order-icon .svg-ic{font-size:22px}
 .draw-btn:has(.svg-ic) .draw-icon{display:grid;place-items:center}
 .svg-ic.attack{color:#ff5a4d}.svg-ic.defend{color:#4da3ff}
+
+/* Báo chết: ghim đầu lâu xám viền theo màu người chết, nhãn viết tắt bên dưới */
+.dead-pin{position:relative;width:34px;height:44px;filter:drop-shadow(0 2px 3px #000a)}
+.dead-pin svg{display:block}
+.dead-pin b{position:absolute;top:45px;left:50%;transform:translateX(-50%);padding:1px 6px;border-radius:6px;background:rgba(14,22,15,.85);border-left:3px solid var(--c);color:#fff;font:700 11px 'DM Sans',sans-serif;white-space:nowrap}
+.svg-ic.death{color:#e5e7ea}
+.hud-dead{font-style:normal;font:800 12px 'DM Sans',sans-serif;color:#fff;background:#c0392b;padding:2px 7px;border-radius:10px;flex:none}
+.dead-row{align-items:stretch}.dead-row .team-row{opacity:.7}.dead-row .pick-name{text-decoration:line-through;text-decoration-color:#ffffff66}.dead-row small{text-decoration:none;display:block}
+.dead-row .revive-btn{width:auto;flex:none;min-width:84px;padding:0 14px}
+.team-row.sel{border-color:var(--lime);background:#2a3d2c}

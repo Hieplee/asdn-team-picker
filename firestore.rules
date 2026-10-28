@@ -123,6 +123,24 @@ service cloud.firestore {
         || (inTeam(teamId) && isCaptain(teamId));
     }
 
+    // Báo chết: một doc mỗi người (id = memberId), ghi đè khi chết lại, xóa = hồi sinh.
+    // Người chơi chỉ báo cho chính mình; đội trưởng báo hộ được người cùng đội. Organizer xóa được để reset ván.
+    match /match/current/teams/{teamId}/deaths/{mid} {
+      allow read: if inTeam(teamId);
+      allow create, update: if signedIn() && inTeam(teamId)
+        && request.resource.data.keys().hasOnly(['mid', 'lat', 'lng', 'by', 'ts'])
+        && request.resource.data.mid == mid
+        && request.resource.data.by == request.auth.uid
+        && request.resource.data.ts == request.time
+        && num(request.resource.data.lat, -90, 90)
+        && num(request.resource.data.lng, -180, 180)
+        && (mid == myMid()
+          || (isCaptain(teamId)
+            && get(/databases/$(database)/documents/match/current/members/$(mid)).data.teamId == teamId));
+      allow delete: if isOrg()
+        || (inTeam(teamId) && (mid == myMid() || isCaptain(teamId)));
+    }
+
     match /public/current {
       allow read: if true;
       allow create, update: if request.auth != null

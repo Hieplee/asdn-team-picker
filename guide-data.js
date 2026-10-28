@@ -1128,7 +1128,7 @@ window.GUIDE={
       },
       {
        "title": "GPS đồng đội",
-       "desc": "Chấm màu có tên là vị trí GPS từng đồng đội, mỗi người một màu. Mờ đi khi quá 60 giây chưa cập nhật, ẩn sau 5 phút.",
+       "desc": "Chấm màu có tên là vị trí GPS từng đồng đội, mỗi người một màu. Mờ đi khi quá 60 giây chưa cập nhật, ẩn sau 5 phút. Người đã báo chết thì chấm GPS ẩn, chỉ còn ghim ☠ tại chỗ chết.",
        "role": null,
        "x": 22.56,
        "y": 41.47,
@@ -1495,6 +1495,30 @@ window.GUIDE={
     },
     {
      "t": "h",
+     "text": "5 · Báo chết"
+    },
+    {
+     "t": "p",
+     "html": "Để cả đội biết còn bao nhiêu người và ai chết ở đâu. Mọi thành viên đều có nút <b>☠ Chết</b> (đầu lâu) cạnh Mục tiêu ở thanh dưới bản đồ."
+    },
+    {
+     "t": "steps",
+     "items": [
+      "Bấm <b>☠ Chết</b>, rồi chạm lên bản đồ <b>nơi bạn chết</b>. Ghi luôn, không hỏi tên. Không cần bật GPS vì bạn tự chấm vị trí.",
+      "Ghim đầu lâu xám (viền theo màu của bạn, kèm chữ viết tắt) hiện cho cả đội, chấm GPS của bạn ẩn đi. Ô Đội ở góc trái hiện <b>số người sống</b> và huy hiệu <b>☠</b> đỏ.",
+      "Báo nhầm hoặc sai chỗ: chạm ô Đội ở góc trái, bấm <b>Hồi sinh</b> cạnh tên mình rồi báo lại. Hồi sinh xong ghim biến mất."
+     ]
+    },
+    {
+     "t": "p",
+     "html": "<b>Đội trưởng</b> báo chết cho người khác: bấm <b>☠ Chết</b>, chạm nơi người đó chết, rồi chọn <b>ai chết ở đây</b> (chọn được nhiều người nếu cùng chết một chỗ) và bấm <b>BÁO CHẾT</b>. Dùng khi đồng đội quên bấm hoặc không cầm điện thoại. Đội trưởng cũng hồi sinh được bất kỳ ai trong đội."
+    },
+    {
+     "t": "p",
+     "html": "Chạm vào ghim ☠ để xem giờ chết và người báo. Trong bảng đội, hàng người chết bị gạch tên, ghi giờ chết, bấm để bay tới chỗ chết."
+    },
+    {
+     "t": "h",
      "text": "Chuẩn bị trận (người tổ chức)",
      "role": "org"
     },
@@ -1504,6 +1528,7 @@ window.GUIDE={
       "Chia đội xong, bấm <b>KHÓA ĐỘI</b> ở từng đội. Chỉ đội đã khóa mới có mã và nút <b>QR VÀO ĐỘI</b>.",
       "Trong tab <b>Đội hình</b>, bấm <b>Chỉnh ▾</b> để mở phần thiết lập, rồi ở mục <b>Khu vực chơi</b> chọn Núi hoặc Phố (cả trận dùng chung). Cũng đổi được trong <b>⚙ Điều khiển trận</b> ở bước sau.",
       "Mở <b>⚙ Điều khiển trận</b> trên bản đồ, đưa mã/QR cho từng đội, đặt đội trưởng.",
+      "Giữa các ván: <b>VÁN MỚI</b> trong <b>⚙ Điều khiển trận</b> xóa báo chết và lệnh nhưng giữ nguyên người đã vào đội, đội trưởng và khu vực. Chỉ một đội chơi lại thì bấm <b>☠ Hồi sinh cả đội</b> ở đội đó.",
       "Cuối buổi: <b>KẾT THÚC TRẬN</b> để xóa dữ liệu."
      ],
      "role": "org"

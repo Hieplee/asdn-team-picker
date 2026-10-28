@@ -81,6 +81,8 @@ function cleanCode(text) { return String(text || '').toUpperCase().replace(/[^A-
 function joinLink(code) { return `${location.origin}${location.pathname}?join=${code}`; }
 function ago(ms) { const s = Math.max(0, Math.round(ms / 1000)); return s < 60 ? `${s} giây trước` : `${Math.round(s / 60)} phút trước`; }
 
+function clock(ms) { return new Date(ms).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }); }
+
 export function initLive(ctx) {
   const { auth, db, fs, signInAnonymously, getState, findMember, makeAvatar, isOrganizer, toast, teamColors } = ctx;
   const { doc, collection, setDoc, deleteDoc, getDoc, getDocs, onSnapshot, writeBatch, serverTimestamp } = fs;
@@ -105,6 +107,9 @@ export function initLive(ctx) {
   let orders = {}; // id -> { type, pts (phẳng), by, mid, ts }
   let draw = null; // đang vẽ: { kind, pts: [[lat, lng]], layer }
   const orderLayers = new Map();
+  let deaths = {}; // memberId -> { lat, lng, by, ts }
+  let deathsReady = false; // bỏ toast cho lần tải đầu
+  const deathLayers = new Map();
 
   // ---------- Bottom sheet ----------
   function openSheet(title, body, onClose) {
@@ -139,7 +144,7 @@ export function initLive(ctx) {
     return auth.currentUser;
   }
 
-  function stopTeamSubs() { unsubTeam.forEach(fn => fn()); unsubTeam = []; members = {}; positions = {}; orders = {}; captain = null; mapId = DEFAULT_MAP; CORNERS = MAPS[DEFAULT_MAP].corners; cancelDraw(); clearMarkers(); clearOrderLayers(); }
+  function stopTeamSubs() { unsubTeam.forEach(fn => fn()); unsubTeam = []; members = {}; positions = {}; orders = {}; deaths = {}; deathsReady = false; captain = null; mapId = DEFAULT_MAP; CORNERS = MAPS[DEFAULT_MAP].corners; cancelDraw(); clearMarkers(); clearOrderLayers(); clearDeathLayers(); }
   function startTeamSubs(teamId) {
     stopTeamSubs();
     // Vừa bấm "Tôi là…" thì snapshot memberOf đến từ bộ nhớ máy, trước khi server nhận. Luồng đọc mở lúc đó bị rules từ chối
@@ -167,6 +172,15 @@ export function initLive(ctx) {
       orders = {};
       snap.forEach(d => { const data = d.data(); const slot = /^(?:t_.*|atk|def)_([0-4])$/.exec(d.id); orders[d.id] = { type: data.type, pts: Array.isArray(data.pts) ? data.pts : [], by: data.by, mid: data.mid, ts: data.ts ? data.ts.toMillis() : Date.now(), num: slot ? Number(slot[1]) + 1 : null }; });
       drawOrders(); renderDraw();
+    }));
+    unsubTeam.push(listen(col('teams', teamId, 'deaths'), snap => {
+      const fresh = [];
+      if (deathsReady) snap.docChanges().forEach(change => { if (change.type === 'added' && change.doc.data().by !== (user && user.uid)) fresh.push(change.doc.id); });
+      deaths = {};
+      snap.forEach(d => { const data = d.data(); deaths[d.id] = { lat: data.lat, lng: data.lng, by: data.by, ts: data.ts ? data.ts.toMillis() : Date.now() }; });
+      deathsReady = true;
+      fresh.forEach(id => toast(`☠ ${findMember(id)?.name || 'Đồng đội'} đã chết`));
+      drawDeaths(); drawPlayers(); renderHud();
     }));
     unsubTeam.push(listen(ref('config', 'map'), snap => { applyMapId(snap.exists() ? snap.data().map : DEFAULT_MAP); }));
   }
@@ -297,7 +311,7 @@ export function initLive(ctx) {
       map.on('zoomend', syncGridLabels);
       map.on('move zoom resize', syncEdges);
       map.on('click', event => addDrawPoint(event.latlng));
-      drawPlayers(); drawMe(); drawOrders(); renderDraw();
+      drawPlayers(); drawMe(); drawOrders(); drawDeaths(); renderDraw();
     })();
     await mapBuilding; mapBuilding = null;
   }
@@ -431,7 +445,7 @@ export function initLive(ctx) {
     if (!map) return;
     const now = Date.now(), myUid = user && user.uid, seen = new Set();
     for (const [uid, p] of Object.entries(positions)) {
-      if (uid === myUid) continue;
+      if (uid === myUid || deaths[members[uid]]) continue; // người chết chỉ còn ghim ☠
       const age = now - p.ts;
       if (age > GONE_MS || !Number.isFinite(p.lat) || !Number.isFinite(p.lng)) continue;
       seen.add(uid);
@@ -542,13 +556,15 @@ export function initLive(ctx) {
     const total = teamPlayers(Number(me.teamId)).length;
     const state = wantShare ? 'live' : 'view';
     const label = state === 'live' ? 'ĐANG CHIA SẺ' : state === 'view' ? 'ĐANG XEM' : 'CHƯA BẬT';
-    const hudSig = [me.teamId, active, total, myName(), state, teamColor(), mapId].join('|');
+    const dead = teamPlayers(Number(me.teamId)).filter(id => deaths[id]).length;
+    const hudSig = [me.teamId, active, total, dead, myName(), state, teamColor(), mapId].join('|');
     if (hud.dataset.sig !== hudSig) {
     hud.dataset.sig = hudSig;
     hud.replaceChildren(
       h('button', { class: 'hud-chip', type: 'button', onclick: openTeamSheet, 'aria-label': 'Xem danh sách đội' },
         h('i', { class: 'team-dot', style: `background:${teamColor()}` }),
-        h('span', { class: 'hud-main' }, h('b', { text: `Đội ${Number(me.teamId) + 1}` }), h('small', { text: `${active}/${total} đang hiện · ${myName()} · ${MAPS[mapId].label}` })),
+        h('span', { class: 'hud-main' }, h('b', { text: `Đội ${Number(me.teamId) + 1}` }), h('small', { text: `${total - dead}/${total} sống · ${active} đang hiện · ${myName()} · ${MAPS[mapId].label}` })),
+        dead > 0 && h('em', { class: 'hud-dead', text: `☠${dead}` }),
         h('em', { class: 'hud-state ' + state, text: label })));
     }
     renderDraw();
@@ -569,6 +585,16 @@ export function initLive(ctx) {
       const member = findMember(id), uid = byMember[id];
       const p = uid === myUid ? (myPos && { ...myPos, ts: now }) : positions[uid];
       const status = !uid ? 'Chưa vào đội' : !p || now - p.ts > GONE_MS ? 'Chưa chia sẻ' : now - p.ts > STALE_MS ? `Mất tín hiệu ${ago(now - p.ts)}` : uid === myUid ? 'Bạn' : 'Đang hiện';
+      const death = deaths[id];
+      if (death) {
+        const spot = Number.isFinite(death.lat) && Number.isFinite(death.lng);
+        return h('div', { class: 'order-row dead-row' },
+          h('button', { class: 'team-row', type: 'button', disabled: !spot, onclick: () => { closeSheet(); if (map && spot) map.flyTo([death.lat, death.lng], Math.max(map.getZoom(), 19)); } },
+            makeAvatar(member, 'pick-avatar'),
+            h('span', { class: 'pick-name' }, h('i', { class: 'color-dot', style: `background:${memberColor(id)}` }), (id === captain ? '★ ' : '') + member.name, h('small', { text: `☠ Chết ${clock(death.ts)}` })),
+            h('span', { class: 'pick-state', text: spot ? 'Đi tới ›' : '' })),
+          canRevive(id) && h('button', { class: 'secondary-button revive-btn', type: 'button', onclick: () => { closeSheet(); revive(id); } }, 'Hồi sinh'));
+      }
       const can = p && Number.isFinite(p.lat) && now - p.ts <= GONE_MS;
       return h('button', { class: 'team-row', type: 'button', disabled: !can, onclick: () => { closeSheet(); if (map) map.flyTo([p.lat, p.lng], Math.max(map.getZoom(), 19)); } },
         makeAvatar(member, 'pick-avatar'),
@@ -581,13 +607,14 @@ export function initLive(ctx) {
   // ---------- Lệnh trên bản đồ: mục tiêu / mũi tên / vùng ----------
   // Thao tác chạm: chạm nút công cụ, rồi chạm lên bản đồ để đặt điểm (không cần kéo, vì kéo là di chuyển bản đồ).
   // Mục tiêu đặt một chạm. Mũi tên (>=2 điểm) và vùng (>=3 điểm) chạm nhiều điểm rồi bấm Xong.
-  const NEED = { target: 1, attack: 1, defend: 1, arrow: 2, zone: 3 };
-  const KIND_NAME = { target: 'Mục tiêu', attack: 'Tấn công', defend: 'Phòng thủ', arrow: 'Mũi tên', zone: 'Vùng' };
+  const NEED = { target: 1, attack: 1, defend: 1, death: 1, arrow: 2, zone: 3 };
+  const KIND_NAME = { target: 'Mục tiêu', attack: 'Tấn công', defend: 'Phòng thủ', death: 'Chết', arrow: 'Mũi tên', zone: 'Vùng' };
   // Tấn công / Phòng thủ: đội trưởng đánh dấu một chạm như mục tiêu, màu cố định (đỏ / xanh) để phân biệt với mục tiêu của từng người.
   const FIXED_MARK = { attack: { color: '#ff5a4d' }, defend: { color: '#4da3ff' } };
   const ORDER_ICON = { target: '⌖', arrow: '➚', zone: '⬠' };
   // Biểu tượng cách điệu kiểu bản đồ chỉ huy trong Squad: mũi tên chevron (tấn công), khiên (phòng thủ). Tô bằng currentColor.
   const SVG_ICON = {
+    death: '<svg viewBox="0 0 24 24"><path d="M12 2.500C7 2.500 4 6 4 10.500c0 3 1.800 5 3.500 6V21h9v-4.500c1.700-1 3.500-3 3.500-6C20 6 17 2.500 12 2.500z" fill="currentColor" stroke="#000" stroke-width="1.4" stroke-linejoin="round"/><circle cx="9" cy="10.500" r="2.200" fill="#000"/><circle cx="15" cy="10.500" r="2.200" fill="#000"/><path d="M12 13l-1.500 3h3z" fill="#000"/></svg>',
     attack: '<svg viewBox="0 0 24 24"><path d="M12 2 21 21 12 16 3 21Z" fill="currentColor" stroke="#000" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 8 15.5 15.5 12 13.5 8.5 15.5Z" fill="#000" fill-opacity=".55"/></svg>',
     defend: '<svg viewBox="0 0 24 24"><path d="M12 2 20.5 5.5V12C20.5 17 16.5 20.5 12 22 7.5 20.5 3.5 17 3.5 12V5.5Z" fill="currentColor" stroke="#000" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 6 17 8V12C17 15 14.8 17.2 12 18.3 9.2 17.2 7 15 7 12V8Z" fill="#000" fill-opacity=".55"/></svg>'
   };
@@ -654,7 +681,8 @@ export function initLive(ctx) {
 
   function startDraw(kind) {
     if (!me || !map) return;
-    if (kind !== 'target' && !isCaptainMe()) { toast('Chỉ đội trưởng đánh dấu được tấn công, phòng thủ, mũi tên và vùng.'); return; }
+    if (kind !== 'target' && kind !== 'death' && !isCaptainMe()) { toast('Chỉ đội trưởng đánh dấu được tấn công, phòng thủ, mũi tên và vùng.'); return; }
+    if (kind === 'death' && !isCaptainMe() && deaths[me.memberId]) { toast('Bạn đã báo chết rồi. Muốn báo lại thì Hồi sinh trong danh sách đội.'); return; }
     cancelDraw();
     draw = { kind, pts: [], layer: window.L.layerGroup().addTo(map) };
     map.doubleClickZoom.disable(); // chạm nhanh liên tiếp không bị phóng to nhầm
@@ -692,7 +720,9 @@ export function initLive(ctx) {
   }
   async function finishDraw() {
     if (!draw || draw.pts.length < NEED[draw.kind] || !me || !user) return;
-    const { kind, pts } = draw, id = pickSlot(kind);
+    const { kind, pts } = draw;
+    if (kind === 'death') { cancelDraw(); if (isCaptainMe()) openDeathPicker(pts[0]); else markDead([me.memberId], pts[0]); return; }
+    const id = pickSlot(kind);
     cancelDraw();
     try { await setDoc(ref('teams', me.teamId, 'orders', id), { type: kind, pts: pts.flat(), by: user.uid, mid: me.memberId, ts: serverTimestamp() }); }
     catch (error) {
@@ -749,6 +779,78 @@ export function initLive(ctx) {
     openSheet('Lệnh của đội', body);
   }
 
+  // ---------- Báo chết ----------
+  // deaths/{memberId}: ghim ☠ tại chỗ chết, chấm GPS live của người đó bị ẩn. Hồi sinh = xóa doc.
+  const canRevive = mid => Boolean(me && (mid === me.memberId || isCaptainMe()));
+  function deathIcon(mid) {
+    const color = memberColor(mid);
+    const el = h('div', { class: 'dead-pin', style: `--c:${color}` });
+    el.innerHTML = `<svg viewBox="0 0 34 44" width="34" height="44"><path d="M17 2C9 2 3 8 3 16c0 11 14 26 14 26s14-15 14-26C31 8 25 2 17 2z" fill="#4a4d52" stroke="${color}" stroke-width="3"/><path d="M17 8c-5 0-8 3.500-8 7.500 0 3 1.800 4.800 3.500 5.700V24h9v-2.800c1.700-.9 3.500-2.700 3.500-5.700C25 11.500 22 8 17 8z" fill="#f2f2f2"/><circle cx="13.800" cy="15" r="2" fill="#4a4d52"/><circle cx="20.200" cy="15" r="2" fill="#4a4d52"/><path d="M17 17.500l-1.300 2.500h2.600z" fill="#4a4d52"/></svg>`;
+    el.append(h('b', { text: initials(findMember(mid)?.name || '') }));
+    return window.L.divIcon({ className: '', iconSize: [34, 44], iconAnchor: [17, 44], html: el });
+  }
+  function clearDeathLayers() { deathLayers.forEach(entry => entry.marker.remove()); deathLayers.clear(); }
+  function drawDeaths() {
+    if (!map || !window.L) return;
+    const seen = new Set();
+    for (const [mid, d] of Object.entries(deaths)) {
+      if (!Number.isFinite(d.lat) || !Number.isFinite(d.lng)) continue;
+      seen.add(mid);
+      const sig = JSON.stringify([d.lat, d.lng, memberColor(mid), findMember(mid)?.name]);
+      const existing = deathLayers.get(mid);
+      if (existing && existing.sig === sig) continue;
+      if (existing) existing.marker.remove();
+      const marker = window.L.marker([d.lat, d.lng], { icon: deathIcon(mid), keyboard: false, zIndexOffset: 400 }).on('click', () => { if (!draw) openDeathSheet(mid); }).addTo(map);
+      deathLayers.set(mid, { marker, sig });
+    }
+    for (const [mid, entry] of deathLayers) if (!seen.has(mid)) { entry.marker.remove(); deathLayers.delete(mid); }
+  }
+  async function markDead(mids, ll) {
+    if (!me || !user || !mids.length) return;
+    try {
+      const batch = writeBatch(db);
+      mids.forEach(mid => batch.set(ref('teams', me.teamId, 'deaths', mid), { mid, lat: ll[0], lng: ll[1], by: user.uid, ts: serverTimestamp() }));
+      await batch.commit();
+      buzz(30);
+      toast(mids.length === 1 && mids[0] === me.memberId ? '☠ Đã báo bạn chết. Hồi sinh trong danh sách đội nếu nhầm.' : `☠ Đã báo chết: ${mids.map(mid => findMember(mid)?.name || 'Đồng đội').join(', ')}`);
+    } catch (error) {
+      notice(`Không báo chết được: ${error.code === 'permission-denied' ? 'không có quyền (bạn đã vào đội chưa?)' : error.message}`);
+    }
+  }
+  async function revive(mid) {
+    try { await deleteDoc(ref('teams', me.teamId, 'deaths', mid)); toast(`Đã hồi sinh ${findMember(mid)?.name || 'đồng đội'}.`); }
+    catch (error) { toast(`Không hồi sinh được: ${error.message}`); }
+  }
+  // Đội trưởng chạm bản đồ rồi chọn ai chết ở đó (chọn nhiều nếu cùng chết một chỗ).
+  function openDeathPicker(ll) {
+    if (!me) return;
+    const picked = new Set(), team = Number(me.teamId);
+    const alive = teamPlayers(team).filter(id => Object.values(members).includes(id) && !deaths[id]).sort((x, y) => (y === me.memberId) - (x === me.memberId));
+    const body = h('div', { class: 'live-sheet-stack' });
+    const paint = () => {
+      const rows = alive.length ? alive.map(id => h('button', { class: 'team-row' + (picked.has(id) ? ' sel' : ''), type: 'button', 'aria-pressed': String(picked.has(id)), onclick: () => { picked.has(id) ? picked.delete(id) : picked.add(id); paint(); } },
+        makeAvatar(findMember(id), 'pick-avatar'),
+        h('span', { class: 'pick-name' }, h('i', { class: 'color-dot', style: `background:${memberColor(id)}` }), (id === captain ? '★ ' : '') + findMember(id).name + (id === me.memberId ? ' (bạn)' : '')),
+        h('span', { class: 'pick-state', text: picked.has(id) ? '✓' : '' })))
+        : [h('p', { class: 'join-lead', text: 'Không còn ai sống để báo chết.' })];
+      body.replaceChildren(h('div', { class: 'pick-list' }, rows),
+        h('div', { class: 'sheet-actions' },
+          h('button', { class: 'primary-button', type: 'button', disabled: !picked.size, onclick: () => { closeSheet(); markDead([...picked], ll); } }, h('span', { text: picked.size ? `BÁO CHẾT (${picked.size})` : 'CHỌN NGƯỜI CHẾT' })),
+          h('button', { class: 'secondary-button', type: 'button', onclick: closeSheet }, 'HỦY')));
+    };
+    paint();
+    openSheet('Ai chết ở đây?', body);
+  }
+  function openDeathSheet(mid) {
+    const d = deaths[mid]; if (!d) return;
+    const by = Object.entries(members).find(([uid]) => uid === d.by)?.[1];
+    const body = h('div', { class: 'sheet-actions' },
+      h('p', { class: 'join-lead', text: `${clock(d.ts)} · ${ago(Date.now() - d.ts)}${by && by !== mid ? ` · ${findMember(by)?.name || 'Đồng đội'} báo` : ''}` }),
+      canRevive(mid) && h('button', { class: 'danger-button', type: 'button', onclick: () => { closeSheet(); revive(mid); } }, 'HỒI SINH'),
+      h('button', { class: 'secondary-button', type: 'button', onclick: closeSheet }, 'ĐÓNG'));
+    openSheet(`☠ ${findMember(mid)?.name || 'Đồng đội'}`, body);
+  }
+
   // Thanh công cụ ở đáy (vùng ngón cái). Chỉ dựng lại khi nội dung đổi để không làm mất cú chạm đang diễn ra.
   function toolButton(icon, label, onclick, extra = {}) {
     return h('button', { class: 'draw-btn' + (extra.class ? ' ' + extra.class : ''), type: 'button', disabled: extra.disabled, onclick, 'aria-label': extra.aria || label },
@@ -763,7 +865,8 @@ export function initLive(ctx) {
     if (draw) {
       const n = draw.pts.length, need = NEED[draw.kind];
       hint.hidden = false;
-      hint.textContent = isPoint(draw.kind) ? `Chạm lên bản đồ để đánh dấu ${KIND_NAME[draw.kind].toLowerCase()}`
+      hint.textContent = draw.kind === 'death' ? (isCaptainMe() ? 'Chạm lên bản đồ nơi người chết' : 'Chạm lên bản đồ nơi bạn chết')
+        : isPoint(draw.kind) ? `Chạm lên bản đồ để đánh dấu ${KIND_NAME[draw.kind].toLowerCase()}`
         : n < need ? `${KIND_NAME[draw.kind]}: chạm ${need - n} điểm nữa (đã ${n})` : `${KIND_NAME[draw.kind]}: đã ${n} điểm. Chạm thêm hoặc bấm Xong`;
       bar.replaceChildren(...[
         toolButton('✕', 'Hủy', cancelDraw, { class: 'cancel' }),
@@ -773,6 +876,7 @@ export function initLive(ctx) {
       hint.hidden = true;
       bar.replaceChildren(...[
         toolButton('⌖', 'Mục tiêu', () => startDraw('target')),
+        toolButton(svgIcon('death'), 'Chết', () => startDraw('death')),
         isCaptainMe() && toolButton(svgIcon('attack'), 'Tấn công', () => startDraw('attack')),
         isCaptainMe() && toolButton(svgIcon('defend'), 'Phòng thủ', () => startDraw('defend')),
         isCaptainMe() && toolButton('➚', 'Mũi tên', () => startDraw('arrow')),
@@ -800,11 +904,11 @@ export function initLive(ctx) {
     catch (error) { toast(`Không đổi được mã: ${error.message}`); }
   }
   let mapWatch = null;
-  let orgUnsubs = [], orgMembers = {}, orgCaptains = {}, orgFocus = null, qrOpen = new Set(), confirmEnd = false;
+  let orgUnsubs = [], orgMembers = {}, orgCaptains = {}, orgFocus = null, qrOpen = new Set(), confirmEnd = false, confirmRound = false;
 
   async function openOrganizer(focusTeam = null) {
     if (!isOrganizer()) return;
-    orgFocus = focusTeam; confirmEnd = false; qrOpen = new Set(focusTeam == null ? [] : [focusTeam]);
+    orgFocus = focusTeam; confirmEnd = false; confirmRound = false; qrOpen = new Set(focusTeam == null ? [] : [focusTeam]);
     openSheet('Điều khiển trận', h('p', { class: 'join-lead', text: 'Đang tải…' }), () => { orgUnsubs.forEach(fn => fn()); orgUnsubs = []; });
     orgUnsubs.push(onSnapshot(col('members'), snap => { orgMembers = {}; snap.forEach(d => { orgMembers[d.id] = d.data(); }); renderOrganizer(); }, () => {}));
     orgUnsubs.push(onSnapshot(col('teamMeta'), snap => { orgCaptains = {}; snap.forEach(d => { orgCaptains[d.id] = d.data().captain; }); renderOrganizer(); }, () => {}));
@@ -841,27 +945,48 @@ export function initLive(ctx) {
       await batch.commit(); toast(`Đã gỡ ${findMember(memberId)?.name || 'người chơi'}. Họ có thể vào lại.`);
     } catch (error) { toast(`Không gỡ được: ${error.message}`); }
   }
+  // Id lệnh và id báo chết cố định nên xóa được mà không cần đọc (organizer không đọc được dữ liệu của đội). Chia nhiều batch vì giới hạn 500 thao tác.
+  async function deleteAll(targets) {
+    for (let i = 0; i < targets.length; i += 400) {
+      const batch = writeBatch(db);
+      targets.slice(i, i + 400).forEach(target => batch.delete(target));
+      await batch.commit();
+    }
+  }
+  function deathTargets(onlyTeam = null) {
+    return Object.entries(orgMembers).filter(([, entry]) => onlyTeam == null || String(entry.teamId) === String(onlyTeam))
+      .map(([memberId, entry]) => ref('teams', entry.teamId, 'deaths', memberId));
+  }
+  function orderTargets() {
+    const targets = [];
+    for (const entry of Object.values(orgMembers)) for (let n = 0; n < 3; n++) targets.push(ref('teams', entry.teamId, 'orders', `t_${entry.uid}_${n}`));
+    for (let team = 0; team < 6; team++) {
+      for (let n = 0; n < 10; n++) targets.push(ref('teams', String(team), 'orders', `a_${n}`), ref('teams', String(team), 'orders', `z_${n}`));
+      for (let n = 0; n < 5; n++) targets.push(ref('teams', String(team), 'orders', `atk_${n}`), ref('teams', String(team), 'orders', `def_${n}`));
+    }
+    return targets;
+  }
+  // Ván mới: giữ nguyên danh sách vào đội, đội trưởng, khu vực và vị trí; chỉ xóa báo chết và lệnh.
+  async function newRound() {
+    try {
+      await deleteAll([...deathTargets(), ...orderTargets()]);
+      confirmRound = false;
+      toast('Đã bắt đầu ván mới: xóa báo chết và lệnh, giữ nguyên đội.'); renderOrganizer();
+    } catch (error) { toast(`Không reset được ván: ${error.message}`); }
+  }
+  async function reviveTeam(team) {
+    try { await deleteAll(deathTargets(team)); toast(`Đã hồi sinh cả Đội ${team + 1}.`); }
+    catch (error) { toast(`Không hồi sinh được: ${error.message}`); }
+  }
   async function endMatch() {
     try {
-      // Id lệnh cố định nên xóa được mà không cần đọc (organizer không đọc được lệnh của đội). Chia nhiều batch vì giới hạn 500 thao tác.
-      const targets = [];
-      for (const [memberId, entry] of Object.entries(orgMembers)) {
-        targets.push(ref('teams', entry.teamId, 'positions', entry.uid), ref('memberOf', entry.uid), ref('members', memberId));
-        for (let n = 0; n < 3; n++) targets.push(ref('teams', entry.teamId, 'orders', `t_${entry.uid}_${n}`));
-      }
-      for (let team = 0; team < 6; team++) {
-        targets.push(ref('teamKeys', String(team)), ref('teamMeta', String(team)));
-        for (let n = 0; n < 10; n++) targets.push(ref('teams', String(team), 'orders', `a_${n}`), ref('teams', String(team), 'orders', `z_${n}`));
-        for (let n = 0; n < 5; n++) targets.push(ref('teams', String(team), 'orders', `atk_${n}`), ref('teams', String(team), 'orders', `def_${n}`));
-      }
+      const targets = [...deathTargets(), ...orderTargets()];
+      for (const [memberId, entry] of Object.entries(orgMembers)) targets.push(ref('teams', entry.teamId, 'positions', entry.uid), ref('memberOf', entry.uid), ref('members', memberId));
+      for (let team = 0; team < 6; team++) targets.push(ref('teamKeys', String(team)), ref('teamMeta', String(team)));
       targets.push(ref('config', 'map'));
-      for (let i = 0; i < targets.length; i += 400) {
-        const batch = writeBatch(db);
-        targets.slice(i, i + 400).forEach(target => batch.delete(target));
-        await batch.commit();
-      }
+      await deleteAll(targets);
       codes = {}; confirmEnd = false;
-      toast('Đã kết thúc trận và xóa dữ liệu vị trí, lệnh.'); renderOrganizer();
+      toast('Đã kết thúc trận và xóa dữ liệu vị trí, lệnh, báo chết.'); renderOrganizer();
     } catch (error) { toast(`Không kết thúc được: ${error.message}`); }
   }
   function renderOrganizer() {
@@ -898,8 +1023,14 @@ export function initLive(ctx) {
           h('button', { class: 'icon-button' + (isCaptain ? ' on' : ''), type: 'button', 'aria-pressed': String(isCaptain), 'aria-label': `${isCaptain ? 'Bỏ' : 'Đặt'} đội trưởng ${member.name}`, onclick: () => setCaptain(team, id) }, '★'),
           inTeam && h('button', { class: 'icon-button', type: 'button', 'aria-label': `Gỡ ${member.name}`, onclick: () => removeMember(id) }, '✕')));
       });
-      card.append(list); blocks.push(card);
+      card.append(list);
+      if (joined) card.append(h('button', { class: 'text-button', type: 'button', onclick: () => reviveTeam(team) }, '☠ Hồi sinh cả đội'));
+      blocks.push(card);
     }
+    blocks.push(h('div', { class: 'org-danger' }, confirmRound
+      ? [h('p', { text: 'Ván mới: xóa báo chết và mọi lệnh của các đội. Giữ nguyên người đã vào đội, đội trưởng, khu vực và vị trí.' }), h('div', { class: 'sheet-actions' },
+          h('button', { class: 'danger-button', type: 'button', onclick: newRound }, 'XÁC NHẬN VÁN MỚI'), h('button', { class: 'secondary-button', type: 'button', onclick: () => { confirmRound = false; renderOrganizer(); } }, 'HỦY'))]
+      : h('button', { class: 'secondary-button', type: 'button', onclick: () => { confirmRound = true; confirmEnd = false; renderOrganizer(); } }, 'VÁN MỚI · GIỮ ĐỘI, XÓA CHẾT VÀ LỆNH')));
     blocks.push(h('div', { class: 'org-danger' }, confirmEnd
       ? [h('p', { text: 'Xóa toàn bộ vị trí, danh sách vào đội và mã đội? Không hoàn tác được.' }), h('div', { class: 'sheet-actions' },
           h('button', { class: 'danger-button', type: 'button', onclick: endMatch }, 'XÁC NHẬN KẾT THÚC'), h('button', { class: 'secondary-button', type: 'button', onclick: () => { confirmEnd = false; renderOrganizer(); } }, 'HỦY'))]

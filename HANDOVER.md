@@ -99,3 +99,10 @@ Tạo project + web app, bật Google sign-in, thêm domain `hieplee.github.io` 
 5. Gần nhất: role icon (admin/elder/newbie) kèm tooltip, bỏ text placeholder trên card, cập nhật avatar.
 
 Xem đầy đủ bằng `git log --oneline` (36 commit).
+
+## Bản đồ: báo chết (2026-10-28)
+
+- Nút **☠ Chết** trên thanh dưới bản đồ, mọi thành viên dùng được. Member chạm bản đồ là tự báo chết; đội trưởng chạm rồi chọn người chết. Dữ liệu ở `match/current/teams/{team}/deaths/{memberId}`, hồi sinh = xóa doc.
+- Organizer: **VÁN MỚI** (xóa báo chết + lệnh, giữ đội) và **Hồi sinh cả đội** trong "Điều khiển trận".
+- **Cần deploy lại rules:** `firebase deploy --only firestore:rules --project asdn-team-picker`.
+- Chưa chụp lại ảnh hướng dẫn (`guide/m05, m07, m12, m21`) sau khi thêm nút Chết; phần chữ đã cập nhật.
