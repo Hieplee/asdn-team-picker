@@ -178,7 +178,7 @@ html.fs-lock,html.fs-lock body{overflow:hidden}
   .leaflet-bottom.leaflet-left{margin-bottom:104px}
 }
 /* Dọc: nút chia sẻ gọn hơn một chút nhưng vẫn >=48px để bấm bằng ngón cái */
-.share-button{min-height:52px}
+.share-button{min-height:46px}
 
 /* Mục tiêu: màu theo người đặt (không ghi tên). Mũi tên: mảnh, trắng viền đen cho dễ đọc trên ảnh vệ tinh. */
 .tgt-pin small{display:none}
@@ -245,3 +245,4 @@ html.fs-lock,html.fs-lock body{overflow:hidden}
   .map-bottom .share-button{width:auto;min-height:44px;padding:0 16px;border-radius:999px;font-size:12px;letter-spacing:.3px}
   .leaflet-bottom.leaflet-left{left:auto;right:180px;margin-bottom:0}
 }
+@media (orientation:landscape) and (max-height:500px){.share-button .share-tail{display:none}.map-bottom .share-button{padding:0 14px;font-size:11px}}

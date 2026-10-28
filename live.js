@@ -657,7 +657,7 @@ export function initLive(ctx) {
     if (wantShare && myPos) sub = `Sai số ~${Math.round(myPos.acc)} m · ${inArea([myPos.lat, myPos.lng]) ? 'trong khu' : 'ngoài khu'}`;
     else if (wantShare) sub = 'Đang lấy tín hiệu GPS…';
     const shareSig = text + '|' + sub;
-    if (share.dataset.sig !== shareSig) { share.dataset.sig = shareSig; share.replaceChildren(h('span', { class: 'share-main', text }), sub && h('small', { text: sub })); }
+    if (share.dataset.sig !== shareSig) { share.dataset.sig = shareSig; share.replaceChildren(h('span', { class: 'share-main' }, h('span', { text: wantShare ? 'ĐANG CHIA SẺ' : 'BẬT CHIA SẺ' }), h('span', { class: 'share-tail', text: wantShare ? ' · BẤM ĐỂ TẮT' : ' VỊ TRÍ' })), sub && h('small', { text: sub })); }
   }
   function openTeamSheet() {
     if (!me) return;
