@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#101714">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ASDN">
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="description" content="Chọn người tham gia và chia đội nhanh cho ASDN Airsoft.">
+  <title>ASDN · Demo bản đồ trực tiếp</title>
+  <script type="importmap">{"imports":{"./members.json":"./demo/members.json","https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js":"./demo/fb-app.js","https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js":"./demo/fb-auth.js","https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js":"./demo/fb-firestore.js"}}</script>
+  <script>
+    // Demo: dữ liệu giả hoàn toàn, không chạm Firebase thật. ?role=member|captain|org|join
+    (function () {
+      var role = new URLSearchParams(location.search).get('role') || 'captain';
+      var x = new XMLHttpRequest(); x.open('GET', 'demo/seeds.json', false); x.send();
+      var d = JSON.parse(x.responseText); window.__DEMO = d.seeds[role] || d.seeds.captain;
+      var rf = window.fetch.bind(window);
+      window.fetch = function (u, o) {
+        var s = String(u);
+        if (/members\.json/.test(s)) return Promise.resolve(new Response(JSON.stringify(d.members), { headers: { 'Content-Type': 'application/json' } }));
+        if (/skills\.json/.test(s)) return Promise.resolve(new Response('{}', { headers: { 'Content-Type': 'application/json' } }));
+        return rf(u, o);
+      };
+      try { localStorage.setItem('asdn-live-share', '1'); } catch (e) {}
+      document.addEventListener('DOMContentLoaded', function () { setTimeout(function () { var b = document.querySelector('#tabbar button[data-tab="map"]'); if (b) b.click(); }, 1500); });
+    })();
+  </script>
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="favicon.png">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+  <link rel="stylesheet" href="styles.css?v=mob19">
+  <link rel="stylesheet" href="live.css?v=mob26">
+  <link rel="stylesheet" href="guide.css?v=mob20">
+  <link rel="stylesheet" href="mobile.css?v=mob19" media="(max-width:768px), (orientation:landscape) and (max-height:500px)">
+  <script type="module" src="app.js?v=mob30"></script>
+  <script defer src="nav.js?v=mob19"></script>
+  <script defer src="mobile.js?v=mob19"></script>
+  <script defer src="guide-data.js?v=mob29"></script>
+  <script defer src="guide.js?v=mob25"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#top" aria-label="ASDN, về đầu trang"><span class="brand-mark">A<span>✦</span></span><span>ASDN<span class="brand-sub"> / TEAM OPS</span></span></a>
+      <div class="topbar-account"><span id="sync-status" class="sync-status" role="status">Đang tải dữ liệu…</span><button id="audit-button" class="auth-button" type="button" hidden>Lịch sử</button><button id="auth-button" class="auth-button" type="button" hidden>Đăng nhập</button></div>
+    </header>
+    <nav id="section-nav" class="section-nav" aria-label="Điều hướng">
+      <a href="#roster-heading" data-target="roster-heading">Chọn người</a>
+      <a href="#setup-heading" data-target="setup-heading">Chia đội</a>
+      <a href="#results-heading" data-target="results-heading">Đội hình</a>
+      <a href="#map-heading" data-target="map-heading">Bản đồ</a>
+      <a href="#guide-heading" data-target="guide-heading">Hướng dẫn</a>
+    </nav>
+
+    <main id="top">
+      <section class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="eyebrow-line"></span> MISSION CONTROL / 01</p>
+          <h1>Lập đội.<br><em>Vào trận.</em></h1>
+          <p class="hero-description">Chọn người có mặt, chia quân số đều, rồi chốt đội hình cho buổi chơi hôm nay.</p>
+          <div class="hero-stats"><div><strong id="roster-total">30</strong><span>THÀNH VIÊN</span></div><div><strong id="selected-total">0</strong><span>ĐÃ CHỌN</span></div><div><strong id="team-total">2</strong><span>ĐỘI</span></div></div>
+        </div>
+        <div class="hero-art" aria-hidden="true"><div class="radar radar-outer"></div><div class="radar radar-middle"></div><div class="radar radar-inner"></div><div class="crosshair crosshair-top">+</div><div class="crosshair crosshair-bottom">+</div><div class="radar-label radar-label-top">ASDN // OPS</div><div class="radar-label radar-label-bottom">READY TO DEPLOY</div><div class="hero-center">A<span>✦</span></div><div class="hero-coordinate">10°47′ N<br>106°42′ E</div></div>
+      </section>
+
+      <div class="workflow">
+        <span class="workflow-step active"><b>01</b> CHỌN NGƯỜI</span><span class="workflow-line"></span><span class="workflow-step"><b>02</b> CHIA ĐỘI</span><span class="workflow-line"></span><span class="workflow-step"><b>03</b> CHỐT ĐỘI HÌNH</span>
+      </div>
+
+      <section id="roster-section" class="panel roster-panel" aria-labelledby="roster-heading">
+        <div class="section-head"><div><p class="eyebrow">01 / ROSTER</p><h2 id="roster-heading">Ai tham gia hôm nay?</h2><p class="section-description">Ai cũng xem được danh sách và đội hình. Chỉ người tổ chức được chọn người, chia đội và chọn lối chơi. Skill tự tính từ điểm 5 tiêu chí.</p></div><div class="roster-head-actions"><div class="selection-pill"><span class="selection-dot"></span><strong id="selected-count">0</strong> NGƯỜI ĐÃ CHỌN</div><button id="roster-toggle" class="secondary-button roster-toggle" type="button" aria-expanded="true" aria-controls="roster">THU GỌN DANH SÁCH ▴</button></div></div>
+        <div class="mode-control"><span class="field-label">KIỂU TRẬN HÔM NAY</span><div class="mode-buttons" role="group" aria-label="Kiểu trận"><button type="button" class="mode-button active" data-mode="cqb" aria-pressed="true">CQB</button><button type="button" class="mode-button" data-mode="outdoor" aria-pressed="false">SÂN NGOÀI TRỜI</button></div><span class="mode-note">Lối chơi được lưu riêng theo kiểu trận. Skill tự tính từ điểm 5 tiêu chí.</span></div>
+        <div class="roster-toolbar"><label class="search-box"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg><input id="search" type="search" placeholder="Tìm thành viên..." autocomplete="off" aria-label="Tìm thành viên"></label><div class="toolbar-actions"><button id="select-all" class="text-button" type="button">Chọn tất cả</button><span class="toolbar-divider"></span><button id="clear-all" class="text-button" type="button">Bỏ chọn</button></div></div>
+        <div id="roster" class="roster-grid" aria-live="polite"></div>
+        <p id="empty-search" class="empty-search" hidden>Không tìm thấy thành viên phù hợp.</p>
+        <form id="guest-form" class="guest-form"><label for="guest-name">THÊM KHÁCH MỜI</label><div class="guest-input"><input id="guest-name" name="guest-name" maxlength="50" placeholder="Nhập tên người mới..." autocomplete="off" required><button type="submit" aria-label="Thêm khách mời">+ THÊM</button></div></form>
+      </section>
+
+      <section id="setup-section" class="panel setup-panel" aria-labelledby="setup-heading"><div class="section-head"><div><p class="eyebrow">02 / SETUP</p><h2 id="setup-heading">Thiết lập trận đấu</h2><p class="section-description">Chọn số đội. App sẽ cân quân số, skill và lối chơi.</p></div></div><div class="setup-content"><div class="setup-field"><span class="field-label">SỐ ĐỘI</span><div class="segmented" role="group" aria-label="Số đội"><button type="button" class="team-count active" data-count="2" aria-pressed="true">02</button><button type="button" class="team-count" data-count="3" aria-pressed="false">03</button><button type="button" class="team-count" data-count="4" aria-pressed="false">04</button><button type="button" class="team-count" data-count="5" aria-pressed="false">05</button><button type="button" class="team-count" data-count="6" aria-pressed="false">06</button></div></div><div class="setup-note"><span class="note-icon">i</span><p>Skill chưa đánh giá được tính tạm là 3; lối chơi chưa chọn sẽ không ảnh hưởng cách chia. Mỗi đội chênh tối đa 1 người.</p></div><div class="split-actions"><label class="split-mode"><span class="field-label">KIỂU CHIA</span><select id="split-mode" aria-label="Kiểu chia đội"><option value="balanced">⚖ Cân bằng</option><option value="random">⚄ Ngẫu nhiên</option></select></label><button id="split-button" class="primary-button" type="button" disabled><span>CHIA ĐỘI</span><span id="split-icon" class="arrow mode-icon">⚖</span></button></div></div><div id="map-pick" class="setup-field map-pick" hidden><span class="field-label">KHU VỰC CHƠI</span><div id="map-pick-buttons" class="segmented" role="group" aria-label="Khu vực chơi"></div></div><p id="setup-message" class="setup-message" role="status">Chọn ít nhất 2 người để bắt đầu.</p></section>
+
+      <p id="viewer-empty" class="viewer-empty" hidden>Chưa có đội hình. Người tổ chức sẽ chia đội và cập nhật tại đây.</p>
+
+      <section id="results" class="results-section" aria-labelledby="results-heading" hidden><div class="results-heading"><div><p class="eyebrow">03 / DEPLOYMENT</p><h2 id="results-heading">Đội hình đã sẵn sàng.</h2><p id="result-summary" class="section-description"></p><p id="split-badge" class="split-badge" hidden></p></div><div class="result-actions"><button id="reshuffle" class="secondary-button" type="button"><span class="mode-icon">⚖</span> &nbsp; CHIA LẠI</button><button id="rebalance-min" class="secondary-button" type="button">⇄ &nbsp; CÂN LẠI TỐI THIỂU</button><button id="unlock-all" class="secondary-button" type="button" hidden>🔓 &nbsp; MỞ KHÓA TẤT CẢ</button><button id="copy-result" class="secondary-button" type="button">⧉ &nbsp; SAO CHÉP</button></div></div><div id="rebalance-box" class="rebalance-box" role="status" hidden></div><div id="teams" class="teams-grid"></div><p id="lock-hint" class="result-hint lock-hint" hidden>🔒 Khóa một người hoặc cả đội để giữ nguyên khi bấm "Chia lại"; những người còn lại vẫn được cân bằng. <button id="lock-hint-ok" type="button" class="text-button">Đã hiểu</button></p><p class="result-hint">Chỉ người tổ chức được đổi đội. Đội hình được đồng bộ cho mọi người xem.</p></section>
+
+      <section id="map-section" class="map-section" aria-labelledby="map-heading">
+        <h2 id="map-heading" class="sr-only">Bản đồ trận đấu</h2>
+        <p id="map-loading" class="map-loading" hidden>Đang kiểm tra đội của bạn…</p>
+        <div id="map-join" class="map-join"></div>
+        <div id="map-view" class="map-view" hidden>
+          <div id="map-canvas" class="map-canvas"></div>
+          <div id="edge-top" class="edge edge-top" hidden></div><div id="edge-left" class="edge edge-left" hidden></div>
+          <div id="map-hud" class="map-hud"></div>
+          <div id="map-hint" class="map-hint" role="status" hidden></div>
+          <div class="map-tools" role="group" aria-label="Công cụ bản đồ">
+            <button id="btn-fit" type="button" aria-label="Căn bản đồ vào khu chơi">⌖</button>
+            <button id="btn-grid" type="button" aria-label="Bật tắt lưới" aria-pressed="false">#</button>
+            <button id="btn-sat" type="button" aria-label="Đổi nền vệ tinh">◐</button>
+            <button id="btn-full" type="button" aria-label="Toàn màn hình, xoay ngang" hidden>⛶</button>
+            <button id="btn-org" type="button" aria-label="Điều khiển trận" hidden>⚙</button>
+          </div>
+          <div class="map-bottom"><div id="draw-bar" class="draw-bar" role="toolbar" aria-label="Công cụ lệnh"></div><button id="btn-share" class="share-button" type="button">BẬT CHIA SẺ VỊ TRÍ</button></div>
+        </div>
+      </section>
+
+    </main>
+
+    <section id="guide-section" class="g-section" aria-labelledby="guide-heading">
+      <header class="g-head">
+        <p class="g-eyebrow">HƯỚNG DẪN SỬ DỤNG</p>
+        <h2 id="guide-heading">Dùng ASDN từng bước</h2>
+        <div class="g-role" role="group" aria-label="Xem hướng dẫn theo vai trò">
+          <button type="button" data-role="player" aria-pressed="false">Người chơi</button>
+          <button type="button" data-role="org" aria-pressed="false">Người tổ chức</button>
+        </div>
+        <p id="g-role-note" class="g-role-note" role="status"></p>
+      </header>
+      <nav id="g-parts" class="g-parts" aria-label="Các phần hướng dẫn"></nav>
+      <div id="g-body" class="g-body"></div>
+    </section>
+
+    <section id="audit-panel" class="panel audit-panel" hidden><div class="section-head"><div><p class="eyebrow">ADMIN</p><h2>Lịch sử khóa đội</h2><p class="section-description">Chỉ ghi khi khóa đội (200 bản ghi gần nhất, gồm cả log cũ). Chỉ system admin xem được.</p></div><button id="audit-refresh" class="secondary-button" type="button">↻ TẢI LẠI</button></div><div id="audit-filters" class="audit-filters"></div><ul id="audit-list" class="audit-list"></ul></section>
+    <div id="mobile-bar" class="mobile-bar" hidden><span><strong id="bar-count">0</strong> người · <b id="bar-teams">2</b> đội</span><button id="bar-split" class="primary-button" type="button">CHIA ĐỘI <span class="arrow mode-icon">⚖</span></button></div>
+
+    <footer><span>ASDN <span class="footer-star">✦</span> TEAM OPS</span><span>BUILD YOUR SQUAD. PLAY FAIR.</span></footer>
+  </div>
+  <nav id="tabbar" class="tabbar" aria-label="Điều hướng chính">
+    <button type="button" data-tab="roster" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 19c0-3.2 2.7-5.2 6-5.2s6 2 6 5.2"/><path d="M16 5.2a3 3 0 0 1 0 5.6M18 14.2c1.8.6 3 2.2 3 4.8"/></svg><span>Chọn người</span><b id="tab-count" hidden></b></button>
+    <button type="button" data-tab="teams"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4" width="7" height="16" rx="1.5"/><rect x="13.5" y="4" width="7" height="16" rx="1.5"/></svg><span>Đội hình</span></button>
+    <button type="button" data-tab="map"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg><span>Bản đồ</span></button>
+    <button type="button" data-tab="guide"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.2.9-1.2 1.8M12 16.6v.1"/></svg><span>Hướng dẫn</span></button>
+    <button type="button" data-tab="audit" id="tab-audit" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg><span>Lịch sử</span></button>
+  </nav>
+  <div id="sheet" class="sheet" hidden><div class="sheet-backdrop" data-close></div><div class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="sheet-title"><div class="sheet-handle" data-close></div><h3 id="sheet-title" class="sheet-title"></h3><div id="sheet-options" class="sheet-options"></div></div></div>
+  <div id="live-sheet" class="sheet live-sheet" hidden><div class="sheet-backdrop" data-close></div><div class="sheet-panel" role="dialog" aria-modal="true" aria-labelledby="live-sheet-title"><div class="sheet-handle" data-close></div><h3 id="live-sheet-title" class="sheet-title"></h3><div id="live-sheet-body" class="live-sheet-body"></div></div></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

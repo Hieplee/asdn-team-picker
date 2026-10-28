@@ -9,3 +9,7 @@ python3 make_tiles.py        # nền vệ tinh GIẢ (bản vẽ). Muốn nền 
 node shots.mjs [key ...]     # ra out/*.png + out/meta.json (khung đánh số lấy từ DOM)
 python3 build_guide.py       # webp -> assets/guide-map/, viết lại phần "Bản đồ" của guide-data.js
 ```
+
+## Trang demo
+
+`node build_demo.mjs` dựng `demo.html` + `demo/` ở gốc repo (app thật, Firebase giả trong bộ nhớ, nền vệ tinh thật). Mở `demo.html?role=captain|member|org|join` (cần mạng cho tile/font/Leaflet).
