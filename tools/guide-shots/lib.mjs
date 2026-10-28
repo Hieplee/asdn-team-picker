@@ -43,6 +43,7 @@ export async function openPage(browser, { size, scene, scale = 2, geo = true }) 
     if (host === 'www.gstatic.com' && url.pathname.includes('firebase-firestore')) return route.fulfill(js(FIREBASE_FIRESTORE));
     const tile = /\/tile\/(\d+)\/(\d+)\/(\d+)/.exec(url.pathname);
     if (tile) {
+      if (process.env.REAL_TILES) return route.continue();
       const f = `${HERE}tiles/${tile[1]}/${tile[2]}/${tile[3]}.jpg`;
       return existsSync(f) ? route.fulfill({ status: 200, contentType: 'image/jpeg', body: readFileSync(f) }) : route.fulfill({ status: 404, body: '' });
     }
