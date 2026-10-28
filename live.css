@@ -199,3 +199,7 @@
 .seg{display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .seg-btn{min-height:48px;border:1px solid #3d5a3d;background:#16201a;color:#dbe7dd;font:inherit;font-weight:700;letter-spacing:.04em;cursor:pointer}
 .seg-btn.on{background:#c8f36b;color:#0d140f;border-color:#c8f36b}
+
+/* Nút chia sẻ gọn hơn: thấp 44px (vẫn đủ vùng chạm), chữ nhỏ, không che nhiều bản đồ */
+.share-button{min-height:44px;padding:6px 12px;font-size:12.5px;letter-spacing:.6px;border-radius:12px;box-shadow:0 4px 18px #0007;touch-action:manipulation}
+.share-button small{font-size:11px;line-height:1.1}
