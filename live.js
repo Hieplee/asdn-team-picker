@@ -308,6 +308,9 @@ export function initLive(ctx) {
       clarity = L.tileLayer('https://clarity.maptiles.arcgis.com/arcgis/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: 19, maxZoom: 21, attribution: 'Esri, Maxar, Earthstar' });
       clarity.addTo(map);
       buildArea(L);
+      map.on('dragstart', () => { userMoved = true; });
+      const cv = map.getContainer();
+      ['wheel', 'touchstart', 'dblclick'].forEach(ev => cv.addEventListener(ev, () => { userMoved = true; }, { passive: true }));
       map.on('zoomend', syncGridLabels);
       map.on('move zoom resize', syncEdges);
       map.on('click', event => addDrawPoint(event.latlng));
@@ -339,7 +342,31 @@ export function initLive(ctx) {
     if (api.onMapChange) api.onMapChange(mapId);
   }
   const orgOpen = () => !$('#live-sheet').hidden && $('#live-sheet-title').textContent === 'Điều khiển trận';
-  function fitArea() { if (map) map.fitBounds(boundsArea, { paddingTopLeft: [16, 70], paddingBottomRight: [64, 96] }); }
+  // Fit khu chơi vào vùng nhìn thấy, trừ phần bị thanh trên / hàng nút dưới / nút bên phải che (đo từ DOM nên đúng cả dọc, ngang, PC).
+  let userMoved = false;
+  function fitArea(force = true) {
+    if (!map || !boundsArea) return;
+    if (!force && userMoved) return;
+    userMoved = false;
+    map.invalidateSize();
+    const box = $('#map-canvas').getBoundingClientRect();
+    if (!box.width || !box.height) return;
+    const M = 14;
+    let top = M, bottom = M, left = M, right = M;
+    const rect = sel => { const el = document.querySelector(sel); if (!el || el.hidden) return null; const r = el.getBoundingClientRect(); return r.width && r.height ? r : null; };
+    const hud = rect('.map-hud'), tools = rect('.map-tools'), bot = rect('.map-bottom');
+    if (hud) top = Math.max(top, hud.bottom - box.top + M);
+    if (bot) bottom = Math.max(bottom, box.bottom - bot.top + M);
+    if (tools) {
+      if (tools.top - box.top > box.height / 2) bottom = Math.max(bottom, box.bottom - tools.top + M);
+      else right = Math.max(right, box.right - tools.left + M);
+    }
+    // không để phần đệm nuốt hết khung nhìn (màn hình rất thấp)
+    const capV = box.height * 0.6, capH = box.width * 0.5;
+    if (top + bottom > capV) { const k = capV / (top + bottom); top *= k; bottom *= k; }
+    if (left + right > capH) { const k = capH / (left + right); left *= k; right *= k; }
+    map.fitBounds(boundsArea, { paddingTopLeft: [left, top], paddingBottomRight: [right, bottom], maxZoom: 20, animate: false });
+  }
 
   // Lưới kiểu Squad: ô lớn A1, B2…, chia 3x3 theo bàn phím số (7 8 9 / 4 5 6 / 1 2 3) thành cấp 2, rồi 3x3 nữa thành cấp 3.
   function buildGrid(L) {
@@ -1081,7 +1108,7 @@ export function initLive(ctx) {
     if (!me && !loading) renderJoin();
     if (me) {
       renderHud();
-      if (mapSectionVisible()) ensureMap().then(() => { if (map) { map.invalidateSize(); drawPlayers(); } });
+      if (mapSectionVisible()) ensureMap().then(() => { if (map) { map.invalidateSize(); fitArea(false); drawPlayers(); } });
       let asked = null; try { asked = localStorage.getItem(SHARE_KEY); } catch {}
       if (asked === '1' && !wantShare) startSharing();
       else if (asked === null && !wantShare && mapSectionVisible() && !askedThisSession()) askShare();
@@ -1091,11 +1118,11 @@ export function initLive(ctx) {
 
   // Khi tab Bản đồ được mở (mobile) hoặc cuộn tới (desktop) thì dựng bản đồ và tính lại kích thước.
   new MutationObserver(() => { if (me && mapSectionVisible()) render(); }).observe(document.body, { attributes: true, attributeFilter: ['data-tab'] });
-  addEventListener('resize', () => { if (map) { map.invalidateSize(); syncEdges(); } });
+  addEventListener('resize', () => { if (map) { map.invalidateSize(); fitArea(false); syncEdges(); } });
   // Xoay màn hình: căn lại khu chơi vào khung mới.
-  matchMedia('(orientation: landscape)').addEventListener('change', () => setTimeout(() => { if (map) { map.invalidateSize(); fitArea(); } }, 250));
+  matchMedia('(orientation: landscape)').addEventListener('change', () => setTimeout(() => { if (map) { map.invalidateSize(); fitArea(false); } }, 250));
 
-  $('#btn-fit').addEventListener('click', fitArea);
+  $('#btn-fit').addEventListener('click', () => fitArea(true));
   $('#btn-grid').addEventListener('click', toggleGrid);
   $('#btn-sat').addEventListener('click', toggleSatellite);
   $('#btn-org').addEventListener('click', () => openOrganizer());
