@@ -266,3 +266,14 @@ body #map-section.pseudo-fs{position:fixed!important;inset:0!important;left:0!im
   .hud-extra,.hud-state{display:none}
   .hud-dead{padding:1px 6px;font-size:11px}
 }
+
+/* Co icon trên bản đồ theo cỡ màn hình (--mk): desktop 1, điện thoại dọc .8, điện thoại ngang/màn thấp .7.
+   Chỉ marker trên bản đồ co lại; nút điều khiển giữ >=44px để dễ chạm. */
+.map-section{--mk:1}
+@media (max-width:768px){.map-section{--mk:.8}}
+@media (max-width:380px){.map-section{--mk:.72}}
+@media (orientation:landscape) and (max-height:500px){.map-section{--mk:.7}}
+.pl{scale:var(--mk);transform-origin:9px 9px}
+.tgt-pin,.zone-num{scale:var(--mk);transform-origin:center}
+.ah{scale:var(--mk);transform-origin:12px 12px}
+.dead-pin{scale:var(--mk);transform-origin:12px 31px}
