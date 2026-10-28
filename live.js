@@ -445,13 +445,18 @@ export function initLive(ctx) {
   setInterval(drawPlayers, 5000);
   setInterval(renderHud, 5000);
 
+  function meIcon() {
+    const mid = user && members[user.uid], color = memberColor(mid), isCaptain = mid && mid === captain;
+    const el = h('div', { class: 'pl me', style: `--c:${color}` }, h('i', { style: `background:${color}` }), h('b', { text: (isCaptain ? '★ ' : '') + initials(myName()) }));
+    return window.L.divIcon({ className: '', iconSize: [0, 0], html: el });
+  }
   function drawMe() {
     if (!map || !myPos) return;
-    const L = window.L, ll = [myPos.lat, myPos.lng];
+    const L = window.L, ll = [myPos.lat, myPos.lng], color = memberColor(user && members[user.uid]);
     if (!meMarker) {
-      meMarker = L.marker(ll, { interactive: false, keyboard: false, zIndexOffset: 1000, icon: L.divIcon({ className: '', html: '<div class="me-dot"></div>', iconSize: [18, 18], iconAnchor: [9, 9] }) }).addTo(map);
-      meCircle = L.circle(ll, { radius: myPos.acc, color: '#2f8cff', weight: 1, fillOpacity: 0.12, interactive: false }).addTo(map);
-    } else { meMarker.setLatLng(ll); meCircle.setLatLng(ll).setRadius(myPos.acc); }
+      meMarker = L.marker(ll, { interactive: false, keyboard: false, zIndexOffset: 1000, icon: meIcon() }).addTo(map);
+      meCircle = L.circle(ll, { radius: myPos.acc, color, weight: 1, fillOpacity: 0.12, interactive: false }).addTo(map);
+    } else { meMarker.setLatLng(ll); meMarker.setIcon(meIcon()); meCircle.setLatLng(ll).setRadius(myPos.acc).setStyle({ color }); }
   }
   function clearMe() { if (meMarker) { meMarker.remove(); meMarker = null; } if (meCircle) { meCircle.remove(); meCircle = null; } myPos = null; }
 
