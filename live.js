@@ -591,7 +591,7 @@ export function initLive(ctx) {
         return h('div', { class: 'order-row dead-row' },
           h('button', { class: 'team-row', type: 'button', disabled: !spot, onclick: () => { closeSheet(); if (map && spot) map.flyTo([death.lat, death.lng], Math.max(map.getZoom(), 19)); } },
             makeAvatar(member, 'pick-avatar'),
-            h('span', { class: 'pick-name' }, h('i', { class: 'color-dot', style: `background:${memberColor(id)}` }), (id === captain ? '★ ' : '') + member.name, h('small', { text: `☠ Chết ${clock(death.ts)}` })),
+            h('span', { class: 'pick-name' }, h('i', { class: 'color-dot', style: `background:${memberColor(id)}` }), (id === captain ? '★ ' : ''), h('span', { class: 'dn', text: member.name }), h('small', { text: `☠ Chết ${clock(death.ts)}` })),
             h('span', { class: 'pick-state', text: spot ? 'Đi tới ›' : '' })),
           canRevive(id) && h('button', { class: 'secondary-button revive-btn', type: 'button', onclick: () => { closeSheet(); revive(id); } }, 'Hồi sinh'));
       }
@@ -785,9 +785,9 @@ export function initLive(ctx) {
   function deathIcon(mid) {
     const color = memberColor(mid);
     const el = h('div', { class: 'dead-pin', style: `--c:${color}` });
-    el.innerHTML = `<svg viewBox="0 0 34 44" width="34" height="44"><path d="M17 2C9 2 3 8 3 16c0 11 14 26 14 26s14-15 14-26C31 8 25 2 17 2z" fill="#4a4d52" stroke="${color}" stroke-width="3"/><path d="M17 8c-5 0-8 3.500-8 7.500 0 3 1.800 4.800 3.500 5.700V24h9v-2.800c1.700-.9 3.500-2.700 3.500-5.700C25 11.500 22 8 17 8z" fill="#f2f2f2"/><circle cx="13.800" cy="15" r="2" fill="#4a4d52"/><circle cx="20.200" cy="15" r="2" fill="#4a4d52"/><path d="M17 17.500l-1.300 2.500h2.600z" fill="#4a4d52"/></svg>`;
+    el.innerHTML = `<svg viewBox="0 0 34 44" width="24" height="31"><path d="M17 2C9 2 3 8 3 16c0 11 14 26 14 26s14-15 14-26C31 8 25 2 17 2z" fill="#4a4d52" stroke="${color}" stroke-width="3"/><path d="M17 8c-5 0-8 3.500-8 7.500 0 3 1.800 4.800 3.500 5.700V24h9v-2.800c1.700-.9 3.500-2.700 3.500-5.700C25 11.500 22 8 17 8z" fill="#f2f2f2"/><circle cx="13.800" cy="15" r="2" fill="#4a4d52"/><circle cx="20.200" cy="15" r="2" fill="#4a4d52"/><path d="M17 17.500l-1.300 2.500h2.600z" fill="#4a4d52"/></svg>`;
     el.append(h('b', { text: initials(findMember(mid)?.name || '') }));
-    return window.L.divIcon({ className: '', iconSize: [34, 44], iconAnchor: [17, 44], html: el });
+    return window.L.divIcon({ className: '', iconSize: [24, 31], iconAnchor: [12, 31], html: el });
   }
   function clearDeathLayers() { deathLayers.forEach(entry => entry.marker.remove()); deathLayers.clear(); }
   function drawDeaths() {
@@ -825,7 +825,7 @@ export function initLive(ctx) {
   function openDeathPicker(ll) {
     if (!me) return;
     const picked = new Set(), team = Number(me.teamId);
-    const alive = teamPlayers(team).filter(id => Object.values(members).includes(id) && !deaths[id]).sort((x, y) => (y === me.memberId) - (x === me.memberId));
+    const alive = teamPlayers(team).filter(id => !deaths[id]).sort((x, y) => (y === me.memberId) - (x === me.memberId));
     const body = h('div', { class: 'live-sheet-stack' });
     const paint = () => {
       const rows = alive.length ? alive.map(id => h('button', { class: 'team-row' + (picked.has(id) ? ' sel' : ''), type: 'button', 'aria-pressed': String(picked.has(id)), onclick: () => { picked.has(id) ? picked.delete(id) : picked.add(id); paint(); } },
