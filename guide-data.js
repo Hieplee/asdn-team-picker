@@ -1086,7 +1086,7 @@ window.GUIDE={
        "desc": "Hiện Đội, số người đang hiện (ví dụ 3/6), tên bạn và trạng thái ĐANG CHIA SẺ / ĐANG XEM. Bấm để xem danh sách đội.",
        "role": null,
        "x": 2.56,
-       "y": 7.46,
+       "y": 1.18,
        "w": 80,
        "h": 5.69
       },
@@ -1095,7 +1095,7 @@ window.GUIDE={
        "desc": "Đưa bản đồ về vừa khu chơi (khung vàng 4 góc).",
        "role": null,
        "x": 85.13,
-       "y": 7.46,
+       "y": 1.18,
        "w": 12.31,
        "h": 5.69
       },
@@ -1104,7 +1104,7 @@ window.GUIDE={
        "desc": "Bật/tắt lưới ô vuông.",
        "role": null,
        "x": 85.13,
-       "y": 14.1,
+       "y": 7.82,
        "w": 12.31,
        "h": 5.69
       },
@@ -1113,7 +1113,7 @@ window.GUIDE={
        "desc": "Đổi giữa Esri chuẩn và Clarity.",
        "role": null,
        "x": 85.13,
-       "y": 20.73,
+       "y": 14.45,
        "w": 12.31,
        "h": 5.69
       },
@@ -1122,7 +1122,7 @@ window.GUIDE={
        "desc": "Xoay ngang để xem rộng hơn. Chỉ hiện khi máy hỗ trợ.",
        "role": null,
        "x": 85.13,
-       "y": 27.37,
+       "y": 21.09,
        "w": 12.31,
        "h": 5.69
       },
@@ -1130,8 +1130,8 @@ window.GUIDE={
        "title": "GPS đồng đội",
        "desc": "Chấm màu có tên là vị trí GPS từng đồng đội, mỗi người một màu. Mờ đi khi quá 60 giây chưa cập nhật, ẩn sau 5 phút. Người đã báo chết thì chấm GPS ẩn, chỉ còn ghim ☠ tại chỗ chết.",
        "role": null,
-       "x": 22.56,
-       "y": 41.47,
+       "x": 27.95,
+       "y": 42.77,
        "w": 0,
        "h": 2.37
       },
@@ -1139,17 +1139,17 @@ window.GUIDE={
        "title": "Chấm xanh là bạn",
        "desc": "Vị trí của bạn, kèm vòng sai số GPS.",
        "role": null,
-       "x": 40,
-       "y": 45.02,
-       "w": 4.62,
-       "h": 2.13
+       "x": 36.15,
+       "y": 50.95,
+       "w": 0,
+       "h": 2.37
       },
       {
        "title": "Nút chia sẻ",
        "desc": "Bấm để bật hoặc tắt chia sẻ vị trí. Dưới nút ghi sai số GPS và \"trong khu\" hay \"ngoài khu\".",
        "role": null,
        "x": 2.56,
-       "y": 85.18,
+       "y": 93.59,
        "w": 94.87,
        "h": 5.22
       },
@@ -1158,17 +1158,26 @@ window.GUIDE={
        "desc": "Đánh dấu mục tiêu cho cả đội (xem bên dưới).",
        "role": null,
        "x": 2.56,
-       "y": 77.36,
-       "w": 46.41,
+       "y": 85.77,
+       "w": 30.26,
+       "h": 6.87
+      },
+      {
+       "title": "☠ Chết",
+       "desc": "Bấm rồi chạm bản đồ nơi chết. Thành viên tự báo chết cho mình, đội trưởng chọn người chết.",
+       "role": null,
+       "x": 34.87,
+       "y": 85.77,
+       "w": 30.26,
        "h": 6.87
       },
       {
        "title": "☰ Lệnh",
        "desc": "Danh sách lệnh của đội, số trong ngoặc là số lệnh đang có.",
        "role": null,
-       "x": 51.03,
-       "y": 77.36,
-       "w": 46.41,
+       "x": 67.18,
+       "y": 85.77,
+       "w": 30.26,
        "h": 6.87
       }
      ],
@@ -1240,6 +1249,24 @@ window.GUIDE={
        "y": 0,
        "w": 0,
        "h": 0
+      },
+      {
+       "title": "Người đã chết",
+       "desc": "Tên gạch ngang, ghi giờ chết. Bấm để bay tới chỗ chết.",
+       "role": null,
+       "x": 4.1,
+       "y": 67.77,
+       "w": 91.79,
+       "h": 7.11
+      },
+      {
+       "title": "Hồi sinh",
+       "desc": "Báo nhầm thì bấm Hồi sinh. Người đó hoặc đội trưởng bấm được.",
+       "role": null,
+       "x": 74.36,
+       "y": 67.77,
+       "w": 21.54,
+       "h": 5.21
       }
      ],
      "alt": "Danh sách đội (bấm chip đội)"
@@ -1345,52 +1372,61 @@ window.GUIDE={
        "role": null,
        "x": 2.56,
        "y": 84.83,
-       "w": 14.1,
+       "w": 11.79,
+       "h": 7.82
+      },
+      {
+       "title": "☠ Chết",
+       "desc": "Đội trưởng chạm bản đồ rồi chọn ai chết ở đó (chọn được nhiều người).",
+       "role": null,
+       "x": 16.41,
+       "y": 84.83,
+       "w": 11.79,
        "h": 7.82
       },
       {
        "title": "Tấn công",
        "desc": "Đánh dấu hướng/điểm tấn công: chạm 1 điểm trên bản đồ (đỏ, tối đa 5).",
        "role": null,
-       "x": 18.72,
+       "x": 30.26,
        "y": 84.83,
-       "w": 14.1,
+       "w": 11.79,
        "h": 7.82
       },
       {
        "title": "Phòng thủ",
        "desc": "Đánh dấu vị trí phòng thủ: chạm 1 điểm (xanh, tối đa 5).",
        "role": null,
-       "x": 34.87,
+       "x": 44.1,
        "y": 84.83,
-       "w": 14.1,
+       "w": 11.79,
        "h": 7.82
       },
       {
        "title": "➚ Mũi tên",
        "desc": "Chỉ hướng đẩy/di chuyển: chạm ít nhất 2 điểm.",
        "role": null,
-       "x": 51.03,
+       "x": 57.95,
        "y": 84.83,
-       "w": 14.1,
+       "w": 11.79,
        "h": 7.82
       },
       {
        "title": "⬠ Vùng",
        "desc": "Khoanh một khu vực: chạm ít nhất 3 điểm.",
        "role": null,
-       "x": 67.18,
+       "x": 71.79,
        "y": 84.83,
-       "w": 14.1,
+       "w": 11.79,
        "h": 7.82
       },
       {
        "title": "☰ Lệnh",
        "desc": "Danh sách lệnh, và nút XÓA TẤT CẢ LỆNH (bấm 2 lần để xác nhận).",
        "role": null,
-       "x": 83.33,
+       "x": 85.64,
        "y": 84.83,
-       "w": 14.1,
+       "w": 11.79,
        "h": 7.82
       }
      ],
@@ -1405,8 +1441,8 @@ window.GUIDE={
        "title": "Tấn công",
        "desc": "Dấu đỏ, có số thứ tự (Tấn công 1, 2, …). Cả đội thấy trên bản đồ.",
        "role": null,
-       "x": 25.13,
-       "y": 63.74,
+       "x": 17.95,
+       "y": 45.14,
        "w": 11.28,
        "h": 5.21
       },
@@ -1414,8 +1450,8 @@ window.GUIDE={
        "title": "Phòng thủ",
        "desc": "Dấu xanh, có số thứ tự (Phòng thủ 1, 2, …). Cả đội thấy trên bản đồ.",
        "role": null,
-       "x": 66.15,
-       "y": 54.27,
+       "x": 59.74,
+       "y": 53.91,
        "w": 11.28,
        "h": 5.21
       }
@@ -1510,8 +1546,113 @@ window.GUIDE={
      ]
     },
     {
+     "t": "fig",
+     "shot": "m24-death-hint",
+     "caption": "Thành viên: chạm nơi bạn chết",
+     "marks": [
+      {
+       "title": "Dòng gợi ý",
+       "desc": "Chạm lên bản đồ đúng nơi bạn chết. Ghi luôn, không hỏi lại.",
+       "role": null,
+       "x": 2.56,
+       "y": 8.06,
+       "w": 80,
+       "h": 4.21
+      },
+      {
+       "title": "✕ Hủy",
+       "desc": "Bấm nếu không muốn báo chết nữa.",
+       "role": null,
+       "x": 2.56,
+       "y": 91.94,
+       "w": 94.87,
+       "h": 6.87
+      }
+     ],
+     "alt": "Gợi ý chạm bản đồ khi báo chết"
+    },
+    {
+     "t": "fig",
+     "shot": "m22-death-pin",
+     "caption": "Ghim ☠ và số người còn sống",
+     "marks": [
+      {
+       "title": "Số người sống",
+       "desc": "Ô Đội hiện số người còn sống, ví dụ 4/6.",
+       "role": null,
+       "x": 2.56,
+       "y": 1.18,
+       "w": 80,
+       "h": 5.69
+      },
+      {
+       "title": "Huy hiệu ☠",
+       "desc": "Số người đã chết trong đội.",
+       "role": null,
+       "x": 45.16,
+       "y": 2.84,
+       "w": 7.22,
+       "h": 2.37
+      },
+      {
+       "title": "Ghim ☠",
+       "desc": "Nơi người đó chết, viền theo màu và chữ viết tắt của họ. Chạm để xem giờ chết hoặc hồi sinh.",
+       "role": null,
+       "x": 23.85,
+       "y": 51.54,
+       "w": 6.15,
+       "h": 3.67
+      },
+      {
+       "title": "☠ Chết",
+       "desc": "Bấm rồi chạm bản đồ nơi chết. Thành viên tự báo chết cho mình, đội trưởng chọn người chết.",
+       "role": null,
+       "x": 16.41,
+       "y": 84.82,
+       "w": 11.79,
+       "h": 7.82
+      }
+     ],
+     "alt": "Ghim đầu lâu tại nơi đồng đội chết"
+    },
+    {
      "t": "p",
      "html": "<b>Đội trưởng</b> báo chết cho người khác: bấm <b>☠ Chết</b>, chạm nơi người đó chết, rồi chọn <b>ai chết ở đây</b> (chọn được nhiều người nếu cùng chết một chỗ) và bấm <b>BÁO CHẾT</b>. Dùng khi đồng đội quên bấm hoặc không cầm điện thoại. Đội trưởng cũng hồi sinh được bất kỳ ai trong đội."
+    },
+    {
+     "t": "fig",
+     "shot": "m23-death-pick",
+     "caption": "Đội trưởng: chọn ai chết ở đây",
+     "marks": [
+      {
+       "title": "Danh sách đội",
+       "desc": "Chọn một hoặc nhiều người cùng chết ở chỗ vừa chạm.",
+       "role": null,
+       "x": 4.1,
+       "y": 36.49,
+       "w": 91.79,
+       "h": 46.21
+      },
+      {
+       "title": "Đã chọn",
+       "desc": "Chạm lần nữa để bỏ chọn.",
+       "role": null,
+       "x": 4.1,
+       "y": 52.13,
+       "w": 91.79,
+       "h": 7.11
+      },
+      {
+       "title": "BÁO CHẾT",
+       "desc": "Ghi những người đã chọn là chết tại điểm đã chạm.",
+       "role": null,
+       "x": 4.1,
+       "y": 85.07,
+       "w": 91.79,
+       "h": 6.16
+      }
+     ],
+     "alt": "Đội trưởng chọn người chết"
     },
     {
      "t": "p",
