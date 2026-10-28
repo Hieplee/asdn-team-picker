@@ -4,7 +4,9 @@
   var body = document.body, partsEl = document.getElementById('g-parts'), bodyEl = document.getElementById('g-body');
   var roleBtns = Array.prototype.slice.call(document.querySelectorAll('.g-role button')), note = document.getElementById('g-role-note');
   var ROLE_KEY = 'asdn-guide-role', PART_KEY = 'asdn-guide-part';
+  var ORIENT_KEY = 'asdn-guide-orient', orient = 'p';
   var manual = null, part = null, auto = 'org';
+  try { orient = localStorage.getItem(ORIENT_KEY) || (matchMedia('(orientation:landscape) and (max-height:500px)').matches ? 'l' : 'p'); } catch (e) {}
   try { manual = localStorage.getItem(ROLE_KEY); } catch (e) {}
   try { part = localStorage.getItem(PART_KEY); } catch (e) {}
 
@@ -26,6 +28,55 @@
     });
     fig.append(el('p', 'g-cap', b.caption), shot, legend);
     return fig;
+  }
+
+  // Ảnh bản đồ có hai kiểu máy: dọc (p) và ngang (l). Chỉ tải ảnh của kiểu đang chọn; khung đánh số lấy từ b.p / b.l.
+  var IMG = 'assets/guide-map/';
+  function mfigure(b) {
+    var fig = el('div', 'g-fig g-mfig ' + orient); fig._b = b;
+    var head = el('div', 'g-fig-head'); head.append(el('p', 'g-cap', b.caption));
+    var tog = el('div', 'g-orient'); tog.setAttribute('role', 'group'); tog.setAttribute('aria-label', 'Kiểu cầm máy');
+    [['p', 'Dọc'], ['l', 'Ngang']].forEach(function (o) {
+      var btn = el('button', null, o[1]); btn.type = 'button'; btn.setAttribute('aria-pressed', String(orient === o[0]));
+      btn.addEventListener('click', function () { setOrient(o[0], fig); }); tog.append(btn);
+    });
+    head.append(tog);
+    var spots = b[orient] || {}, size = orient === 'p' ? [390, 844] : [844, 390];
+    var shot = el('div', 'g-shot ' + orient); var img = el('img');
+    img.width = size[0]; img.height = size[1]; img.loading = 'lazy'; img.decoding = 'async';
+    img.src = IMG + b.shot + '-' + orient + '.webp?v=1'; img.alt = (b.alt || b.caption) + (orient === 'p' ? ' (máy cầm dọc)' : ' (máy xoay ngang)');
+    shot.append(img);
+    shot.addEventListener('click', function () { lightbox(img.src, orient === 'l'); });
+    var legend = el('ol', 'g-legend');
+    b.marks.forEach(function (m) {
+      var r = spots[m.k]; if (!r) return;
+      var box = el('div', 'g-mk'); box.dataset.role = m.role || ''; box.style.cssText = 'left:' + r[0] + '%;top:' + r[1] + '%;width:' + r[2] + '%;height:' + r[3] + '%'; box.append(el('i'));
+      shot.append(box);
+      var li = el('li', null, '<i></i><span><b>' + m.title + (m.role === 'org' ? '<em>TỔ CHỨC</em>' : '') + '</b>' + m.desc + '</span>'); li.dataset.role = m.role || '';
+      legend.append(li);
+    });
+    fig.append(head, shot, legend);
+    if (b.note) fig.append(el('p', 'g-fig-note', b.note));
+    return fig;
+  }
+  function setOrient(next, from) {
+    if (next === orient) return;
+    var before = from.getBoundingClientRect().top;
+    orient = next; try { localStorage.setItem(ORIENT_KEY, orient); } catch (e) {}
+    bodyEl.querySelectorAll('.g-mfig').forEach(function (f) { f.replaceWith(mfigure(f._b)); });
+    renumber(bodyEl, role());
+    var nf = null; bodyEl.querySelectorAll('.g-mfig').forEach(function (f) { if (f._b === from._b) nf = f; });
+    if (nf) window.scrollBy(0, nf.getBoundingClientRect().top - before);
+  }
+  function lightbox(src, wide) {
+    var box = el('div', 'g-lb'); var img = el('img'); img.src = src; img.alt = '';
+    var portraitScreen = innerHeight > innerWidth;
+    if (wide && portraitScreen) box.classList.add('rot');
+    box.append(img, el('button', 'g-lb-x', '✕ Đóng')); box.querySelector('button').type = 'button';
+    var close = function () { box.remove(); document.removeEventListener('keydown', onKey); };
+    var onKey = function (e) { if (e.key === 'Escape') close(); };
+    box.addEventListener('click', close); document.addEventListener('keydown', onKey);
+    document.body.append(box);
   }
   function renumber(scope, r) {
     scope.querySelectorAll('.g-fig').forEach(function (fig) {
@@ -50,6 +101,7 @@
       case 'chips': w = el('div', 'g-chips'); b.items.forEach(function (c) { var d = el('div', 'g-chip', '<i' + (c[0].length > 2 ? ' class="wide"' : '') + '>' + c[0] + '</i><span><b>' + c[1] + (c[3] === 'org' ? ' · <small>tổ chức</small>' : '') + '</b>' + c[2] + '</span>'); d.dataset.role = c[3] || ''; w.append(d); }); break;
       case 'faq': w = el('div'); b.items.forEach(function (q) { var d = el('details', 'g-faq', '<summary>' + q[0] + '</summary><div>' + q[1] + '</div>'); d.dataset.role = q[2] || ''; w.append(d); }); break;
       case 'fig': w = figure(b); break;
+      case 'mfig': w = mfigure(b); break;
     }
     var wrap = el('div', 'g-block'); wrap.dataset.role = b.role || ''; wrap.append(w); return wrap;
   }

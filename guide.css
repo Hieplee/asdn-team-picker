@@ -60,11 +60,28 @@
 .g-nav-row{display:flex;justify-content:space-between;gap:10px;margin-top:28px}
 .g-nav-row button{min-height:46px;padding:0 18px;border:1px solid #496149;background:#233328;color:var(--lime);font:800 12px 'DM Sans',sans-serif;letter-spacing:.8px;cursor:pointer}
 .g-nav-row button.next{background:var(--lime);border-color:var(--lime);color:#172016;margin-left:auto}
+.g-fig-head{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.g-fig-head .g-cap{flex:1}
+.g-orient{display:inline-flex;border:1px solid #496149;background:#142019}
+.g-orient button{min-height:34px;padding:0 14px;border:0;background:none;color:#aecaad;font:800 11px 'DM Sans',sans-serif;letter-spacing:.8px;cursor:pointer}
+.g-orient button[aria-pressed="true"]{background:var(--lime);color:#192416}
+.g-shot{cursor:zoom-in}
+.g-shot.l{max-width:none;aspect-ratio:844/390;border-radius:20px;border-width:4px}
+.g-mfig.l{grid-template-columns:1fr}
+.g-mfig.l .g-shot{width:100%;max-width:660px;justify-self:center}
+.g-mfig.l .g-legend{grid-template-columns:repeat(auto-fit,minmax(260px,1fr));column-gap:22px}
+.g-fig-note{grid-column:1/-1;margin:0;color:var(--muted);font-size:13px;line-height:1.5}
+.g-lb{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:#000e;cursor:zoom-out;overflow:hidden}
+.g-lb img{max-width:96vw;max-height:92vh;object-fit:contain;border-radius:10px}
+.g-lb.rot img{position:fixed;left:50%;top:50%;width:92vh;max-width:none;max-height:none;height:auto;transform:translate(-50%,-50%) rotate(90deg)}
+.g-lb-x{position:fixed;right:14px;top:14px;z-index:2;min-height:40px;padding:0 14px;border:1px solid #496149;background:#142019;color:var(--lime);font:800 12px 'DM Sans',sans-serif;cursor:pointer}
 @media(max-width:700px){
   .g-section{margin:0 -14px;padding:16px 14px 24px;border:0;background:var(--bg)}
   .g-parts{top:0;margin:14px -14px 0;padding:8px 14px;background:#101714f5}
   .g-fig{grid-template-columns:1fr;padding:12px;justify-items:center;gap:14px}
   .g-legend{justify-self:stretch}
   .g-shot{max-width:290px}
+  .g-shot.l{max-width:none}
+  .g-fig-head{flex-wrap:wrap}
   .g-gest{grid-template-columns:1fr}
 }

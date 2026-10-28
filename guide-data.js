@@ -917,746 +917,1645 @@ window.GUIDE={
   {
    "id": "map",
    "title": "Bản đồ",
-   "lead": "Vào đội bằng mã, chia sẻ vị trí với đồng đội và đánh dấu mục tiêu ngoài trời.",
+   "lead": "Vào đội bằng mã, chia sẻ vị trí với đồng đội, đặt mục tiêu, vẽ kế hoạch và báo chết ngay trên bản đồ khu chơi.",
    "leadOrg": "Chốt đội, phát mã/QR vào đội, chọn khu vực chơi, đặt đội trưởng và kết thúc trận. Bạn cũng là người chơi nên vào đội như mọi người.",
    "blocks": [
     {
      "t": "p",
-     "html": "Bản đồ vệ tinh chỉ hiện <b>đội của bạn</b>: vị trí GPS đồng đội và các lệnh trong đội. Người đội khác không thấy bạn."
+     "html": "Bản đồ vệ tinh chỉ hiện <b>đội của bạn</b>: vị trí GPS đồng đội và các lệnh trong đội. Người đội khác không thấy bạn, bạn cũng không thấy họ."
+    },
+    {
+     "t": "tip",
+     "html": "Mỗi hình có hai kiểu máy: <b>Dọc</b> và <b>Ngang</b>. Bấm nút ở góc hình để đổi, chạm vào ảnh để phóng to. Tên người, vị trí và nền bản đồ trong ảnh là <b>dữ liệu minh họa</b>; mọi dấu đều nằm trong khung vàng A-B-C-D (khu chơi)."
     },
     {
      "t": "h",
      "text": "1 · Vào đội của bạn"
     },
     {
-     "t": "fig",
-     "shot": "m01-join-code",
+     "t": "mfig",
+     "shot": "join-code",
      "caption": "Nhập mã đội",
+     "alt": "Nhập mã đội",
      "marks": [
       {
+       "k": "code",
        "title": "Ô mã đội",
        "desc": "6 ký tự, ví dụ <b>1K7QMA</b>. Ký tự đầu là số đội. Hoặc quét QR để vào thẳng bước chọn tên.",
-       "role": null,
-       "x": 4.1,
-       "y": 25.04,
-       "w": 91.79,
-       "h": 8.06
+       "role": null
       },
       {
+       "k": "next",
        "title": "TIẾP TỤC",
        "desc": "Kiểm tra mã. Báo \"chưa được chốt\" nghĩa là đội chưa được khóa.",
-       "role": null,
-       "x": 4.1,
-       "y": 34.76,
-       "w": 91.79,
-       "h": 6.64
+       "role": null
       },
       {
-       "title": "Lưu ý riêng tư",
-       "desc": "Chỉ đồng đội thấy vị trí của bạn; có thể tắt chia sẻ bất cứ lúc nào.",
-       "role": null,
-       "x": 4.1,
-       "y": 43.53,
-       "w": 91.79,
-       "h": 4.41
+       "k": "note",
+       "title": "Riêng tư",
+       "desc": "Chỉ đồng đội thấy vị trí của bạn; tắt chia sẻ được bất cứ lúc nào.",
+       "role": null
       }
      ],
-     "alt": "Nhập mã đội"
+     "p": {
+      "code": [
+       3.33,
+       24.69,
+       93.33,
+       8.77
+      ],
+      "next": [
+       3.33,
+       34.4,
+       93.33,
+       7.35
+      ],
+      "note": [
+       3.33,
+       43.17,
+       93.33,
+       5.12
+      ]
+     },
+     "l": {
+      "code": [
+       20.73,
+       37.79,
+       58.53,
+       18.97
+      ],
+      "next": [
+       20.73,
+       58.81,
+       58.53,
+       15.9
+      ],
+      "note": [
+       20.73,
+       77.79,
+       58.53,
+       6.31
+      ]
+     }
     },
     {
-     "t": "fig",
-     "shot": "m02-pick-name",
+     "t": "mfig",
+     "shot": "pick-name",
      "caption": "Chọn tên của bạn",
+     "alt": "Chọn tên của bạn",
      "marks": [
       {
+       "k": "back",
        "title": "← Đổi mã",
        "desc": "Quay lại nhập mã khác.",
-       "role": null,
-       "x": 4.1,
-       "y": 8.65,
-       "w": 17.24,
-       "h": 5.21
+       "role": null
       },
       {
+       "k": "team",
        "title": "Nhãn đội",
        "desc": "Cho biết bạn đang vào Đội nào.",
-       "role": null,
-       "x": 80.3,
-       "y": 9.66,
-       "w": 15.59,
-       "h": 3.2
+       "role": null
       },
       {
+       "k": "taken",
        "title": "Tên mờ",
-       "desc": "\"Đã có người nhận\": tên đã có người dùng rồi, không chọn được.",
-       "role": null,
-       "x": 4.1,
-       "y": 27.06,
-       "w": 91.79,
-       "h": 7.11
+       "desc": "\"Đã có người nhận\": tên đã có người dùng, không chọn được.",
+       "role": null
       },
       {
+       "k": "mine",
        "title": "Tên của bạn",
        "desc": "Chạm đúng tên mình trong danh sách.",
-       "role": null,
-       "x": 4.1,
-       "y": 50.52,
-       "w": 91.79,
-       "h": 7.11
+       "role": null
       }
      ],
-     "alt": "Chọn tên của bạn"
+     "p": {
+      "back": [
+       3.33,
+       8.29,
+       18.78,
+       5.92
+      ],
+      "team": [
+       79.53,
+       9.3,
+       17.14,
+       3.91
+      ],
+      "taken": [
+       3.33,
+       26.7,
+       93.33,
+       7.82
+      ],
+      "mine": [
+       3.33,
+       34.52,
+       93.33,
+       7.82
+      ]
+     },
+     "l": {
+      "back": [
+       20.73,
+       2.31,
+       8.68,
+       12.82
+      ],
+      "team": [
+       71.35,
+       4.49,
+       7.92,
+       8.46
+      ],
+      "taken": [
+       20.73,
+       36.59,
+       58.53,
+       16.92
+      ],
+      "mine": [
+       20.73,
+       53.51,
+       58.53,
+       16.92
+      ]
+     }
     },
     {
-     "t": "fig",
-     "shot": "m03-pick-chosen",
+     "t": "mfig",
+     "shot": "pick-chosen",
      "caption": "Xác nhận",
+     "alt": "Xác nhận",
      "marks": [
       {
+       "k": "chosen",
        "title": "Tên đã chọn",
        "desc": "Có dấu ✓ và viền sáng.",
-       "role": null,
-       "x": 4.1,
-       "y": 50.52,
-       "w": 91.79,
-       "h": 7.11
+       "role": null
       },
       {
+       "k": "confirm",
        "title": "TÔI LÀ …",
        "desc": "Bấm để vào đội. Máy nhớ phiên nên lần sau mở lại không phải chọn tên.",
-       "role": null,
-       "x": 5.13,
-       "y": 78.95,
-       "w": 89.74,
-       "h": 6.64
+       "role": null
       }
      ],
-     "alt": "Xác nhận"
+     "p": {
+      "chosen": [
+       3.33,
+       34.52,
+       93.33,
+       7.82
+      ],
+      "confirm": [
+       4.36,
+       78.6,
+       91.28,
+       7.35
+      ]
+     },
+     "l": {
+      "chosen": [
+       20.73,
+       53.51,
+       58.53,
+       16.92
+      ],
+      "confirm": [
+       21.21,
+       70,
+       57.58,
+       15.9
+      ]
+     }
     },
     {
      "t": "warn",
      "html": "Chọn nhầm tên? Người tổ chức gỡ bạn trong Điều khiển trận, rồi bạn vào lại."
     },
     {
-     "t": "fig",
-     "shot": "m04-share-ask",
+     "t": "mfig",
+     "shot": "share-ask",
      "caption": "Hỏi bật chia sẻ vị trí",
+     "alt": "Hỏi bật chia sẻ vị trí",
      "marks": [
       {
+       "k": "why",
        "title": "Giải thích",
        "desc": "Vị trí chỉ hiện cho đồng đội, tắt được bất cứ lúc nào, xóa khi kết thúc trận. iPhone chỉ cập nhật khi app đang mở.",
-       "role": null,
-       "x": 4.1,
-       "y": 74.27,
-       "w": 91.79,
-       "h": 9.86
+       "role": null
       },
       {
+       "k": "share",
        "title": "CHIA SẺ VỊ TRÍ",
        "desc": "Bật GPS và cho đồng đội thấy bạn. Trình duyệt sẽ hỏi quyền vị trí, hãy chọn Cho phép.",
-       "role": null,
-       "x": 4.1,
-       "y": 85.07,
-       "w": 91.79,
-       "h": 6.16
+       "role": null
       },
       {
+       "k": "view",
        "title": "CHỈ XEM BẢN ĐỒ",
-       "desc": "Vẫn xem bản đồ và lệnh của đội nhưng không chia sẻ vị trí. Bật lại sau bằng nút dưới bản đồ.",
-       "role": null,
-       "x": 4.1,
-       "y": 92.18,
-       "w": 91.79,
-       "h": 6.16
+       "desc": "Vẫn xem bản đồ và lệnh của đội nhưng không chia sẻ vị trí. Bật lại sau bằng nút ở dưới bản đồ.",
+       "role": null
       }
      ],
-     "alt": "Hỏi bật chia sẻ vị trí"
+     "p": {
+      "why": [
+       3.33,
+       63.91,
+       93.33,
+       9.52
+      ],
+      "share": [
+       3.33,
+       84.72,
+       93.33,
+       6.87
+      ],
+      "view": [
+       3.33,
+       91.82,
+       93.33,
+       6.87
+      ]
+     },
+     "l": {
+      "why": [
+       18.36,
+       28.26,
+       63.27,
+       14.25
+      ],
+      "share": [
+       18.36,
+       66.92,
+       63.27,
+       14.87
+      ],
+      "view": [
+       18.36,
+       82.31,
+       63.27,
+       14.87
+      ]
+     }
     },
     {
      "t": "h",
      "text": "2 · Màn hình bản đồ"
     },
     {
-     "t": "fig",
-     "shot": "m05-map",
+     "t": "mfig",
+     "shot": "map",
      "caption": "Bản đồ khi đang chia sẻ",
+     "alt": "Bản đồ khi đang chia sẻ",
      "marks": [
       {
+       "k": "chip",
        "title": "Chip đội",
-       "desc": "Hiện Đội, số người đang hiện (ví dụ 3/6), tên bạn và trạng thái ĐANG CHIA SẺ / ĐANG XEM. Bấm để xem danh sách đội.",
-       "role": null,
-       "x": 2.56,
-       "y": 1.18,
-       "w": 80,
-       "h": 5.69
+       "desc": "Hiện Đội, số người còn sống, số người đang hiện, tên bạn, khu chơi và trạng thái ĐANG CHIA SẺ / ĐANG XEM. Bấm để mở danh sách đội.",
+       "role": null
       },
       {
+       "k": "area",
+       "title": "Khung vàng A-B-C-D",
+       "desc": "Khu chơi. Mục tiêu, mũi tên, vùng đều đặt trong khung này.",
+       "role": null
+      },
+      {
+       "k": "me",
+       "title": "Bạn",
+       "desc": "Chấm viền màu của bạn; vòng tròn mờ quanh chấm là sai số GPS.",
+       "role": null
+      },
+      {
+       "k": "mate",
+       "title": "Đồng đội",
+       "desc": "Chấm màu kèm chữ viết tắt tên; ★ đứng trước tên đội trưởng. Mỗi người một màu, ai đặt lệnh thì lệnh mang màu người đó.",
+       "role": null
+      },
+      {
+       "k": "stale",
+       "title": "Chấm mờ",
+       "desc": "Quá 60 giây chưa cập nhật thì mờ đi (khóa màn hình, mất sóng); quá 5 phút thì ẩn hẳn.",
+       "role": null
+      },
+      {
+       "k": "target",
+       "title": "Mục tiêu",
+       "desc": "Dấu ⌖ đánh số, màu theo người đặt.",
+       "role": null
+      },
+      {
+       "k": "fit",
        "title": "⌖ Căn bản đồ",
-       "desc": "Đưa bản đồ về vừa khu chơi (khung vàng 4 góc).",
-       "role": null,
-       "x": 85.13,
-       "y": 1.18,
-       "w": 12.31,
-       "h": 5.69
+       "desc": "Đưa bản đồ về vừa khu chơi, không bị nút che.",
+       "role": null
       },
       {
+       "k": "grid",
        "title": "# Lưới",
-       "desc": "Bật/tắt lưới ô vuông.",
-       "role": null,
-       "x": 85.13,
-       "y": 7.82,
-       "w": 12.31,
-       "h": 5.69
+       "desc": "Bật/tắt lưới ô vuông (xem phần 3).",
+       "role": null
       },
       {
+       "k": "sat",
        "title": "◐ Nền vệ tinh",
        "desc": "Đổi giữa Esri chuẩn và Clarity.",
-       "role": null,
-       "x": 85.13,
-       "y": 14.45,
-       "w": 12.31,
-       "h": 5.69
+       "role": null
       },
       {
+       "k": "full",
        "title": "⛶ Toàn màn hình",
-       "desc": "Xoay ngang để xem rộng hơn. Chỉ hiện khi máy hỗ trợ.",
-       "role": null,
-       "x": 85.13,
-       "y": 21.09,
-       "w": 12.31,
-       "h": 5.69
+       "desc": "Điện thoại tự vào toàn màn hình khi mở tab Bản đồ. Bấm để thoát hoặc vào lại.",
+       "role": null
       },
       {
-       "title": "GPS đồng đội",
-       "desc": "Chấm màu có tên là vị trí GPS từng đồng đội, mỗi người một màu. Mờ đi khi quá 60 giây chưa cập nhật, ẩn sau 5 phút. Người đã báo chết thì chấm GPS ẩn, chỉ còn ghim ☠ tại chỗ chết.",
-       "role": null,
-       "x": 27.95,
-       "y": 42.77,
-       "w": 0,
-       "h": 2.37
+       "k": "tools",
+       "title": "Thanh lệnh",
+       "desc": "Mục tiêu, Chết, Lệnh. Đội trưởng có thêm Tấn công, Phòng thủ, Mũi tên, Vùng.",
+       "role": null
       },
       {
-       "title": "Chấm xanh là bạn",
-       "desc": "Vị trí của bạn, kèm vòng sai số GPS.",
-       "role": null,
-       "x": 36.15,
-       "y": 50.95,
-       "w": 0,
-       "h": 2.37
-      },
-      {
+       "k": "share",
        "title": "Nút chia sẻ",
-       "desc": "Bấm để bật hoặc tắt chia sẻ vị trí. Dưới nút ghi sai số GPS và \"trong khu\" hay \"ngoài khu\".",
-       "role": null,
-       "x": 2.56,
-       "y": 93.59,
-       "w": 94.87,
-       "h": 5.22
-      },
-      {
-       "title": "⌖ Mục tiêu",
-       "desc": "Đánh dấu mục tiêu cho cả đội (xem bên dưới).",
-       "role": null,
-       "x": 2.56,
-       "y": 85.77,
-       "w": 30.26,
-       "h": 6.87
-      },
-      {
-       "title": "☠ Chết",
-       "desc": "Bấm rồi chạm bản đồ nơi chết. Thành viên tự báo chết cho mình, đội trưởng chọn người chết.",
-       "role": null,
-       "x": 34.87,
-       "y": 85.77,
-       "w": 30.26,
-       "h": 6.87
-      },
-      {
-       "title": "☰ Lệnh",
-       "desc": "Danh sách lệnh của đội, số trong ngoặc là số lệnh đang có.",
-       "role": null,
-       "x": 67.18,
-       "y": 85.77,
-       "w": 30.26,
-       "h": 6.87
+       "desc": "Bấm để tắt/bật chia sẻ vị trí. Dòng nhỏ cho biết sai số GPS và bạn đang trong hay ngoài khu.",
+       "role": null
       }
      ],
-     "alt": "Bản đồ khi đang chia sẻ"
+     "p": {
+      "chip": [
+       1.79,
+       0.83,
+       81.54,
+       6.4
+      ],
+      "fit": [
+       84.36,
+       0.83,
+       13.85,
+       6.4
+      ],
+      "grid": [
+       84.36,
+       7.46,
+       13.85,
+       6.4
+      ],
+      "sat": [
+       84.36,
+       14.1,
+       13.85,
+       6.4
+      ],
+      "full": [
+       84.36,
+       20.73,
+       13.85,
+       6.4
+      ],
+      "me": [
+       26.15,
+       46.8,
+       17.54,
+       4.27
+      ],
+      "mate": [
+       11.79,
+       43.48,
+       17.81,
+       4.27
+      ],
+      "stale": [
+       34.1,
+       43.48,
+       17.9,
+       4.27
+      ],
+      "captain": [
+       10.77,
+       49.29,
+       21.05,
+       4.27
+      ],
+      "target": [
+       47.44,
+       44.31,
+       12.31,
+       5.69
+      ],
+      "tools": [
+       2.05,
+       85.53,
+       95.9,
+       7.35
+      ],
+      "share": [
+       1.79,
+       93.24,
+       96.41,
+       5.94
+      ],
+      "area": [
+       2.82,
+       31.75,
+       95.9,
+       36.37
+      ]
+     },
+     "l": {
+      "chip": [
+       0.83,
+       1.79,
+       41,
+       13.85
+      ],
+      "fit": [
+       93.25,
+       1.79,
+       5.92,
+       12.82
+      ],
+      "grid": [
+       93.25,
+       14.62,
+       5.92,
+       12.82
+      ],
+      "sat": [
+       93.25,
+       27.44,
+       5.92,
+       12.82
+      ],
+      "full": [
+       93.25,
+       40.26,
+       5.92,
+       12.82
+      ],
+      "me": [
+       55.21,
+       43.08,
+       8.11,
+       9.23
+      ],
+      "mate": [
+       48.58,
+       35.9,
+       8.23,
+       9.23
+      ],
+      "stale": [
+       58.89,
+       35.9,
+       8.27,
+       9.23
+      ],
+      "captain": [
+       48.1,
+       48.46,
+       9.73,
+       9.23
+      ],
+      "target": [
+       65.05,
+       37.69,
+       5.69,
+       12.31
+      ],
+      "tools": [
+       0.95,
+       60,
+       11.61,
+       25.13
+      ],
+      "share": [
+       0.83,
+       85.38,
+       13.96,
+       12.82
+      ],
+      "area": [
+       44.43,
+       10.51,
+       44.31,
+       78.72
+      ]
+     },
+     "note": "Xoay ngang: nút công cụ dồn vào hai cột gọn ở bên trái, nút Căn / Lưới / Nền / Toàn màn hình nằm cột bên phải, bản đồ rộng hơn."
     },
     {
-     "t": "fig",
-     "shot": "m06-grid",
+     "t": "h",
+     "text": "3 · Lưới và cách báo ô"
+    },
+    {
+     "t": "p",
+     "html": "Bấm <b>#</b> để hiện lưới. Ô lớn (60 m) gọi theo <b>cột rồi hàng</b>: A1, B2… Mỗi ô lớn chia thành 9 ô con theo <b>bàn phím số</b> (7-8-9 / 4-5-6 / 1-2-3). Phóng to thêm sẽ hiện cấp nhỏ hơn nữa."
+    },
+    {
+     "t": "mfig",
+     "shot": "grid",
      "caption": "Lưới tọa độ",
+     "alt": "Lưới tọa độ",
      "marks": [
       {
+       "k": "grid",
        "title": "# đang bật",
        "desc": "Nút sáng lên khi lưới đang hiện.",
-       "role": null,
-       "x": 85.13,
-       "y": 14.1,
-       "w": 12.31,
-       "h": 5.69
+       "role": null
       },
       {
-       "title": "Nhãn ô",
-       "desc": "Ô lớn gọi A1, B2… Chia nhỏ bằng bàn phím số: 7-8-9 / 4-5-6 / 1-2-3. Phóng to để thấy cấp nhỏ hơn. Báo vị trí qua bộ đàm theo kiểu ô lớn rồi số, ví dụ \"A1 4\" hoặc \"B3 5\".",
-       "role": null,
-       "x": 16.41,
-       "y": 28.2,
-       "w": 0,
-       "h": 0
+       "k": "top",
+       "title": "Chữ cột",
+       "desc": "A, B… ở mép trên bản đồ.",
+       "role": null
+      },
+      {
+       "k": "left",
+       "title": "Số hàng",
+       "desc": "1, 2… ở mép trái bản đồ.",
+       "role": null
+      },
+      {
+       "k": "cell",
+       "title": "Ô con số 4",
+       "desc": "Ô con giữa-trái của ô lớn A1. Báo qua bộ đàm: <b>\"A1 4\"</b>.",
+       "role": null
       }
      ],
-     "alt": "Lưới tọa độ"
+     "p": {
+      "grid": [
+       84.36,
+       7.46,
+       13.85,
+       6.4
+      ],
+      "top": [
+       24.49,
+       15.05,
+       10.26,
+       3.79
+      ],
+      "left": [
+       0,
+       29.09,
+       9.23,
+       3.79
+      ],
+      "cell": [
+       2.56,
+       26.84,
+       17.95,
+       8.18
+      ]
+     },
+     "l": {
+      "grid": [
+       93.25,
+       14.62,
+       5.92,
+       12.82
+      ],
+      "top": [
+       54.44,
+       0,
+       4.74,
+       7.18
+      ],
+      "left": [
+       40.17,
+       13.72,
+       4.74,
+       8.21
+      ],
+      "cell": [
+       44.31,
+       -9.23,
+       8.29,
+       35.9
+      ]
+     }
     },
     {
-     "t": "fig",
-     "shot": "m07-team-sheet",
-     "caption": "Danh sách đội (bấm chip đội)",
+     "t": "cards",
+     "items": [
+      [
+       "Cách báo vị trí",
+       "<ul><li><b>\"A1 4\"</b>: ô lớn A1, ô con số 4</li><li><b>\"B2 9\"</b>: ô lớn B2, góc trên bên phải</li><li>Phóng to thấy cấp nhỏ hơn thì nói thêm số: <b>\"A1 4 8\"</b></li></ul>"
+      ],
+      [
+       "Bàn phím số",
+       "<b>7 8 9</b><br><b>4 5 6</b><br><b>1 2 3</b><br>Trên là bắc, trái là tây, giống bàn phím điện thoại."
+      ]
+     ]
+    },
+    {
+     "t": "h",
+     "text": "4 · Danh sách đội"
+    },
+    {
+     "t": "mfig",
+     "shot": "team-sheet",
+     "caption": "Bấm chip đội ở góc trên trái",
+     "alt": "Bấm chip đội ở góc trên trái",
      "marks": [
       {
+       "k": "on",
        "title": "Đang hiện",
-       "desc": "Đồng đội có tín hiệu. Nếu là bạn sẽ ghi \"Bạn\"; còn lại có nút \"Đi tới ›\" để bản đồ bay tới người đó.",
-       "role": null,
-       "x": 0,
-       "y": 0,
-       "w": 0,
-       "h": 0
+       "desc": "Đồng đội có tín hiệu. Bấm \"Đi tới ›\" để bản đồ bay tới người đó.",
+       "role": null
       },
       {
+       "k": "me",
+       "title": "Bạn",
+       "desc": "Dòng của chính bạn.",
+       "role": null
+      },
+      {
+       "k": "nopos",
+       "title": "Chưa chia sẻ",
+       "desc": "Đã vào đội nhưng chưa bật chia sẻ vị trí.",
+       "role": null
+      },
+      {
+       "k": "lost",
        "title": "Mất tín hiệu",
        "desc": "Quá 60 giây chưa cập nhật, kèm thời gian. Có thể họ khóa màn hình hoặc mất sóng.",
-       "role": null,
-       "x": 0,
-       "y": 0,
-       "w": 0,
-       "h": 0
+       "role": null
       },
       {
-       "title": "Chưa vào / chưa chia sẻ",
-       "desc": "Người này chưa vào đội, hoặc đã vào nhưng chưa bật chia sẻ.",
-       "role": null,
-       "x": 0,
-       "y": 0,
-       "w": 0,
-       "h": 0
+       "k": "out",
+       "title": "Chưa vào đội",
+       "desc": "Người này chưa nhập mã vào đội.",
+       "role": null
       },
       {
+       "k": "handle",
        "title": "Thanh kéo",
        "desc": "Chạm hoặc vuốt xuống để đóng.",
-       "role": null,
-       "x": 0,
-       "y": 0,
-       "w": 0,
-       "h": 0
-      },
-      {
-       "title": "Người đã chết",
-       "desc": "Tên gạch ngang, ghi giờ chết. Bấm để bay tới chỗ chết.",
-       "role": null,
-       "x": 4.1,
-       "y": 67.77,
-       "w": 91.79,
-       "h": 7.11
-      },
-      {
-       "title": "Hồi sinh",
-       "desc": "Báo nhầm thì bấm Hồi sinh. Người đó hoặc đội trưởng bấm được.",
-       "role": null,
-       "x": 74.36,
-       "y": 67.77,
-       "w": 21.54,
-       "h": 5.21
+       "role": null
       }
      ],
-     "alt": "Danh sách đội (bấm chip đội)"
+     "p": {
+      "on": [
+       3.33,
+       51.78,
+       93.33,
+       7.82
+      ],
+      "me": [
+       3.33,
+       59.6,
+       93.33,
+       7.82
+      ],
+      "nopos": [
+       3.33,
+       67.42,
+       93.33,
+       7.82
+      ],
+      "lost": [
+       3.33,
+       75.24,
+       93.33,
+       7.82
+      ],
+      "out": [
+       3.33,
+       90.88,
+       93.33,
+       7.82
+      ],
+      "handle": [
+       43.59,
+       45.14,
+       12.82,
+       1.3
+      ]
+     },
+     "l": {
+      "on": [
+       18.36,
+       22.92,
+       63.27,
+       16.92
+      ],
+      "me": [
+       18.36,
+       39.85,
+       63.27,
+       16.92
+      ],
+      "nopos": [
+       18.36,
+       56.77,
+       63.27,
+       16.92
+      ],
+      "lost": [
+       18.36,
+       73.69,
+       63.27,
+       16.92
+      ],
+      "handle": [
+       47.04,
+       8.57,
+       5.92,
+       2.82
+      ]
+     }
     },
     {
      "t": "h",
-     "text": "3 · Đặt mục tiêu (mọi thành viên)"
+     "text": "5 · Đặt mục tiêu (mọi thành viên)"
     },
     {
-     "t": "fig",
-     "shot": "m08-target-hint",
+     "t": "p",
+     "html": "Bấm <b>⌖ Mục tiêu</b>, rồi chạm một lần lên bản đồ là đặt xong. Mỗi người có tối đa 3 mục tiêu; hết chỗ thì mục tiêu cũ nhất bị thay."
+    },
+    {
+     "t": "mfig",
+     "shot": "target-hint",
      "caption": "Bấm Mục tiêu rồi chạm lên bản đồ",
+     "alt": "Bấm Mục tiêu rồi chạm lên bản đồ",
      "marks": [
       {
+       "k": "hint",
        "title": "Dòng hướng dẫn",
-       "desc": "Hiện trên bản đồ: \"Chạm lên bản đồ để đánh dấu mục tiêu\". Chạm một lần là đặt xong.",
-       "role": null,
-       "x": 2.56,
-       "y": 14.34,
-       "w": 80,
-       "h": 4.21
+       "desc": "Hiện trên bản đồ: \"Chạm lên bản đồ để đánh dấu mục tiêu\".",
+       "role": null
       },
       {
+       "k": "cancel",
        "title": "✕ Hủy",
        "desc": "Bỏ thao tác, không đặt gì.",
-       "role": null,
-       "x": 2.56,
-       "y": 83.53,
-       "w": 94.87,
-       "h": 6.87
+       "role": null
       }
      ],
-     "alt": "Bấm Mục tiêu rồi chạm lên bản đồ"
+     "p": {
+      "hint": [
+       1.79,
+       7.7,
+       81.54,
+       4.92
+      ],
+      "cancel": [
+       1.79,
+       91.59,
+       96.41,
+       7.58
+      ]
+     },
+     "l": {
+      "hint": [
+       0.83,
+       15.64,
+       41,
+       10.65
+      ],
+      "cancel": [
+       0.83,
+       85.38,
+       9.37,
+       12.82
+      ]
+     }
     },
     {
-     "t": "fig",
-     "shot": "m09-target-placed",
+     "t": "mfig",
+     "shot": "target-placed",
      "caption": "Đã đặt mục tiêu",
+     "alt": "Đã đặt mục tiêu",
      "marks": [
       {
+       "k": "pin",
+       "title": "Mục tiêu mới",
+       "desc": "Màu theo người đặt, cả đội cùng thấy ngay.",
+       "role": null
+      },
+      {
+       "k": "orders",
        "title": "☰ Lệnh (n)",
-       "desc": "Số lệnh tăng lên. Mỗi người có tối đa 3 mục tiêu; hết chỗ thì mục tiêu cũ nhất bị thay.",
-       "role": null,
-       "x": 51.03,
-       "y": 77.36,
-       "w": 46.41,
-       "h": 6.87
+       "desc": "Số lệnh của đội tăng lên. Bấm để xem danh sách.",
+       "role": null
       }
      ],
-     "alt": "Đã đặt mục tiêu"
+     "p": {
+      "pin": [
+       46.92,
+       44.08,
+       13.33,
+       6.16
+      ],
+      "orders": [
+       66.41,
+       85.42,
+       31.79,
+       7.58
+      ]
+     },
+     "l": {
+      "pin": [
+       64.81,
+       37.18,
+       6.16,
+       13.33
+      ],
+      "orders": [
+       0.83,
+       72.56,
+       5.92,
+       12.82
+      ]
+     }
     },
     {
-     "t": "fig",
-     "shot": "m10-orders-list",
+     "t": "mfig",
+     "shot": "orders",
      "caption": "Danh sách lệnh của đội",
+     "alt": "Danh sách lệnh của đội",
      "marks": [
       {
+       "k": "row",
        "title": "Dòng lệnh",
        "desc": "Chạm để bản đồ bay tới lệnh đó. Ghi rõ ai đặt và cách đây bao lâu.",
-       "role": null,
-       "x": 4.1,
-       "y": 69.67,
-       "w": 78.46,
-       "h": 6.64
+       "role": null
       },
       {
+       "k": "own",
+       "title": "Lệnh của bạn",
+       "desc": "Bạn xóa được lệnh do chính mình đặt.",
+       "role": null
+      },
+      {
+       "k": "del",
        "title": "✕ Xóa",
-       "desc": "Chỉ hiện với lệnh bạn có quyền xóa (lệnh của chính bạn; đội trưởng xóa được mọi lệnh).",
-       "role": null,
-       "x": 84.62,
-       "y": 70.38,
-       "w": 11.28,
-       "h": 5.21
+       "desc": "Chỉ hiện với lệnh bạn có quyền xóa (đội trưởng xóa được mọi lệnh).",
+       "role": null
       },
       {
+       "k": "icon",
        "title": "Biểu tượng loại",
-       "desc": "⌖ mục tiêu (màu theo người đặt), ➚ mũi tên, ⬠ vùng.",
-       "role": null,
-       "x": 7.44,
-       "y": 85.66,
-       "w": 8.72,
-       "h": 4.03
+       "desc": "⌖ mục tiêu, ➚ mũi tên, ⬠ vùng, khiên là Phòng thủ, mũi nhọn là Tấn công.",
+       "role": null
+      },
+      {
+       "k": "sheet",
+       "title": "Thanh kéo",
+       "desc": "Chạm hoặc vuốt xuống để đóng.",
+       "role": null
       }
      ],
-     "alt": "Danh sách lệnh của đội"
+     "p": {
+      "row": [
+       3.33,
+       39.93,
+       93.33,
+       7.35
+      ],
+      "own": [
+       3.33,
+       84,
+       80,
+       7.35
+      ],
+      "del": [
+       83.85,
+       84.72,
+       12.82,
+       5.92
+      ],
+      "icon": [
+       6.67,
+       48.58,
+       10.26,
+       4.74
+      ],
+      "sheet": [
+       43.59,
+       33.29,
+       12.82,
+       1.3
+      ]
+     },
+     "l": {
+      "row": [
+       18.36,
+       22.92,
+       63.27,
+       15.9
+      ],
+      "icon": [
+       19.91,
+       41.64,
+       4.74,
+       10.26
+      ],
+      "sheet": [
+       47.04,
+       8.57,
+       5.92,
+       2.82
+      ]
+     }
     },
     {
      "t": "h",
-     "text": "4 · Đội trưởng: tấn công, phòng thủ, mũi tên, vùng"
+     "text": "6 · Đội trưởng: tấn công, phòng thủ, mũi tên, vùng"
     },
     {
      "t": "p",
-     "html": "Mỗi đội có 1 đội trưởng do người tổ chức đặt. Chỉ đội trưởng có thêm nút <b>Tấn công</b> (đỏ), <b>Phòng thủ</b> (xanh), <b>➚ Mũi tên</b> và <b>⬠ Vùng</b>. Tấn công và Phòng thủ chạm 1 điểm là xong, mỗi loại tối đa 5 dấu, tự đánh số 1–5 theo thứ tự đặt; hết chỗ thì thay dấu cũ nhất."
+     "html": "Mỗi đội có 1 đội trưởng do người tổ chức đặt (dấu ★). Chỉ đội trưởng có thêm bốn nút dưới. Tấn công và Phòng thủ chạm 1 điểm là xong, mỗi loại tối đa 5 dấu, tự đánh số 1–5; hết chỗ thì thay dấu cũ nhất. Mũi tên (tối đa 10) cần ít nhất 2 điểm, vùng (tối đa 10) cần ít nhất 3 điểm."
     },
     {
-     "t": "fig",
-     "shot": "m12-captain-bar",
+     "t": "mfig",
+     "shot": "captain-bar",
      "caption": "Thanh lệnh của đội trưởng",
+     "alt": "Thanh lệnh của đội trưởng",
      "marks": [
       {
+       "k": "target",
        "title": "⌖ Mục tiêu",
        "desc": "Như thành viên thường.",
-       "role": null,
-       "x": 2.56,
-       "y": 84.83,
-       "w": 11.79,
-       "h": 7.82
+       "role": null
       },
       {
+       "k": "dead",
        "title": "☠ Chết",
-       "desc": "Đội trưởng chạm bản đồ rồi chọn ai chết ở đó (chọn được nhiều người).",
-       "role": null,
-       "x": 16.41,
-       "y": 84.83,
-       "w": 11.79,
-       "h": 7.82
+       "desc": "Chạm bản đồ rồi chọn ai chết ở đó (chọn được nhiều người).",
+       "role": null
       },
       {
+       "k": "atk",
        "title": "Tấn công",
-       "desc": "Đánh dấu hướng/điểm tấn công: chạm 1 điểm trên bản đồ (đỏ, tối đa 5).",
-       "role": null,
-       "x": 30.26,
-       "y": 84.83,
-       "w": 11.79,
-       "h": 7.82
+       "desc": "Dấu đỏ, đánh dấu điểm tấn công.",
+       "role": null
       },
       {
+       "k": "def",
        "title": "Phòng thủ",
-       "desc": "Đánh dấu vị trí phòng thủ: chạm 1 điểm (xanh, tối đa 5).",
-       "role": null,
-       "x": 44.1,
-       "y": 84.83,
-       "w": 11.79,
-       "h": 7.82
+       "desc": "Dấu xanh, đánh dấu vị trí phòng thủ.",
+       "role": null
       },
       {
+       "k": "arrow",
        "title": "➚ Mũi tên",
-       "desc": "Chỉ hướng đẩy/di chuyển: chạm ít nhất 2 điểm.",
-       "role": null,
-       "x": 57.95,
-       "y": 84.83,
-       "w": 11.79,
-       "h": 7.82
+       "desc": "Vẽ hướng di chuyển, chạm từng điểm dọc đường đi.",
+       "role": null
       },
       {
+       "k": "zone",
        "title": "⬠ Vùng",
-       "desc": "Khoanh một khu vực: chạm ít nhất 3 điểm.",
-       "role": null,
-       "x": 71.79,
-       "y": 84.83,
-       "w": 11.79,
-       "h": 7.82
+       "desc": "Khoanh một khu (nhà, bãi trống) bằng đa giác.",
+       "role": null
       },
       {
-       "title": "☰ Lệnh",
-       "desc": "Danh sách lệnh, và nút XÓA TẤT CẢ LỆNH (bấm 2 lần để xác nhận).",
-       "role": null,
-       "x": 85.64,
-       "y": 84.83,
-       "w": 11.79,
-       "h": 7.82
+       "k": "orders",
+       "title": "☰ Lệnh (n)",
+       "desc": "Danh sách lệnh, đội trưởng có thêm nút xóa tất cả.",
+       "role": null
       }
      ],
-     "alt": "Thanh lệnh của đội trưởng"
+     "p": {
+      "target": [
+       1.79,
+       84.47,
+       13.33,
+       8.53
+      ],
+      "dead": [
+       15.64,
+       84.47,
+       13.33,
+       8.53
+      ],
+      "atk": [
+       29.49,
+       84.47,
+       13.33,
+       8.53
+      ],
+      "def": [
+       43.33,
+       84.47,
+       13.33,
+       8.53
+      ],
+      "arrow": [
+       57.18,
+       84.47,
+       13.33,
+       8.53
+      ],
+      "zone": [
+       71.03,
+       84.47,
+       13.33,
+       8.53
+      ],
+      "orders": [
+       84.87,
+       84.47,
+       13.33,
+       8.53
+      ]
+     },
+     "l": {
+      "target": [
+       0.83,
+       34.1,
+       5.92,
+       12.82
+      ],
+      "dead": [
+       6.75,
+       34.1,
+       5.92,
+       12.82
+      ],
+      "atk": [
+       0.83,
+       46.92,
+       5.92,
+       12.82
+      ],
+      "def": [
+       6.75,
+       46.92,
+       5.92,
+       12.82
+      ],
+      "arrow": [
+       0.83,
+       59.74,
+       5.92,
+       12.82
+      ],
+      "zone": [
+       6.75,
+       59.74,
+       5.92,
+       12.82
+      ],
+      "orders": [
+       0.83,
+       72.56,
+       5.92,
+       12.82
+      ]
+     }
     },
     {
-     "t": "fig",
-     "shot": "m21-attack-defend",
-     "caption": "Dấu Tấn công và Phòng thủ trên bản đồ",
-     "marks": [
-      {
-       "title": "Tấn công",
-       "desc": "Dấu đỏ, có số thứ tự (Tấn công 1, 2, …). Cả đội thấy trên bản đồ.",
-       "role": null,
-       "x": 17.95,
-       "y": 45.14,
-       "w": 11.28,
-       "h": 5.21
-      },
-      {
-       "title": "Phòng thủ",
-       "desc": "Dấu xanh, có số thứ tự (Phòng thủ 1, 2, …). Cả đội thấy trên bản đồ.",
-       "role": null,
-       "x": 59.74,
-       "y": 53.91,
-       "w": 11.28,
-       "h": 5.21
-      }
-     ],
+     "t": "mfig",
+     "shot": "attack-defend",
+     "caption": "Dấu Tấn công và Phòng thủ",
      "alt": "Dấu Tấn công và Phòng thủ",
-     "role": null
-    },
-    {
-     "t": "fig",
-     "shot": "m13-drawing-arrow",
-     "caption": "Đang vẽ mũi tên",
      "marks": [
       {
+       "k": "atk1",
+       "title": "Tấn công 1",
+       "desc": "Dấu đỏ, số theo thứ tự đặt. Cả đội thấy.",
+       "role": null
+      },
+      {
+       "k": "atk2",
+       "title": "Tấn công 2",
+       "desc": "Điểm tấn công kế tiếp.",
+       "role": null
+      },
+      {
+       "k": "def1",
+       "title": "Phòng thủ 1",
+       "desc": "Dấu xanh hình khiên, giữ cửa nhà gỗ.",
+       "role": null
+      },
+      {
+       "k": "def2",
+       "title": "Phòng thủ 2",
+       "desc": "Điểm phòng thủ kế tiếp, che đường mòn phía nam.",
+       "role": null
+      }
+     ],
+     "p": {
+      "atk1": [
+       67.44,
+       42.42,
+       13.33,
+       6.16
+      ],
+      "atk2": [
+       74.62,
+       37.91,
+       13.33,
+       6.16
+      ],
+      "def1": [
+       24.62,
+       40.4,
+       13.33,
+       6.16
+      ],
+      "def2": [
+       33.59,
+       51.07,
+       13.33,
+       6.16
+      ]
+     },
+     "l": {
+      "atk1": [
+       74.29,
+       33.59,
+       6.16,
+       13.33
+      ],
+      "atk2": [
+       77.61,
+       23.85,
+       6.16,
+       13.33
+      ],
+      "def1": [
+       54.5,
+       29.23,
+       6.16,
+       13.33
+      ],
+      "def2": [
+       58.65,
+       52.31,
+       6.16,
+       13.33
+      ]
+     }
+    },
+    {
+     "t": "mfig",
+     "shot": "draw-arrow",
+     "caption": "Đang vẽ mũi tên",
+     "alt": "Đang vẽ mũi tên",
+     "marks": [
+      {
+       "k": "hint",
        "title": "Dòng gợi ý",
        "desc": "Cho biết đã chạm mấy điểm và cần thêm bao nhiêu.",
-       "role": null,
-       "x": 2.56,
-       "y": 8.06,
-       "w": 80,
-       "h": 6.29
+       "role": null
       },
       {
+       "k": "cancel",
        "title": "✕ Hủy",
        "desc": "Bỏ lệnh đang vẽ.",
-       "role": null,
-       "x": 2.56,
-       "y": 91.94,
-       "w": 30.26,
-       "h": 6.87
+       "role": null
       },
       {
+       "k": "undo",
        "title": "↶ Lùi 1 điểm",
        "desc": "Xóa điểm vừa chạm để chạm lại.",
-       "role": null,
-       "x": 34.87,
-       "y": 91.94,
-       "w": 30.26,
-       "h": 6.87
+       "role": null
       },
       {
+       "k": "done",
        "title": "✓ Xong (n)",
        "desc": "Lưu lệnh khi đã đủ điểm; nút sáng lên khi có thể bấm.",
-       "role": null,
-       "x": 67.18,
-       "y": 91.94,
-       "w": 30.26,
-       "h": 6.87
+       "role": null
       }
      ],
-     "alt": "Đang vẽ mũi tên"
+     "p": {
+      "hint": [
+       1.79,
+       7.7,
+       81.54,
+       7
+      ],
+      "cancel": [
+       1.79,
+       91.59,
+       31.79,
+       7.58
+      ],
+      "undo": [
+       34.1,
+       91.59,
+       31.79,
+       7.58
+      ],
+      "done": [
+       66.41,
+       91.59,
+       31.79,
+       7.58
+      ]
+     },
+     "l": {
+      "hint": [
+       0.83,
+       15.64,
+       41,
+       10.65
+      ],
+      "cancel": [
+       0.83,
+       85.38,
+       9.37,
+       12.82
+      ],
+      "undo": [
+       10.2,
+       85.38,
+       13.51,
+       12.82
+      ],
+      "done": [
+       23.71,
+       85.38,
+       12.76,
+       12.82
+      ]
+     },
+     "note": "Mẹo: chạm nhiều điểm bám theo đường mòn thì mũi tên uốn theo đường, đồng đội dễ theo."
     },
     {
-     "t": "fig",
-     "shot": "m14-drawing-zone",
+     "t": "mfig",
+     "shot": "draw-zone",
      "caption": "Đang vẽ vùng",
+     "alt": "Đang vẽ vùng",
      "marks": [
       {
+       "k": "hint",
        "title": "Dòng gợi ý",
        "desc": "Vùng cần ít nhất 3 điểm, nối thành đa giác.",
-       "role": null,
-       "x": 2.56,
-       "y": 8.06,
-       "w": 80,
-       "h": 4.21
+       "role": null
       },
       {
+       "k": "undo",
+       "title": "↶ Lùi 1 điểm",
+       "desc": "Chạm sai thì lùi lại.",
+       "role": null
+      },
+      {
+       "k": "done",
        "title": "✓ Xong (n)",
        "desc": "Lưu vùng cho cả đội.",
-       "role": null,
-       "x": 67.18,
-       "y": 91.94,
-       "w": 30.26,
-       "h": 6.87
+       "role": null
       }
      ],
-     "alt": "Đang vẽ vùng"
+     "p": {
+      "hint": [
+       1.79,
+       7.7,
+       81.54,
+       4.92
+      ],
+      "undo": [
+       34.1,
+       91.59,
+       31.79,
+       7.58
+      ],
+      "done": [
+       66.41,
+       91.59,
+       31.79,
+       7.58
+      ]
+     },
+     "l": {
+      "hint": [
+       0.83,
+       15.64,
+       41,
+       10.65
+      ],
+      "undo": [
+       10.2,
+       85.38,
+       13.51,
+       12.82
+      ],
+      "done": [
+       23.71,
+       85.38,
+       12.78,
+       12.82
+      ]
+     }
+    },
+    {
+     "t": "mfig",
+     "shot": "plan",
+     "caption": "Kế hoạch hoàn chỉnh trên bản đồ",
+     "alt": "Kế hoạch hoàn chỉnh trên bản đồ",
+     "marks": [
+      {
+       "k": "arrow",
+       "title": "Mũi tên",
+       "desc": "Chạm vào mũi tên để xem người đặt, đi tới hoặc xóa.",
+       "role": null
+      },
+      {
+       "k": "head",
+       "title": "Đầu mũi tên",
+       "desc": "Chỉ hướng đi: từ cửa phía tây dọc đường mòn ra ngã tư.",
+       "role": null
+      }
+     ],
+     "p": {
+      "arrow": [
+       6.67,
+       46.45,
+       63.85,
+       5.57
+      ],
+      "head": [
+       64.82,
+       45.42,
+       8.32,
+       3.36
+      ]
+     },
+     "l": {
+      "arrow": [
+       46.21,
+       42.31,
+       29.5,
+       12.05
+      ],
+      "head": [
+       73.08,
+       40.09,
+       3.84,
+       7.26
+      ]
+     }
     },
     {
      "t": "h",
-     "text": "5 · Báo chết"
+     "text": "7 · Báo chết"
     },
     {
      "t": "p",
-     "html": "Để cả đội biết còn bao nhiêu người và ai chết ở đâu. Mọi thành viên đều có nút <b>☠ Chết</b> (đầu lâu) cạnh Mục tiêu ở thanh dưới bản đồ."
+     "html": "Để cả đội biết còn bao nhiêu người và ai chết ở đâu. Mọi thành viên đều có nút <b>☠ Chết</b> (đầu lâu) cạnh Mục tiêu."
     },
     {
      "t": "steps",
      "items": [
       "Bấm <b>☠ Chết</b>, rồi chạm lên bản đồ <b>nơi bạn chết</b>. Ghi luôn, không hỏi tên. Không cần bật GPS vì bạn tự chấm vị trí.",
       "Ghim đầu lâu xám (viền theo màu của bạn, kèm chữ viết tắt) hiện cho cả đội, chấm GPS của bạn ẩn đi. Ô Đội ở góc trái hiện <b>số người sống</b> và huy hiệu <b>☠</b> đỏ.",
-      "Báo nhầm hoặc sai chỗ: chạm ô Đội ở góc trái, bấm <b>Hồi sinh</b> cạnh tên mình rồi báo lại. Hồi sinh xong ghim biến mất."
+      "Báo nhầm hoặc sai chỗ: chạm ô Đội ở góc trái, bấm <b>Hồi sinh</b> cạnh tên mình rồi báo lại."
      ]
     },
     {
-     "t": "fig",
-     "shot": "m24-death-hint",
-     "caption": "Thành viên: chạm nơi bạn chết",
+     "t": "mfig",
+     "shot": "death-hint",
+     "caption": "Chạm nơi bạn chết",
+     "alt": "Chạm nơi bạn chết",
      "marks": [
       {
+       "k": "hint",
        "title": "Dòng gợi ý",
        "desc": "Chạm lên bản đồ đúng nơi bạn chết. Ghi luôn, không hỏi lại.",
-       "role": null,
-       "x": 2.56,
-       "y": 8.06,
-       "w": 80,
-       "h": 4.21
+       "role": null
       },
       {
+       "k": "cancel",
        "title": "✕ Hủy",
        "desc": "Bấm nếu không muốn báo chết nữa.",
-       "role": null,
-       "x": 2.56,
-       "y": 91.94,
-       "w": 94.87,
-       "h": 6.87
+       "role": null
       }
      ],
-     "alt": "Gợi ý chạm bản đồ khi báo chết"
+     "p": {
+      "hint": [
+       1.79,
+       7.7,
+       81.54,
+       4.92
+      ],
+      "cancel": [
+       1.79,
+       91.59,
+       96.41,
+       7.58
+      ]
+     },
+     "l": {
+      "hint": [
+       0.83,
+       15.64,
+       41,
+       10.65
+      ],
+      "cancel": [
+       0.83,
+       85.38,
+       9.37,
+       12.82
+      ]
+     }
     },
     {
-     "t": "fig",
-     "shot": "m22-death-pin",
+     "t": "mfig",
+     "shot": "death-pin",
      "caption": "Ghim ☠ và số người còn sống",
+     "alt": "Ghim ☠ và số người còn sống",
      "marks": [
       {
+       "k": "chip",
        "title": "Số người sống",
-       "desc": "Ô Đội hiện số người còn sống, ví dụ 4/6.",
-       "role": null,
-       "x": 2.56,
-       "y": 1.18,
-       "w": 80,
-       "h": 5.69
+       "desc": "Ô Đội hiện số người còn sống, ví dụ 5/6.",
+       "role": null
       },
       {
+       "k": "badge",
        "title": "Huy hiệu ☠",
        "desc": "Số người đã chết trong đội.",
-       "role": null,
-       "x": 45.16,
-       "y": 2.84,
-       "w": 7.22,
-       "h": 2.37
+       "role": null
       },
       {
+       "k": "pin",
        "title": "Ghim ☠",
        "desc": "Nơi người đó chết, viền theo màu và chữ viết tắt của họ. Chạm để xem giờ chết hoặc hồi sinh.",
-       "role": null,
-       "x": 23.85,
-       "y": 51.54,
-       "w": 6.15,
-       "h": 3.67
+       "role": null
       },
       {
+       "k": "btn",
        "title": "☠ Chết",
-       "desc": "Bấm rồi chạm bản đồ nơi chết. Thành viên tự báo chết cho mình, đội trưởng chọn người chết.",
-       "role": null,
-       "x": 16.41,
-       "y": 84.82,
-       "w": 11.79,
-       "h": 7.82
+       "desc": "Thành viên tự báo chết cho mình; đội trưởng chọn người chết.",
+       "role": null
       }
      ],
-     "alt": "Ghim đầu lâu tại nơi đồng đội chết"
+     "p": {
+      "chip": [
+       1.79,
+       0.83,
+       81.54,
+       6.4
+      ],
+      "badge": [
+       44.13,
+       2.49,
+       9.01,
+       3.08
+      ],
+      "pin": [
+       25.13,
+       49.88,
+       8.72,
+       4.86
+      ],
+      "btn": [
+       34.1,
+       85.42,
+       31.79,
+       7.58
+      ]
+     },
+     "l": {
+      "chip": [
+       0.83,
+       1.79,
+       41,
+       13.85
+      ],
+      "badge": [
+       23.71,
+       5.38,
+       4.16,
+       6.67
+      ],
+      "pin": [
+       54.74,
+       49.74,
+       4.03,
+       10.51
+      ],
+      "btn": [
+       6.75,
+       59.74,
+       5.92,
+       12.82
+      ]
+     }
     },
     {
      "t": "p",
-     "html": "<b>Đội trưởng</b> báo chết cho người khác: bấm <b>☠ Chết</b>, chạm nơi người đó chết, rồi chọn <b>ai chết ở đây</b> (chọn được nhiều người nếu cùng chết một chỗ) và bấm <b>BÁO CHẾT</b>. Dùng khi đồng đội quên bấm hoặc không cầm điện thoại. Đội trưởng cũng hồi sinh được bất kỳ ai trong đội."
+     "html": "<b>Đội trưởng</b> báo chết cho người khác: bấm <b>☠ Chết</b>, chạm nơi người đó chết, rồi chọn <b>ai chết ở đây</b> (chọn được nhiều người cùng chết một chỗ) và bấm <b>BÁO CHẾT</b>. Dùng khi đồng đội quên bấm hoặc không cầm điện thoại."
     },
     {
-     "t": "fig",
-     "shot": "m23-death-pick",
+     "t": "mfig",
+     "shot": "death-pick",
      "caption": "Đội trưởng: chọn ai chết ở đây",
+     "alt": "Đội trưởng: chọn ai chết ở đây",
      "marks": [
       {
+       "k": "list",
        "title": "Danh sách đội",
        "desc": "Chọn một hoặc nhiều người cùng chết ở chỗ vừa chạm.",
-       "role": null,
-       "x": 4.1,
-       "y": 36.49,
-       "w": 91.79,
-       "h": 46.21
+       "role": null
       },
       {
+       "k": "chosen",
        "title": "Đã chọn",
        "desc": "Chạm lần nữa để bỏ chọn.",
-       "role": null,
-       "x": 4.1,
-       "y": 52.13,
-       "w": 91.79,
-       "h": 7.11
+       "role": null
       },
       {
+       "k": "confirm",
        "title": "BÁO CHẾT",
        "desc": "Ghi những người đã chọn là chết tại điểm đã chạm.",
-       "role": null,
-       "x": 4.1,
-       "y": 85.07,
-       "w": 91.79,
-       "h": 6.16
+       "role": null
       }
      ],
-     "alt": "Đội trưởng chọn người chết"
+     "p": {
+      "list": [
+       3.33,
+       36.14,
+       93.33,
+       46.92
+      ],
+      "chosen": [
+       3.33,
+       67.42,
+       93.33,
+       7.82
+      ],
+      "confirm": [
+       3.33,
+       84.72,
+       93.33,
+       6.87
+      ]
+     },
+     "l": {
+      "list": [
+       18.36,
+       0,
+       63.27,
+       63.44
+      ],
+      "chosen": [
+       18.36,
+       29.59,
+       63.27,
+       16.92
+      ],
+      "confirm": [
+       18.36,
+       67.03,
+       63.27,
+       14.87
+      ]
+     }
     },
     {
-     "t": "p",
-     "html": "Chạm vào ghim ☠ để xem giờ chết và người báo. Trong bảng đội, hàng người chết bị gạch tên, ghi giờ chết, bấm để bay tới chỗ chết."
+     "t": "mfig",
+     "shot": "death-team",
+     "caption": "Danh sách đội khi có người chết",
+     "alt": "Danh sách đội khi có người chết",
+     "marks": [
+      {
+       "k": "dead",
+       "title": "Hàng người chết",
+       "desc": "Gạch tên, ghi giờ chết; bấm để bay tới chỗ chết.",
+       "role": null
+      },
+      {
+       "k": "revive",
+       "title": "Hồi sinh",
+       "desc": "Người chết tự hồi sinh cho mình; đội trưởng hồi sinh được bất kỳ ai. Ghim ☠ biến mất.",
+       "role": null
+      }
+     ],
+     "p": {
+      "dead": [
+       3.33,
+       83.06,
+       69.74,
+       7.82
+      ],
+      "revive": [
+       73.59,
+       83.06,
+       23.08,
+       5.92
+      ]
+     },
+     "l": {
+      "dead": [
+       18.36,
+       90.62,
+       52.37,
+       9.38
+      ],
+      "revive": [
+       70.97,
+       90.62,
+       10.66,
+       9.38
+      ]
+     }
     },
     {
      "t": "h",
@@ -1665,19 +2564,274 @@ window.GUIDE={
     },
     {
      "t": "steps",
+     "role": "org",
      "items": [
       "Chia đội xong, bấm <b>KHÓA ĐỘI</b> ở từng đội. Chỉ đội đã khóa mới có mã và nút <b>QR VÀO ĐỘI</b>.",
-      "Trong tab <b>Đội hình</b>, bấm <b>Chỉnh ▾</b> để mở phần thiết lập, rồi ở mục <b>Khu vực chơi</b> chọn Núi hoặc Phố (cả trận dùng chung). Cũng đổi được trong <b>⚙ Điều khiển trận</b> ở bước sau.",
-      "Mở <b>⚙ Điều khiển trận</b> trên bản đồ, đưa mã/QR cho từng đội, đặt đội trưởng.",
-      "Giữa các ván: <b>VÁN MỚI</b> trong <b>⚙ Điều khiển trận</b> xóa báo chết và lệnh nhưng giữ nguyên người đã vào đội, đội trưởng và khu vực. Chỉ một đội chơi lại thì bấm <b>☠ Hồi sinh cả đội</b> ở đội đó.",
+      "Trong tab <b>Đội hình</b>, bấm <b>Chỉnh ▾</b> rồi ở mục <b>Khu vực chơi</b> chọn Núi hoặc Phố (cả trận dùng chung). Cũng đổi được trong <b>⚙ Điều khiển trận</b>.",
+      "Mở <b>⚙ Điều khiển trận</b> trên bản đồ, đưa mã/QR cho từng đội, đặt đội trưởng (★).",
+      "Giữa các ván: <b>VÁN MỚI</b> xóa báo chết và lệnh nhưng giữ nguyên người đã vào đội, đội trưởng và khu vực. Chỉ một đội chơi lại thì bấm <b>☠ Hồi sinh cả đội</b> ở đội đó.",
       "Cuối buổi: <b>KẾT THÚC TRẬN</b> để xóa dữ liệu."
+     ]
+    },
+    {
+     "t": "mfig",
+     "shot": "org-map",
+     "caption": "Nút ⚙ trên bản đồ",
+     "alt": "Nút ⚙ trên bản đồ",
+     "marks": [
+      {
+       "k": "gear",
+       "title": "⚙ Điều khiển trận",
+       "desc": "Chỉ người tổ chức thấy nút này (nằm cùng cột nút công cụ).",
+       "role": "org"
+      },
+      {
+       "k": "chip",
+       "title": "Chip đội",
+       "desc": "Bạn cũng là người chơi nên chỉ thấy đội của mình.",
+       "role": "org"
+      }
      ],
+     "p": {
+      "gear": [
+       84.36,
+       27.37,
+       13.85,
+       6.4
+      ],
+      "chip": [
+       1.79,
+       0.83,
+       81.54,
+       6.4
+      ]
+     },
+     "l": {
+      "gear": [
+       93.25,
+       53.08,
+       5.92,
+       12.82
+      ],
+      "chip": [
+       0.83,
+       1.79,
+       41,
+       13.85
+      ]
+     },
+     "role": "org"
+    },
+    {
+     "t": "mfig",
+     "shot": "org-sheet",
+     "caption": "Điều khiển trận",
+     "alt": "Điều khiển trận",
+     "marks": [
+      {
+       "k": "area",
+       "title": "Khu vực chơi",
+       "desc": "Núi / Phố. Đổi là bản đồ mọi máy đổi theo.",
+       "role": "org"
+      },
+      {
+       "k": "code",
+       "title": "Mã đội",
+       "desc": "Mã 6 ký tự để đội viên nhập.",
+       "role": "org"
+      },
+      {
+       "k": "joined",
+       "title": "Đã vào",
+       "desc": "Ví dụ \"5/6 đã vào\": có bao nhiêu người đã vào đội.",
+       "role": "org"
+      },
+      {
+       "k": "qr",
+       "title": "HIỆN QR",
+       "desc": "Hiện mã QR để đội viên quét bằng camera.",
+       "role": "org"
+      },
+      {
+       "k": "link",
+       "title": "CHIA SẺ LINK",
+       "desc": "Gửi link vào đội qua Zalo/Messenger (hoặc SAO CHÉP LINK trên máy không có chia sẻ).",
+       "role": "org"
+      },
+      {
+       "k": "star",
+       "title": "★ Đội trưởng",
+       "desc": "Bấm để đặt hoặc bỏ đội trưởng của đội.",
+       "role": "org"
+      },
+      {
+       "k": "remove",
+       "title": "✕ Gỡ",
+       "desc": "Gỡ người vào nhầm tên; họ vào lại được.",
+       "role": "org"
+      }
+     ],
+     "p": {
+      "area": [
+       3.33,
+       21.82,
+       93.33,
+       15.28
+      ],
+      "code": [
+       7.44,
+       43.39,
+       85.9,
+       8.18
+      ],
+      "qr": [
+       7.44,
+       51.8,
+       42.69,
+       6.4
+      ],
+      "link": [
+       50.64,
+       51.8,
+       42.69,
+       6.4
+      ],
+      "joined": [
+       76.9,
+       40.3,
+       16.44,
+       2.61
+      ],
+      "star": [
+       66.67,
+       59.03,
+       12.82,
+       5.92
+      ],
+      "remove": [
+       80.51,
+       59.03,
+       12.82,
+       5.92
+      ]
+     },
+     "l": {
+      "area": [
+       18.36,
+       22.92,
+       63.27,
+       33.08
+      ],
+      "code": [
+       20.26,
+       69.59,
+       59.83,
+       17.69
+      ],
+      "qr": [
+       20.26,
+       87.8,
+       29.8,
+       12.2
+      ],
+      "link": [
+       50.3,
+       87.8,
+       29.8,
+       12.2
+      ],
+      "joined": [
+       72.5,
+       62.92,
+       7.6,
+       5.64
+      ]
+     },
+     "role": "org"
+    },
+    {
+     "t": "mfig",
+     "shot": "org-qr",
+     "caption": "Mã QR của đội",
+     "alt": "Mã QR của đội",
+     "marks": [
+      {
+       "k": "qr",
+       "title": "QR",
+       "desc": "Đội viên quét bằng camera điện thoại.",
+       "role": "org"
+      },
+      {
+       "k": "hide",
+       "title": "ẨN QR",
+       "desc": "Thu QR lại.",
+       "role": "org"
+      },
+      {
+       "k": "link",
+       "title": "CHIA SẺ LINK",
+       "desc": "Gửi link thay vì QR.",
+       "role": "org"
+      },
+      {
+       "k": "newcode",
+       "title": "↻ Đổi mã",
+       "desc": "Tạo mã mới khi bị lộ. Mã cũ vô hiệu, người đã vào đội vẫn giữ quyền.",
+       "role": "org"
+      }
+     ],
+     "p": {
+      "qr": [
+       13.72,
+       58.43,
+       73.33,
+       33.89
+      ],
+      "hide": [
+       7.44,
+       51.8,
+       42.69,
+       6.4
+      ],
+      "link": [
+       50.64,
+       51.8,
+       42.69,
+       6.4
+      ],
+      "newcode": [
+       7.44,
+       92.32,
+       42.38,
+       5.92
+      ]
+     },
+     "l": {
+      "qr": [
+       33.23,
+       97.8,
+       33.89,
+       2.2
+      ],
+      "hide": [
+       20.26,
+       83.44,
+       29.8,
+       13.85
+      ],
+      "link": [
+       50.3,
+       83.44,
+       29.8,
+       13.85
+      ]
+     },
      "role": "org"
     },
     {
      "t": "fig",
      "shot": "m15-team-qr",
-     "caption": "Nút QR VÀO ĐỘI",
+     "caption": "Nút QR VÀO ĐỘI (tab Đội hình)",
      "marks": [
       {
        "title": "QR VÀO ĐỘI",
@@ -1695,7 +2849,7 @@ window.GUIDE={
     {
      "t": "fig",
      "shot": "m20-map-pick",
-     "caption": "Chọn khu vực chơi",
+     "caption": "Chọn khu vực chơi (tab Đội hình)",
      "marks": [
       {
        "title": "Chỉnh ▾",
@@ -1729,183 +2883,64 @@ window.GUIDE={
      "role": "org"
     },
     {
-     "t": "fig",
-     "shot": "m16-org-map",
-     "caption": "Nút ⚙ trên bản đồ",
+     "t": "mfig",
+     "shot": "org-round",
+     "caption": "Giữa các ván và cuối trận",
+     "alt": "Giữa các ván và cuối trận",
      "marks": [
       {
-       "title": "⚙ Điều khiển trận",
-       "desc": "Chỉ người tổ chức thấy nút này (nằm cạnh các nút công cụ).",
-       "role": "org",
-       "x": 85.13,
-       "y": 27.73,
-       "w": 12.31,
-       "h": 5.69
-      },
-      {
-       "title": "Chip đội",
-       "desc": "Bạn cũng là người chơi nên chỉ thấy đội của mình.",
-       "role": "org",
-       "x": 2.56,
-       "y": 1.18,
-       "w": 80,
-       "h": 5.69
-      }
-     ],
-     "alt": "Nút ⚙ trên bản đồ",
-     "role": "org"
-    },
-    {
-     "t": "fig",
-     "shot": "m17-org-sheet",
-     "caption": "Điều khiển trận",
-     "marks": [
-      {
-       "title": "Khu vực chơi",
-       "desc": "Núi / Phố. Đổi là bản đồ mọi máy đổi theo.",
-       "role": "org",
-       "x": 7.44,
-       "y": 29.29,
-       "w": 85.13,
-       "h": 5.69
-      },
-      {
-       "title": "Mã đội",
-       "desc": "Mã 6 ký tự để đội viên nhập. Dòng \"4/6 đã vào\" cho biết có bao nhiêu người đã vào đội.",
-       "role": "org",
-       "x": 8.21,
-       "y": 43.27,
-       "w": 84.36,
-       "h": 7.46
-      },
-      {
-       "title": "HIỆN QR",
-       "desc": "Hiện mã QR để đội viên quét bằng camera.",
-       "role": "org",
-       "x": 8.21,
-       "y": 51.68,
-       "w": 41.15,
-       "h": 5.69
-      },
-      {
-       "title": "CHIA SẺ LINK",
-       "desc": "Gửi link vào đội qua Zalo/Messenger (hoặc SAO CHÉP LINK trên máy không có chia sẻ).",
-       "role": "org",
-       "x": 51.41,
-       "y": 51.68,
-       "w": 41.15,
-       "h": 5.69
-      },
-      {
-       "title": "Thành viên",
-       "desc": "✓ Đã vào / Chưa vào. Nút ★ đặt đội trưởng (bấm lại để bỏ), nút ✕ gỡ người đó ra khỏi đội.",
-       "role": "org",
-       "x": 8.21,
-       "y": 58.31,
-       "w": 84.36,
-       "h": 6.4
-      }
-     ],
-     "alt": "Điều khiển trận",
-     "role": "org"
-    },
-    {
-     "t": "fig",
-     "shot": "m18-org-qr",
-     "caption": "Mã QR của đội",
-     "marks": [
-      {
-       "title": "QR",
-       "desc": "Đội viên quét bằng camera điện thoại.",
-       "role": "org",
-       "x": 14.49,
-       "y": 42.32,
-       "w": 71.79,
-       "h": 33.18
-      },
-      {
-       "title": "ẨN QR",
-       "desc": "Thu QR lại.",
-       "role": "org",
-       "x": 8.21,
-       "y": 35.68,
-       "w": 41.15,
-       "h": 5.69
-      },
-      {
-       "title": "CHIA SẺ LINK",
-       "desc": "Gửi link thay vì QR.",
-       "role": "org",
-       "x": 51.41,
-       "y": 35.68,
-       "w": 41.15,
-       "h": 5.69
-      },
-      {
-       "title": "↻ Đổi mã",
-       "desc": "Tạo mã mới khi bị lộ. Mã cũ vô hiệu, người đã vào đội vẫn giữ quyền.",
-       "role": "org",
-       "x": 8.21,
-       "y": 76.21,
-       "w": 39.77,
-       "h": 5.21
-      }
-     ],
-     "alt": "Mã QR của đội",
-     "role": "org"
-    },
-    {
-     "t": "fig",
-     "shot": "m25-org-round",
-     "caption": "Giữa các ván: ván mới và hồi sinh",
-     "role": "org",
-     "marks": [
-      {
+       "k": "revive",
        "title": "☠ Hồi sinh cả đội",
        "desc": "Xóa báo chết của đội đó. Dùng khi chỉ một đội chơi lại.",
-       "role": "org",
-       "x": 8.21,
-       "y": 62.94,
-       "w": 27.44,
-       "h": 5.21
+       "role": "org"
       },
       {
+       "k": "round",
        "title": "VÁN MỚI",
-       "desc": "Xóa báo chết và mọi lệnh, giữ nguyên người đã vào đội, đội trưởng, khu vực và vị trí. Bấm 2 lần để xác nhận.",
-       "role": "org",
-       "x": 7.44,
-       "y": 80.91,
-       "w": 85.13,
-       "h": 5.21
+       "desc": "Xóa báo chết và mọi lệnh, giữ nguyên người đã vào đội, đội trưởng, khu vực. Bấm 2 lần để xác nhận.",
+       "role": "org"
       },
       {
+       "k": "end",
        "title": "KẾT THÚC TRẬN",
-       "desc": "Xóa toàn bộ dữ liệu của trận, kể cả danh sách vào đội.",
-       "role": "org",
-       "x": 7.44,
-       "y": 90.62,
-       "w": 85.13,
-       "h": 6.16
+       "desc": "Xóa toàn bộ dữ liệu của trận, kể cả danh sách vào đội. Bấm rồi XÁC NHẬN, không hoàn tác.",
+       "role": "org"
       }
      ],
-     "alt": "Điều khiển trận: Ván mới và Hồi sinh cả đội"
-    },
-    {
-     "t": "fig",
-     "shot": "m19-org-end",
-     "caption": "Kết thúc trận",
-     "marks": [
-      {
-       "title": "KẾT THÚC TRẬN · XÓA DỮ LIỆU",
-       "desc": "Bấm rồi XÁC NHẬN: xóa toàn bộ vị trí, lệnh, danh sách vào đội và mã đội. Không hoàn tác.",
-       "role": "org",
-       "x": 7.44,
-       "y": 90.66,
-       "w": 85.13,
-       "h": 6.16
-      }
-     ],
-     "alt": "Kết thúc trận",
+     "p": {
+      "revive": [
+       7.44,
+       7.01,
+       29.65,
+       5.92
+      ],
+      "round": [
+       6.67,
+       80.59,
+       86.67,
+       5.92
+      ],
+      "end": [
+       6.67,
+       90.3,
+       86.67,
+       6.87
+      ]
+     },
+     "l": {
+      "round": [
+       19.91,
+       58.57,
+       60.19,
+       12.31
+      ],
+      "end": [
+       19.91,
+       79.08,
+       60.19,
+       14.87
+      ]
+     },
      "role": "org"
     },
     {

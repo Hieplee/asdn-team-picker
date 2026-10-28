@@ -1,0 +1,12 @@
+import { launch, openPage, waitTiles } from './lib.mjs';
+import { seed } from './data.mjs';
+const [,, role='member', w='390', h='844', out='/tmp/s.png'] = process.argv;
+const b = await launch();
+const { page } = await openPage(b, { size: [+w, +h], scene: seed({ role }) });
+await page.evaluate(() => localStorage.setItem('asdn-live-share', '1'));
+await page.click('#tabbar button[data-tab="map"]');
+await page.waitForTimeout(1500);
+await waitTiles(page);
+await page.screenshot({ path: out });
+console.log(await page.evaluate(() => ({ fs: !!document.fullscreenElement, tab: document.body.dataset.tab, share: localStorage.getItem('asdn-live-share'), btnFull: !document.querySelector('#btn-full').hidden })));
+await b.close();
