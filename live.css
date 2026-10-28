@@ -183,7 +183,7 @@ html.fs-lock,html.fs-lock body{overflow:hidden}
 /* Mục tiêu: màu theo người đặt (không ghi tên). Mũi tên: mảnh, trắng viền đen cho dễ đọc trên ảnh vệ tinh. */
 .tgt-pin small{display:none}
 .tgt-mark{color:var(--c,#ff4d4d);text-shadow:0 0 2px #000,0 0 2px #000,0 0 5px #000,0 0 5px #000}
-.ah{border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:16px solid #fff;margin:-8px 0 0 -7px;filter:drop-shadow(0 0 1.5px #000) drop-shadow(0 0 1.5px #000)}
+.ah{border-left:5px solid transparent;border-right:5px solid transparent;border-bottom:15px solid #ff7a1a;margin:-8px 0 0 -5px;filter:drop-shadow(0 0 1.5px #000) drop-shadow(0 0 1.5px #000)}
 .color-dot{display:inline-block;width:11px;height:11px;margin-right:8px;border-radius:50%;border:2px solid #000;box-shadow:0 0 0 1px #fff8;vertical-align:-1px}
 @media (orientation:landscape) and (max-height:500px){
   .map-bottom{width:min(400px,56vw)}
@@ -224,3 +224,4 @@ html.fs-lock,html.fs-lock body{overflow:hidden}
 .dead-row .revive-btn{width:auto;flex:none;min-width:84px;padding:0 14px}
 .team-row.sel{border-color:var(--lime);background:#2a3d2c}
 .org-danger .secondary-button{width:100%}
+.zone-num{width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;border:2px solid #000;background:var(--c,#ff4d4d);color:#000;font:800 13px/20px 'DM Sans',sans-serif;text-align:center;box-sizing:border-box}

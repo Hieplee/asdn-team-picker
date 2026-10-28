@@ -170,7 +170,7 @@ export function initLive(ctx) {
     unsubTeam.push(listen(ref('teamMeta', teamId), snap => { captain = snap.exists() ? snap.data().captain : null; if (!isCaptainMe() && draw && draw.kind !== 'target') cancelDraw(); drawPlayers(); renderHud(); renderDraw(); }));
     unsubTeam.push(listen(col('teams', teamId, 'orders'), snap => {
       orders = {};
-      snap.forEach(d => { const data = d.data(); const slot = /^(?:t_.*|atk|def)_([0-4])$/.exec(d.id); orders[d.id] = { type: data.type, pts: Array.isArray(data.pts) ? data.pts : [], by: data.by, mid: data.mid, ts: data.ts ? data.ts.toMillis() : Date.now(), num: slot ? Number(slot[1]) + 1 : null }; });
+      snap.forEach(d => { const data = d.data(); const slot = /^(?:t_.*|atk|def)_([0-4])$|^z_([0-9])$/.exec(d.id); orders[d.id] = { type: data.type, pts: Array.isArray(data.pts) ? data.pts : [], by: data.by, mid: data.mid, ts: data.ts ? data.ts.toMillis() : Date.now(), num: slot ? Number(slot[1] ?? slot[2]) + 1 : null }; });
       drawOrders(); renderDraw();
     }));
     unsubTeam.push(listen(col('teams', teamId, 'deaths'), snap => {
@@ -653,7 +653,7 @@ export function initLive(ctx) {
     let hash = 0; for (const ch of String(mid)) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
     return MEMBER_COLORS[hash % MEMBER_COLORS.length];
   }
-  function orderLabel(order) { return order.num && isPoint(order.type) ? `${KIND_NAME[order.type]} ${order.num}` : (KIND_NAME[order.type] || 'Lệnh'); }
+  function orderLabel(order) { return order.num && (isPoint(order.type) || order.type === 'zone') ? `${KIND_NAME[order.type]} ${order.num}` : (KIND_NAME[order.type] || 'Lệnh'); }
   function authorName(order) { return findMember(order.mid)?.name || 'Đồng đội'; }
   function canDeleteOrder(order) { return Boolean(user && (order.by === user.uid || isCaptainMe())); }
   function targetIcon(order) {
@@ -678,11 +678,15 @@ export function initLive(ctx) {
       } else if (order.type === 'arrow' && ll.length >= 2) {
         const end = ll[ll.length - 1], head = h('div', { class: 'ah', style: `transform:rotate(${bearing(ll[ll.length - 2], end)}deg)` });
         group.addLayer(L.polyline(ll, { color: '#000', weight: 6, opacity: .65, lineCap: 'round', lineJoin: 'round', interactive: false }));
-        group.addLayer(L.polyline(ll, { color: '#fff', weight: 2.5, opacity: 1, lineCap: 'round', lineJoin: 'round', interactive: false }));
+        group.addLayer(L.polyline(ll, { color: '#ff7a1a', weight: 3, opacity: 1, lineCap: 'round', lineJoin: 'round', interactive: false }));
         group.addLayer(L.marker(end, { interactive: false, keyboard: false, icon: L.divIcon({ className: '', iconSize: [0, 0], html: head }) }));
         group.addLayer(L.polyline(ll, { color: '#000', weight: 36, opacity: 0 }).on('click', open)); // vùng chạm rộng cho ngón tay
       } else if (order.type === 'zone' && ll.length >= 3) {
         group.addLayer(L.polygon(ll, { color, weight: 2, fillColor: color, fillOpacity: .14, dashArray: '7 5', interactive: false }));
+        if (order.num) {
+          const c = ll.reduce((a, p) => [a[0] + p[0] / ll.length, a[1] + p[1] / ll.length], [0, 0]);
+          group.addLayer(L.marker(c, { interactive: false, keyboard: false, icon: L.divIcon({ className: '', iconSize: [0, 0], html: h('div', { class: 'zone-num', style: `--c:${color}`, text: String(order.num) }) }) }));
+        }
         group.addLayer(L.polyline([...ll, ll[0]], { color: '#000', weight: 36, opacity: 0 }).on('click', open)); // chỉ viền bấm được, chạm trong vùng vẫn là kéo bản đồ
       } else { orderLayers.delete(id); continue; }
       group.addTo(map); orderLayers.set(id, { group, sig });
@@ -712,7 +716,7 @@ export function initLive(ctx) {
     draw.layer.clearLayers();
     if (pts.length >= 2) draw.layer.addLayer(draw.kind === 'zone' && pts.length >= 3
       ? L.polygon(pts, { color, weight: 2, fillColor: color, fillOpacity: .12, dashArray: '6 6', interactive: false })
-      : L.polyline(pts, { color: draw.kind === 'arrow' ? '#fff' : color, weight: 2.5, dashArray: '6 6', interactive: false }));
+      : L.polyline(pts, { color: draw.kind === 'arrow' ? '#ff7a1a' : color, weight: 2.5, dashArray: '6 6', interactive: false }));
     pts.forEach((point, i) => draw.layer.addLayer(L.circleMarker(point, { radius: i === pts.length - 1 ? 10 : 7, color: '#000', weight: 2, fillColor: i === 0 ? '#ffd23f' : '#fff', fillOpacity: 1, interactive: false })));
   }
   function addDrawPoint(latlng) {
