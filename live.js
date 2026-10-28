@@ -443,7 +443,8 @@ export function initLive(ctx) {
     const host = on ? $('#map-section') : document.body;
     host.append($('#toast'), $('#live-sheet'));
     if (!on) { try { screen.orientation.unlock(); } catch {} try { sessionStorage.setItem(FS_OFF_KEY, '1'); } catch {} }
-    if (map) setTimeout(() => { map.invalidateSize(); syncEdges(); }, 150);
+    // Vào/thoát toàn màn hình (và xoay ngang theo) làm đổi khung nhìn: fit lại, lần 2 sau khi xoay xong.
+    if (map) { userMoved = false; [150, 700].forEach(ms => setTimeout(() => { map.invalidateSize(); fitArea(); syncEdges(); }, ms)); }
   }
   async function toggleFullscreen(auto = false) {
     const el = $('#map-section');
