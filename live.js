@@ -661,7 +661,7 @@ export function initLive(ctx) {
     hud.replaceChildren(
       h('button', { class: 'hud-chip', type: 'button', onclick: openTeamSheet, 'aria-label': 'Xem danh sách đội' },
         h('i', { class: 'team-dot', style: `background:${teamColor()}` }),
-        h('span', { class: 'hud-main' }, h('b', { text: `Đội ${Number(me.teamId) + 1}` }), h('small', { text: `${total - dead}/${total} sống · ${active} đang hiện · ${myName()} · ${MAPS[mapId].label}` })),
+        h('span', { class: 'hud-main' }, h('b', { text: `Đội ${Number(me.teamId) + 1}` }), h('small', {}, h('span', { text: `${total - dead}/${total}` , title: 'còn sống' }), h('span', { class: 'hud-extra', text: ` · ${active} hiện` }), h('span', { class: 'hud-extra', text: ` · ${myName()} · ${MAPS[mapId].label}` }))),
         dead > 0 && h('em', { class: 'hud-dead', text: `☠${dead}` }),
         h('em', { class: 'hud-state ' + state, text: label })));
     }
