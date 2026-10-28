@@ -1110,7 +1110,7 @@ export function initLive(ctx) {
     if (nativeFs) { if (!document.fullscreenElement) toggleFullscreen(true); }
     else { let seen = false; try { seen = sessionStorage.getItem(HINT_KEY) === '1'; sessionStorage.setItem(HINT_KEY, '1'); } catch {} if (!seen) toast('Xoay ngang điện thoại để xem bản đồ rộng hơn.'); }
   });
-  $('#btn-full').hidden = false; $('#btn-full').addEventListener('click', () => toggleFullscreen());
+  $('#btn-full').hidden = !nativeFs; $('#btn-full').addEventListener('click', () => toggleFullscreen());
   $('#btn-share').addEventListener('click', () => { if (wantShare) stopSharing(true); else startSharing(); });
 
   // ---------- API cho app.js ----------
