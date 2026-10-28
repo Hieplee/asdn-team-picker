@@ -1332,7 +1332,7 @@ window.GUIDE={
     },
     {
      "t": "p",
-     "html": "Mỗi đội có 1 đội trưởng do người tổ chức đặt. Chỉ đội trưởng có thêm nút <b>Tấn công</b> (đỏ), <b>Phòng thủ</b> (xanh), <b>➚ Mũi tên</b> và <b>⬠ Vùng</b>. Tấn công và Phòng thủ chạm 1 điểm là xong, mỗi loại tối đa 5 dấu; hết chỗ thì thay dấu cũ nhất."
+     "html": "Mỗi đội có 1 đội trưởng do người tổ chức đặt. Chỉ đội trưởng có thêm nút <b>Tấn công</b> (đỏ), <b>Phòng thủ</b> (xanh), <b>➚ Mũi tên</b> và <b>⬠ Vùng</b>. Tấn công và Phòng thủ chạm 1 điểm là xong, mỗi loại tối đa 5 dấu, tự đánh số 1–5 theo thứ tự đặt; hết chỗ thì thay dấu cũ nhất."
     },
     {
      "t": "fig",
@@ -1403,7 +1403,7 @@ window.GUIDE={
      "marks": [
       {
        "title": "Tấn công",
-       "desc": "Dấu đỏ: cả đội thấy trên bản đồ.",
+       "desc": "Dấu đỏ, có số thứ tự (Tấn công 1, 2, …). Cả đội thấy trên bản đồ.",
        "role": null,
        "x": 25.13,
        "y": 63.74,
@@ -1412,7 +1412,7 @@ window.GUIDE={
       },
       {
        "title": "Phòng thủ",
-       "desc": "Dấu xanh: cả đội thấy trên bản đồ.",
+       "desc": "Dấu xanh, có số thứ tự (Phòng thủ 1, 2, …). Cả đội thấy trên bản đồ.",
        "role": null,
        "x": 66.15,
        "y": 54.27,

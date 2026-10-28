@@ -165,7 +165,7 @@ export function initLive(ctx) {
     unsubTeam.push(listen(ref('teamMeta', teamId), snap => { captain = snap.exists() ? snap.data().captain : null; if (!isCaptainMe() && draw && draw.kind !== 'target') cancelDraw(); drawPlayers(); renderHud(); renderDraw(); }));
     unsubTeam.push(listen(col('teams', teamId, 'orders'), snap => {
       orders = {};
-      snap.forEach(d => { const data = d.data(); const slot = /^t_.*_([0-2])$/.exec(d.id); orders[d.id] = { type: data.type, pts: Array.isArray(data.pts) ? data.pts : [], by: data.by, mid: data.mid, ts: data.ts ? data.ts.toMillis() : Date.now(), num: slot ? Number(slot[1]) + 1 : null }; });
+      snap.forEach(d => { const data = d.data(); const slot = /^(?:t_.*|atk|def)_([0-4])$/.exec(d.id); orders[d.id] = { type: data.type, pts: Array.isArray(data.pts) ? data.pts : [], by: data.by, mid: data.mid, ts: data.ts ? data.ts.toMillis() : Date.now(), num: slot ? Number(slot[1]) + 1 : null }; });
       drawOrders(); renderDraw();
     }));
     unsubTeam.push(listen(ref('config', 'map'), snap => { applyMapId(snap.exists() ? snap.data().map : DEFAULT_MAP); }));
@@ -615,12 +615,12 @@ export function initLive(ctx) {
     let hash = 0; for (const ch of String(mid)) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
     return MEMBER_COLORS[hash % MEMBER_COLORS.length];
   }
-  function orderLabel(order) { return order.type === 'target' && order.num ? `Mục tiêu ${order.num}` : (KIND_NAME[order.type] || 'Lệnh'); }
+  function orderLabel(order) { return order.num && isPoint(order.type) ? `${KIND_NAME[order.type]} ${order.num}` : (KIND_NAME[order.type] || 'Lệnh'); }
   function authorName(order) { return findMember(order.mid)?.name || 'Đồng đội'; }
   function canDeleteOrder(order) { return Boolean(user && (order.by === user.uid || isCaptainMe())); }
   function targetIcon(order) {
     const fixed = FIXED_MARK[order.type];
-    const el = h('div', { class: 'tgt-pin' + (fixed ? ' fixed' : ''), style: `--c:${fixed ? fixed.color : memberColor(order.mid)}` }, h('span', { class: 'tgt-mark' }, fixed ? svgIcon(order.type) : '⌖'), !fixed && order.num && h('b', { class: 'tgt-num', text: String(order.num) }));
+    const el = h('div', { class: 'tgt-pin' + (fixed ? ' fixed' : ''), style: `--c:${fixed ? fixed.color : memberColor(order.mid)}` }, h('span', { class: 'tgt-mark' }, fixed ? svgIcon(order.type) : '⌖'), order.num && h('b', { class: 'tgt-num', text: String(order.num) }));
     return window.L.divIcon({ className: '', iconSize: [44, 44], iconAnchor: [22, 22], html: el });
   }
   function clearOrderLayers() { orderLayers.forEach(entry => entry.group.remove()); orderLayers.clear(); }
