@@ -119,7 +119,7 @@ async function initCloud() {
       import('https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js'),
       import('https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js'),
       import('https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js'),
-      import('./live.js?v=mob12').catch(error => { console.error('live.js', error); return null; }),
+      import('./live.js?v=mob14').catch(error => { console.error('live.js', error); return null; }),
     ]);
     const app = initializeApp(firebaseConfig);
     cloudAuth = getAuth(app);
@@ -797,7 +797,7 @@ function toggleTeamLock(team) {
 // Bản ghi lịch sử khi khóa đội: đội hình tại thời điểm khóa.
 function lockTeamAudit(team) {
   const members = Object.keys(state.assignments).filter(id => state.assignments[id] === team);
-  return [{ path: 'action', before: null, after: 'lock-team' }, { path: `lockedTeams/${team}`, before: null, after: true }, ...members.map(id => ({ path: `lockedRoster/${team}/${id}`, before: null, after: true }))];
+  return [{ path: 'action', before: null, after: 'lock-team' }, { path: `lockedTeams/${team}`, before: null, after: true }, ...members.map(id => ({ path: `lockedRoster/${team}/${id}`, before: null, after: findMember(id)?.name || id }))];
 }
 function updateLockUi() {
   $('#unlock-all').hidden = !(canEdit && lockCount());
@@ -1077,7 +1077,7 @@ function describeChange({ path, before, after }) {
   const where = modeIndex ? ` (${a})` : '';
   const show = value => value === null ? '—' : group === 'stats' ? Object.entries(JSON.parse(value)).map(([k, v]) => `${k}:${v}`).join(' ') : String(value);
   if (group === 'action' && after === 'lock-team') return 'Khóa đội';
-  if (group === 'lockedRoster') return `Đội ${Number(a) + 1}: ${name}`;
+  if (group === 'lockedRoster') return `Đội ${Number(a) + 1}: ${typeof after === 'string' ? after : name}`;
   if (group === 'action') return ACTION_LABELS[after] || `Kiểu chia: ${after === 'random' ? 'ngẫu nhiên hoàn toàn' : 'cân bằng'}`;
   if (group === 'lockedPlayers') return `Khóa người: ${name} ${after ? 'khóa' : 'mở khóa'}`;
   if (group === 'lockedTeams') return `Khóa đội: Đội ${Number(a) + 1} ${after ? 'khóa' : 'mở khóa'}`;
@@ -1107,9 +1107,11 @@ function auditCategory(data) {
 function describeAudit(data, cat) {
   if (cat === 'lock') {
     const roster = {};
-    data.changes.filter(c => c.path.startsWith('lockedRoster/')).forEach(c => { const [, t, id] = c.path.split('/'); (roster[t] ||= []).push(findMember(id)?.name || id); });
+    data.changes.filter(c => c.path.startsWith('lockedRoster/')).forEach(c => { const [, t, id] = c.path.split('/'); (roster[t] ||= []).push(typeof c.after === 'string' ? c.after : findMember(id)?.name || id); });
     const teams = Object.keys(roster);
-    if (teams.length) return teams.map(t => `Đội ${Number(t) + 1}: ${roster[t].join(', ')}`);
+    if (teams.length) return teams.map(t => `Đội ${Number(t) + 1} (${roster[t].length} người): ${roster[t].join(', ')}`);
+    const old = data.changes.filter(c => c.path.startsWith('lockedTeams/') && c.after).map(c => `Đội ${Number(c.path.split('/')[1]) + 1}`);
+    if (old.length) return [`${old.join(', ')} — bản ghi cũ, không lưu danh sách thành viên`];
   }
   return [data.changes.map(describeChange).join('; ')];
 }
