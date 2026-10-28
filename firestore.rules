@@ -79,7 +79,6 @@ service cloud.firestore {
     match /match/current/teams/{teamId}/positions/{uid} {
       allow read: if inTeam(teamId);
       allow create, update: if signedIn() && request.auth.uid == uid && inTeam(teamId)
-        && get(/databases/$(database)/documents/match/current/config/live).data.live == true
         && request.resource.data.keys().hasOnly(['lat', 'lng', 'acc', 'heading', 'ts'])
         && num(request.resource.data.lat, -90, 90)
         && num(request.resource.data.lng, -180, 180)

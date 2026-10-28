@@ -96,7 +96,6 @@ export function initLive(ctx) {
   let members = {}; // uid -> memberId (đội mình)
   let positions = {}; // uid -> { lat, lng, acc, heading, ts }
   let captain = null;
-  let liveOn = false;
   let mapId = DEFAULT_MAP;
   let CORNERS = MAPS[DEFAULT_MAP].corners;
   let wantShare = false;
@@ -140,7 +139,7 @@ export function initLive(ctx) {
     return auth.currentUser;
   }
 
-  function stopTeamSubs() { unsubTeam.forEach(fn => fn()); unsubTeam = []; members = {}; positions = {}; orders = {}; captain = null; liveOn = false; mapId = DEFAULT_MAP; CORNERS = MAPS[DEFAULT_MAP].corners; cancelDraw(); clearMarkers(); clearOrderLayers(); }
+  function stopTeamSubs() { unsubTeam.forEach(fn => fn()); unsubTeam = []; members = {}; positions = {}; orders = {}; captain = null; mapId = DEFAULT_MAP; CORNERS = MAPS[DEFAULT_MAP].corners; cancelDraw(); clearMarkers(); clearOrderLayers(); }
   function startTeamSubs(teamId) {
     stopTeamSubs();
     // Vừa bấm "Tôi là…" thì snapshot memberOf đến từ bộ nhớ máy, trước khi server nhận. Luồng đọc mở lúc đó bị rules từ chối
@@ -170,11 +169,6 @@ export function initLive(ctx) {
       drawOrders(); renderDraw();
     }));
     unsubTeam.push(listen(ref('config', 'map'), snap => { applyMapId(snap.exists() ? snap.data().map : DEFAULT_MAP); }));
-    unsubTeam.push(listen(ref('config', 'live'), snap => {
-      const was = liveOn; liveOn = snap.exists() && snap.data().live === true;
-      if (was !== liveOn) { if (liveOn && wantShare) toast('Organizer đã bật chia sẻ vị trí.'); syncSharing(); lastWrite.at = 0; maybeWrite(); }
-      renderHud();
-    }));
   }
 
   function watchMe(nextUser) {
@@ -482,7 +476,7 @@ export function initLive(ctx) {
     maybeWrite();
   }
   function maybeWrite() {
-    if (!liveOn || !me || !user || !myPos) return;
+    if (!me || !user || !myPos) return;
     const now = Date.now(), ll = [myPos.lat, myPos.lng];
     const gap = now - lastWrite.at, moved = lastWrite.ll ? distanceM(lastWrite.ll, ll) : Infinity;
     if (gap < MIN_WRITE_GAP_MS || (gap < HEARTBEAT_MS && moved < MOVE_WRITE_M)) return;
@@ -538,9 +532,9 @@ export function initLive(ctx) {
   function renderHud() {
     const hud = $('#map-hud'); if (!hud || !me) return;
     const now = Date.now();
-    const active = Object.entries(positions).filter(([uid, p]) => uid !== (user && user.uid) && now - p.ts <= STALE_MS).length + (wantShare && liveOn && myPos ? 1 : 0);
+    const active = Object.entries(positions).filter(([uid, p]) => uid !== (user && user.uid) && now - p.ts <= STALE_MS).length + (wantShare && myPos ? 1 : 0);
     const total = teamPlayers(Number(me.teamId)).length;
-    const state = liveOn ? (wantShare ? 'live' : 'view') : 'off';
+    const state = wantShare ? 'live' : 'view';
     const label = state === 'live' ? 'ĐANG CHIA SẺ' : state === 'view' ? 'ĐANG XEM' : 'CHƯA BẬT';
     const hudSig = [me.teamId, active, total, myName(), state, teamColor(), mapId].join('|');
     if (hud.dataset.sig !== hudSig) {
@@ -556,8 +550,7 @@ export function initLive(ctx) {
     share.className = 'share-button' + (wantShare ? ' on' : '');
     let text = wantShare ? 'ĐANG CHIA SẺ · BẤM ĐỂ TẮT' : 'BẬT CHIA SẺ VỊ TRÍ';
     let sub = '';
-    if (wantShare && !liveOn) sub = 'Chờ organizer bật chia sẻ cho trận';
-    else if (wantShare && myPos) sub = `Sai số ~${Math.round(myPos.acc)} m · ${inArea([myPos.lat, myPos.lng]) ? 'trong khu' : 'ngoài khu'}`;
+    if (wantShare && myPos) sub = `Sai số ~${Math.round(myPos.acc)} m · ${inArea([myPos.lat, myPos.lng]) ? 'trong khu' : 'ngoài khu'}`;
     else if (wantShare) sub = 'Đang lấy tín hiệu GPS…';
     const shareSig = text + '|' + sub;
     if (share.dataset.sig !== shareSig) { share.dataset.sig = shareSig; share.replaceChildren(h('span', { class: 'share-main', text }), sub && h('small', { text: sub })); }
@@ -784,7 +777,7 @@ export function initLive(ctx) {
     try { await setDoc(ref('teamKeys', String(team)), { code, at: serverTimestamp() }); codes[team] = code; toast(`Đã đổi mã Đội ${team + 1}. Mã cũ không dùng được nữa.`); renderOrganizer(); }
     catch (error) { toast(`Không đổi được mã: ${error.message}`); }
   }
-  let orgUnsubs = [], orgMembers = {}, orgCaptains = {}, orgLive = false, orgFocus = null, qrOpen = new Set(), confirmEnd = false;
+  let orgUnsubs = [], orgMembers = {}, orgCaptains = {}, orgFocus = null, qrOpen = new Set(), confirmEnd = false;
 
   async function openOrganizer(focusTeam = null) {
     if (!isOrganizer()) return;
@@ -792,7 +785,6 @@ export function initLive(ctx) {
     openSheet('Điều khiển trận', h('p', { class: 'join-lead', text: 'Đang tải…' }), () => { orgUnsubs.forEach(fn => fn()); orgUnsubs = []; });
     orgUnsubs.push(onSnapshot(col('members'), snap => { orgMembers = {}; snap.forEach(d => { orgMembers[d.id] = d.data(); }); renderOrganizer(); }, () => {}));
     orgUnsubs.push(onSnapshot(col('teamMeta'), snap => { orgCaptains = {}; snap.forEach(d => { orgCaptains[d.id] = d.data().captain; }); renderOrganizer(); }, () => {}));
-    orgUnsubs.push(onSnapshot(ref('config', 'live'), snap => { orgLive = snap.exists() && snap.data().live === true; renderOrganizer(); }, () => {}));
     orgUnsubs.push(onSnapshot(ref('config', 'map'), snap => { applyMapId(snap.exists() ? snap.data().map : DEFAULT_MAP); }, () => {}));
     await loadCodes();
     renderOrganizer();
@@ -805,10 +797,6 @@ export function initLive(ctx) {
       wrap.replaceChildren(document.importNode(svg, true));
     }).catch(error => wrap.replaceChildren(h('p', { class: 'join-error', text: error.message })));
     return wrap;
-  }
-  async function setLive(on) {
-    try { await setDoc(ref('config', 'live'), { live: on, at: serverTimestamp() }); toast(on ? 'Đã bật chia sẻ vị trí cho cả trận.' : 'Đã tắt chia sẻ vị trí.'); }
-    catch (error) { toast(`Không đổi được: ${error.message}`); }
   }
   async function setMap(id) {
     if (id === mapId) return;
@@ -842,7 +830,7 @@ export function initLive(ctx) {
         targets.push(ref('teamKeys', String(team)), ref('teamMeta', String(team)));
         for (let n = 0; n < 10; n++) targets.push(ref('teams', String(team), 'orders', `a_${n}`), ref('teams', String(team), 'orders', `z_${n}`));
       }
-      targets.push(ref('config', 'live'), ref('config', 'map'));
+      targets.push(ref('config', 'map'));
       for (let i = 0; i < targets.length; i += 400) {
         const batch = writeBatch(db);
         targets.slice(i, i + 400).forEach(target => batch.delete(target));
@@ -855,9 +843,6 @@ export function initLive(ctx) {
   function renderOrganizer() {
     if ($('#live-sheet').hidden || $('#live-sheet-title').textContent !== 'Điều khiển trận') return;
     const s = getState(), blocks = [];
-    blocks.push(h('div', { class: 'org-live' },
-      h('div', {}, h('b', { text: 'Chia sẻ vị trí toàn trận' }), h('small', { text: orgLive ? 'Đang bật: người chơi gửi vị trí cho đội mình' : 'Đang tắt: chưa ai gửi vị trí' })),
-      h('button', { class: orgLive ? 'secondary-button' : 'primary-button', type: 'button', onclick: () => setLive(!orgLive) }, orgLive ? 'TẮT' : 'BẬT')));
     blocks.push(h('div', { class: 'org-map' },
       h('div', {}, h('b', { text: 'Khu vực chơi' }), h('small', { text: 'Cả trận dùng chung. Đổi là bản đồ của mọi người đổi theo.' })),
       h('div', { class: 'seg', role: 'radiogroup', 'aria-label': 'Chọn khu vực chơi' },
