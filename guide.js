@@ -44,7 +44,7 @@
     var spots = b[orient] || {}, size = orient === 'p' ? [390, 844] : [844, 390];
     var shot = el('div', 'g-shot ' + orient); var img = el('img');
     img.width = size[0]; img.height = size[1]; img.loading = 'lazy'; img.decoding = 'async';
-    img.src = IMG + b.shot + '-' + orient + '.webp?v=1'; img.alt = (b.alt || b.caption) + (orient === 'p' ? ' (máy cầm dọc)' : ' (máy xoay ngang)');
+    img.src = IMG + b.shot + '-' + orient + '.webp?v=2'; img.alt = (b.alt || b.caption) + (orient === 'p' ? ' (máy cầm dọc)' : ' (máy xoay ngang)');
     shot.append(img);
     shot.addEventListener('click', function () { lightbox(img.src, orient === 'l'); });
     var legend = el('ol', 'g-legend');

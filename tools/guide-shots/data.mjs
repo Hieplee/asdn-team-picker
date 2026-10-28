@@ -32,8 +32,8 @@ const ORDERS = (t) => ({
   [`t_${uidOf('d04')}_0`]: { type: 'target', pts: flat([[85, 16]]), by: uidOf('d04'), mid: 'd04', ts: { __ago: 260000 } },
   atk_0: { type: 'attack', pts: flat([[80, 45]]), by: uidOf('d01'), mid: 'd01', ts: { __ago: 90000 } },
   atk_1: { type: 'attack', pts: flat([[88, 56]]), by: uidOf('d01'), mid: 'd01', ts: { __ago: 80000 } },
-  def_0: { type: 'defend', pts: flat([[32, 50]]), by: uidOf('d01'), mid: 'd01', ts: { __ago: 70000 } },
-  def_1: { type: 'defend', pts: flat([[42, 24]]), by: uidOf('d01'), mid: 'd01', ts: { __ago: 60000 } },
+  def_0: { type: 'defend', pts: flat([[44, 55]]), by: uidOf('d01'), mid: 'd01', ts: { __ago: 70000 } },
+  def_1: { type: 'defend', pts: flat([[53, 30]]), by: uidOf('d01'), mid: 'd01', ts: { __ago: 60000 } },
   a_0: { type: 'arrow', pts: flat([[6, 31], [24, 34], [42, 37], [56, 38], [74, 41]]), by: uidOf('d01'), mid: 'd01', ts: { __ago: 50000 } },
   z_0: { type: 'zone', pts: flat([[73, 6], [96, 5], [100, 24], [75, 25]]), by: uidOf('d01'), mid: 'd01', ts: { __ago: 40000 } },
 });
