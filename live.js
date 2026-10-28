@@ -498,6 +498,18 @@ export function initLive(ctx) {
     } catch { if (!auto) toast('Không vào được toàn màn hình. Hãy xoay ngang điện thoại.'); }
   }
   document.addEventListener('fullscreenchange', () => applyFs(Boolean(document.fullscreenElement)));
+  // Chrome/Brave Android đôi khi giữ vùng chạm cũ sau khi vào toàn màn hình hoặc xoay (nửa màn mất điều khiển):
+  // mỗi lần khung nhìn đổi thì ép layout + vẽ lại lớp bản đồ để vùng chạm khớp khung hiển thị.
+  let relayoutTimer = null;
+  function relayout() {
+    const ms = $('#map-section'); if (!ms) return;
+    ms.style.transform = 'translateZ(0)'; void ms.offsetWidth;
+    requestAnimationFrame(() => { ms.style.transform = ''; if (map) { map.invalidateSize(); syncEdges(); } });
+  }
+  const relayoutSoon = () => { clearTimeout(relayoutTimer); relayoutTimer = setTimeout(relayout, 250); };
+  ['resize', 'orientationchange', 'fullscreenchange'].forEach(ev => (ev === 'fullscreenchange' ? document : window).addEventListener(ev, relayoutSoon));
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', relayoutSoon);
+  screen.orientation && screen.orientation.addEventListener && screen.orientation.addEventListener('change', () => { relayoutSoon(); setTimeout(relayout, 900); });
   function toggleSatellite() {
     if (!map) return;
     satClarity = !satClarity;

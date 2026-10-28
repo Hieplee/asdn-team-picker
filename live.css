@@ -246,3 +246,11 @@ html.fs-lock,html.fs-lock body{overflow:hidden}
   .leaflet-bottom.leaflet-left{left:auto;right:180px;margin-bottom:0}
 }
 @media (orientation:landscape) and (max-height:500px){.share-button .share-tail{display:none}.map-bottom .share-button{padding:0 14px;font-size:11px}}
+
+/* Toàn màn hình: selector id của tab Bản đồ (mobile.css) mạnh hơn class nên từng ghi đè margin/height; khóa lại bằng cùng độ mạnh */
+body #map-section:fullscreen,body #map-section.pseudo-fs{margin:0!important;width:100%!important;height:100vh!important;height:100dvh!important;max-height:none!important}
+body #map-section.pseudo-fs{position:fixed!important;inset:0!important;left:0!important;top:0!important}
+/* Khung chứa nút ở đáy chỉ để xếp bố cục: vùng trống không được nuốt thao tác kéo/chạm bản đồ */
+.map-bottom{pointer-events:none}
+.map-bottom>*{pointer-events:none}
+.map-bottom button,.map-bottom .draw-btn{pointer-events:auto}
