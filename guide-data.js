@@ -918,24 +918,535 @@ window.GUIDE={
    "id": "map",
    "title": "Bản đồ",
    "lead": "Vào đội bằng mã, chia sẻ vị trí với đồng đội và đánh dấu mục tiêu ngoài trời.",
-   "leadOrg": "Chốt đội, phát mã/QR vào đội, chọn khu vực chơi, đặt đội trưởng và kết thúc trận.",
+   "leadOrg": "Chốt đội, phát mã/QR vào đội, chọn khu vực chơi, đặt đội trưởng và kết thúc trận. Bạn cũng là người chơi nên vào đội như mọi người.",
    "blocks": [
     {
-     "t": "h",
-     "text": "Vào đội của bạn"
+     "t": "p",
+     "html": "Bản đồ vệ tinh chỉ hiện <b>đội của bạn</b>: vị trí GPS đồng đội và các lệnh trong đội. Người đội khác không thấy bạn."
     },
     {
-     "t": "steps",
-     "items": [
-      "Mở tab <b>Bản đồ</b>. Quét QR của người tổ chức bằng camera (mở bằng Safari/Chrome, <b>không</b> dùng trình duyệt trong Zalo/Messenger) hoặc nhập mã đội gồm <b>6 ký tự</b>, rồi bấm <b>TIẾP TỤC</b>.",
-      "Màn <b>Bạn là ai?</b>: chọn đúng tên của mình. Tên đã có người nhận sẽ ghi \"Đã có người nhận\". Bấm <b>TÔI LÀ …</b>.",
-      "Hộp <b>Chia sẻ vị trí?</b>: chọn <b>CHIA SẺ VỊ TRÍ</b> rồi cho phép GPS, hoặc <b>CHỈ XEM BẢN ĐỒ</b>.",
-      "Máy nhớ phiên, lần sau mở lại không phải chọn tên."
-     ]
+     "t": "h",
+     "text": "1 · Vào đội của bạn"
+    },
+    {
+     "t": "fig",
+     "shot": "m01-join-code",
+     "caption": "Nhập mã đội",
+     "marks": [
+      {
+       "title": "Ô mã đội",
+       "desc": "6 ký tự, ví dụ <b>1K7QMA</b>. Ký tự đầu là số đội. Hoặc quét QR để vào thẳng bước chọn tên.",
+       "role": null,
+       "x": 4.1,
+       "y": 25.04,
+       "w": 91.79,
+       "h": 8.06
+      },
+      {
+       "title": "TIẾP TỤC",
+       "desc": "Kiểm tra mã. Báo \"chưa được chốt\" nghĩa là đội chưa được khóa.",
+       "role": null,
+       "x": 4.1,
+       "y": 34.76,
+       "w": 91.79,
+       "h": 6.64
+      },
+      {
+       "title": "Lưu ý riêng tư",
+       "desc": "Chỉ đồng đội thấy vị trí của bạn; có thể tắt chia sẻ bất cứ lúc nào.",
+       "role": null,
+       "x": 4.1,
+       "y": 43.53,
+       "w": 91.79,
+       "h": 4.41
+      }
+     ],
+     "alt": "Nhập mã đội"
+    },
+    {
+     "t": "fig",
+     "shot": "m02-pick-name",
+     "caption": "Chọn tên của bạn",
+     "marks": [
+      {
+       "title": "← Đổi mã",
+       "desc": "Quay lại nhập mã khác.",
+       "role": null,
+       "x": 4.1,
+       "y": 8.65,
+       "w": 17.24,
+       "h": 5.21
+      },
+      {
+       "title": "Nhãn đội",
+       "desc": "Cho biết bạn đang vào Đội nào.",
+       "role": null,
+       "x": 80.3,
+       "y": 9.66,
+       "w": 15.59,
+       "h": 3.2
+      },
+      {
+       "title": "Tên mờ",
+       "desc": "\"Đã có người nhận\": tên đã có người dùng rồi, không chọn được.",
+       "role": null,
+       "x": 4.1,
+       "y": 27.06,
+       "w": 91.79,
+       "h": 7.11
+      },
+      {
+       "title": "Tên của bạn",
+       "desc": "Chạm đúng tên mình trong danh sách.",
+       "role": null,
+       "x": 4.1,
+       "y": 50.52,
+       "w": 91.79,
+       "h": 7.11
+      }
+     ],
+     "alt": "Chọn tên của bạn"
+    },
+    {
+     "t": "fig",
+     "shot": "m03-pick-chosen",
+     "caption": "Xác nhận",
+     "marks": [
+      {
+       "title": "Tên đã chọn",
+       "desc": "Có dấu ✓ và viền sáng.",
+       "role": null,
+       "x": 4.1,
+       "y": 50.52,
+       "w": 91.79,
+       "h": 7.11
+      },
+      {
+       "title": "TÔI LÀ …",
+       "desc": "Bấm để vào đội. Máy nhớ phiên nên lần sau mở lại không phải chọn tên.",
+       "role": null,
+       "x": 5.13,
+       "y": 78.95,
+       "w": 89.74,
+       "h": 6.64
+      }
+     ],
+     "alt": "Xác nhận"
     },
     {
      "t": "warn",
-     "html": "Mã chỉ hoạt động khi đội của bạn đã được <b>khóa</b>. Nếu báo \"Đội N chưa được chốt\", hỏi người tổ chức."
+     "html": "Chọn nhầm tên? Người tổ chức gỡ bạn trong Điều khiển trận, rồi bạn vào lại."
+    },
+    {
+     "t": "fig",
+     "shot": "m04-share-ask",
+     "caption": "Hỏi bật chia sẻ vị trí",
+     "marks": [
+      {
+       "title": "Giải thích",
+       "desc": "Vị trí chỉ hiện cho đồng đội, tắt được bất cứ lúc nào, xóa khi kết thúc trận. iPhone chỉ cập nhật khi app đang mở.",
+       "role": null,
+       "x": 4.1,
+       "y": 74.27,
+       "w": 91.79,
+       "h": 9.86
+      },
+      {
+       "title": "CHIA SẺ VỊ TRÍ",
+       "desc": "Bật GPS và cho đồng đội thấy bạn. Trình duyệt sẽ hỏi quyền vị trí, hãy chọn Cho phép.",
+       "role": null,
+       "x": 4.1,
+       "y": 85.07,
+       "w": 91.79,
+       "h": 6.16
+      },
+      {
+       "title": "CHỈ XEM BẢN ĐỒ",
+       "desc": "Vẫn xem bản đồ và lệnh của đội nhưng không chia sẻ vị trí. Bật lại sau bằng nút dưới bản đồ.",
+       "role": null,
+       "x": 4.1,
+       "y": 92.18,
+       "w": 91.79,
+       "h": 6.16
+      }
+     ],
+     "alt": "Hỏi bật chia sẻ vị trí"
+    },
+    {
+     "t": "h",
+     "text": "2 · Màn hình bản đồ"
+    },
+    {
+     "t": "fig",
+     "shot": "m05-map",
+     "caption": "Bản đồ khi đang chia sẻ",
+     "marks": [
+      {
+       "title": "Chip đội",
+       "desc": "Hiện Đội, số người đang hiện (ví dụ 3/6), tên bạn và trạng thái ĐANG CHIA SẺ / ĐANG XEM. Bấm để xem danh sách đội.",
+       "role": null,
+       "x": 2.56,
+       "y": 7.46,
+       "w": 80,
+       "h": 5.69
+      },
+      {
+       "title": "⌖ Căn bản đồ",
+       "desc": "Đưa bản đồ về vừa khu chơi (khung vàng 4 góc).",
+       "role": null,
+       "x": 85.13,
+       "y": 7.46,
+       "w": 12.31,
+       "h": 5.69
+      },
+      {
+       "title": "# Lưới",
+       "desc": "Bật/tắt lưới ô vuông.",
+       "role": null,
+       "x": 85.13,
+       "y": 14.1,
+       "w": 12.31,
+       "h": 5.69
+      },
+      {
+       "title": "◐ Nền vệ tinh",
+       "desc": "Đổi giữa Esri chuẩn và Clarity.",
+       "role": null,
+       "x": 85.13,
+       "y": 20.73,
+       "w": 12.31,
+       "h": 5.69
+      },
+      {
+       "title": "⛶ Toàn màn hình",
+       "desc": "Xoay ngang để xem rộng hơn. Chỉ hiện khi máy hỗ trợ.",
+       "role": null,
+       "x": 85.13,
+       "y": 27.37,
+       "w": 12.31,
+       "h": 5.69
+      },
+      {
+       "title": "GPS đồng đội",
+       "desc": "Chấm màu có tên là vị trí GPS từng đồng đội, mỗi người một màu. Mờ đi khi quá 60 giây chưa cập nhật, ẩn sau 5 phút.",
+       "role": null,
+       "x": 22.56,
+       "y": 41.47,
+       "w": 0,
+       "h": 2.37
+      },
+      {
+       "title": "Chấm xanh là bạn",
+       "desc": "Vị trí của bạn, kèm vòng sai số GPS.",
+       "role": null,
+       "x": 40,
+       "y": 45.02,
+       "w": 4.62,
+       "h": 2.13
+      },
+      {
+       "title": "Nút chia sẻ",
+       "desc": "Bấm để bật hoặc tắt chia sẻ vị trí. Dưới nút ghi sai số GPS và \"trong khu\" hay \"ngoài khu\".",
+       "role": null,
+       "x": 2.56,
+       "y": 85.18,
+       "w": 94.87,
+       "h": 5.22
+      },
+      {
+       "title": "⌖ Mục tiêu",
+       "desc": "Đánh dấu mục tiêu cho cả đội (xem bên dưới).",
+       "role": null,
+       "x": 2.56,
+       "y": 77.36,
+       "w": 46.41,
+       "h": 6.87
+      },
+      {
+       "title": "☰ Lệnh",
+       "desc": "Danh sách lệnh của đội, số trong ngoặc là số lệnh đang có.",
+       "role": null,
+       "x": 51.03,
+       "y": 77.36,
+       "w": 46.41,
+       "h": 6.87
+      }
+     ],
+     "alt": "Bản đồ khi đang chia sẻ"
+    },
+    {
+     "t": "fig",
+     "shot": "m06-grid",
+     "caption": "Lưới tọa độ",
+     "marks": [
+      {
+       "title": "# đang bật",
+       "desc": "Nút sáng lên khi lưới đang hiện.",
+       "role": null,
+       "x": 85.13,
+       "y": 14.1,
+       "w": 12.31,
+       "h": 5.69
+      },
+      {
+       "title": "Nhãn ô",
+       "desc": "Ô lớn gọi A1, B2… Chia nhỏ bằng bàn phím số: 7-8-9 / 4-5-6 / 1-2-3. Phóng to để thấy cấp nhỏ hơn. Dùng để báo vị trí qua bộ đàm, ví dụ \"B3 phím 5\".",
+       "role": null,
+       "x": 16.41,
+       "y": 28.2,
+       "w": 0,
+       "h": 0
+      }
+     ],
+     "alt": "Lưới tọa độ"
+    },
+    {
+     "t": "fig",
+     "shot": "m07-team-sheet",
+     "caption": "Danh sách đội (bấm chip đội)",
+     "marks": [
+      {
+       "title": "Đang hiện",
+       "desc": "Đồng đội có tín hiệu. Nếu là bạn sẽ ghi \"Bạn\"; còn lại có nút \"Đi tới ›\" để bản đồ bay tới người đó.",
+       "role": null,
+       "x": 0,
+       "y": 0,
+       "w": 0,
+       "h": 0
+      },
+      {
+       "title": "Mất tín hiệu",
+       "desc": "Quá 60 giây chưa cập nhật, kèm thời gian. Có thể họ khóa màn hình hoặc mất sóng.",
+       "role": null,
+       "x": 0,
+       "y": 0,
+       "w": 0,
+       "h": 0
+      },
+      {
+       "title": "Chưa vào / chưa chia sẻ",
+       "desc": "Người này chưa vào đội, hoặc đã vào nhưng chưa bật chia sẻ.",
+       "role": null,
+       "x": 0,
+       "y": 0,
+       "w": 0,
+       "h": 0
+      },
+      {
+       "title": "Thanh kéo",
+       "desc": "Chạm hoặc vuốt xuống để đóng.",
+       "role": null,
+       "x": 0,
+       "y": 0,
+       "w": 0,
+       "h": 0
+      }
+     ],
+     "alt": "Danh sách đội (bấm chip đội)"
+    },
+    {
+     "t": "h",
+     "text": "3 · Đặt mục tiêu (mọi thành viên)"
+    },
+    {
+     "t": "fig",
+     "shot": "m08-target-hint",
+     "caption": "Bấm Mục tiêu rồi chạm lên bản đồ",
+     "marks": [
+      {
+       "title": "Dòng hướng dẫn",
+       "desc": "Hiện trên bản đồ: \"Chạm lên bản đồ để đánh dấu mục tiêu\". Chạm một lần là đặt xong.",
+       "role": null,
+       "x": 2.56,
+       "y": 14.34,
+       "w": 80,
+       "h": 4.21
+      },
+      {
+       "title": "✕ Hủy",
+       "desc": "Bỏ thao tác, không đặt gì.",
+       "role": null,
+       "x": 2.56,
+       "y": 83.53,
+       "w": 94.87,
+       "h": 6.87
+      }
+     ],
+     "alt": "Bấm Mục tiêu rồi chạm lên bản đồ"
+    },
+    {
+     "t": "fig",
+     "shot": "m09-target-placed",
+     "caption": "Đã đặt mục tiêu",
+     "marks": [
+      {
+       "title": "☰ Lệnh (n)",
+       "desc": "Số lệnh tăng lên. Mỗi người có tối đa 3 mục tiêu; hết chỗ thì mục tiêu cũ nhất bị thay.",
+       "role": null,
+       "x": 51.03,
+       "y": 77.36,
+       "w": 46.41,
+       "h": 6.87
+      }
+     ],
+     "alt": "Đã đặt mục tiêu"
+    },
+    {
+     "t": "fig",
+     "shot": "m10-orders-list",
+     "caption": "Danh sách lệnh của đội",
+     "marks": [
+      {
+       "title": "Dòng lệnh",
+       "desc": "Chạm để bản đồ bay tới lệnh đó. Ghi rõ ai đặt và cách đây bao lâu.",
+       "role": null,
+       "x": 4.1,
+       "y": 69.67,
+       "w": 78.46,
+       "h": 6.64
+      },
+      {
+       "title": "✕ Xóa",
+       "desc": "Chỉ hiện với lệnh bạn có quyền xóa (lệnh của chính bạn; đội trưởng xóa được mọi lệnh).",
+       "role": null,
+       "x": 84.62,
+       "y": 70.38,
+       "w": 11.28,
+       "h": 5.21
+      },
+      {
+       "title": "Biểu tượng loại",
+       "desc": "⌖ mục tiêu (màu theo người đặt), ➚ mũi tên, ⬠ vùng.",
+       "role": null,
+       "x": 7.44,
+       "y": 85.66,
+       "w": 8.72,
+       "h": 4.03
+      }
+     ],
+     "alt": "Danh sách lệnh của đội"
+    },
+    {
+     "t": "h",
+     "text": "4 · Đội trưởng: mũi tên và vùng"
+    },
+    {
+     "t": "p",
+     "html": "Mỗi đội có 1 đội trưởng do người tổ chức đặt. Chỉ đội trưởng có thêm nút <b>➚ Mũi tên</b> và <b>⬠ Vùng</b>."
+    },
+    {
+     "t": "fig",
+     "shot": "m12-captain-bar",
+     "caption": "Thanh lệnh của đội trưởng",
+     "marks": [
+      {
+       "title": "⌖ Mục tiêu",
+       "desc": "Như thành viên thường.",
+       "role": null,
+       "x": 2.56,
+       "y": 85.78,
+       "w": 22.18,
+       "h": 6.87
+      },
+      {
+       "title": "➚ Mũi tên",
+       "desc": "Chỉ hướng đẩy/di chuyển: chạm ít nhất 2 điểm.",
+       "role": null,
+       "x": 26.79,
+       "y": 85.78,
+       "w": 22.18,
+       "h": 6.87
+      },
+      {
+       "title": "⬠ Vùng",
+       "desc": "Khoanh một khu vực: chạm ít nhất 3 điểm.",
+       "role": null,
+       "x": 51.03,
+       "y": 85.78,
+       "w": 22.18,
+       "h": 6.87
+      },
+      {
+       "title": "☰ Lệnh",
+       "desc": "Danh sách lệnh, và nút XÓA TẤT CẢ LỆNH (bấm 2 lần để xác nhận).",
+       "role": null,
+       "x": 75.26,
+       "y": 85.78,
+       "w": 22.18,
+       "h": 6.87
+      }
+     ],
+     "alt": "Thanh lệnh của đội trưởng"
+    },
+    {
+     "t": "fig",
+     "shot": "m13-drawing-arrow",
+     "caption": "Đang vẽ mũi tên",
+     "marks": [
+      {
+       "title": "Dòng gợi ý",
+       "desc": "Cho biết đã chạm mấy điểm và cần thêm bao nhiêu.",
+       "role": null,
+       "x": 2.56,
+       "y": 8.06,
+       "w": 80,
+       "h": 6.29
+      },
+      {
+       "title": "✕ Hủy",
+       "desc": "Bỏ lệnh đang vẽ.",
+       "role": null,
+       "x": 2.56,
+       "y": 91.94,
+       "w": 30.26,
+       "h": 6.87
+      },
+      {
+       "title": "↶ Lùi 1 điểm",
+       "desc": "Xóa điểm vừa chạm để chạm lại.",
+       "role": null,
+       "x": 34.87,
+       "y": 91.94,
+       "w": 30.26,
+       "h": 6.87
+      },
+      {
+       "title": "✓ Xong (n)",
+       "desc": "Lưu lệnh khi đã đủ điểm; nút sáng lên khi có thể bấm.",
+       "role": null,
+       "x": 67.18,
+       "y": 91.94,
+       "w": 30.26,
+       "h": 6.87
+      }
+     ],
+     "alt": "Đang vẽ mũi tên"
+    },
+    {
+     "t": "fig",
+     "shot": "m14-drawing-zone",
+     "caption": "Đang vẽ vùng",
+     "marks": [
+      {
+       "title": "Dòng gợi ý",
+       "desc": "Vùng cần ít nhất 3 điểm, nối thành đa giác.",
+       "role": null,
+       "x": 2.56,
+       "y": 8.06,
+       "w": 80,
+       "h": 4.21
+      },
+      {
+       "title": "✓ Xong (n)",
+       "desc": "Lưu vùng cho cả đội.",
+       "role": null,
+       "x": 67.18,
+       "y": 91.94,
+       "w": 30.26,
+       "h": 6.87
+      }
+     ],
+     "alt": "Đang vẽ vùng"
     },
     {
      "t": "h",
@@ -945,142 +1456,226 @@ window.GUIDE={
     {
      "t": "steps",
      "items": [
-      "Chia đội xong, bấm <b>KHÓA ĐỘI</b> ở từng đội. Đội đã khóa hiện nút <b>QR VÀO ĐỘI</b> ở tiêu đề.",
-      "Chạm <b>⚙</b> trên bản đồ để mở <b>Điều khiển trận</b>.",
-      "Chọn <b>Khu vực chơi</b> (ví dụ Núi hoặc Phố). Cả trận dùng chung, đổi là mọi máy đổi theo.",
-      "Mỗi đội có thẻ riêng: mã 6 ký tự, <b>HIỆN QR</b>/<b>ẨN QR</b>, <b>CHIA SẺ LINK</b>/<b>SAO CHÉP LINK</b>, <b>↻ Đổi mã</b> (mã cũ vô hiệu, người đã vào vẫn giữ quyền).",
-      "Bấm <b>★</b> cạnh tên để đặt <b>đội trưởng</b> (mỗi đội 1 người). Trạng thái ✓ Đã vào / Chưa vào cho biết ai đã vào đội.",
-      "Cuối buổi: <b>KẾT THÚC TRẬN · XÓA DỮ LIỆU</b>, rồi <b>XÁC NHẬN</b>. Vị trí, lệnh, danh sách vào đội và mã đội bị xóa, không hoàn tác."
+      "Chia đội xong, bấm <b>KHÓA ĐỘI</b> ở từng đội. Chỉ đội đã khóa mới có mã và nút <b>QR VÀO ĐỘI</b>.",
+      "Trong tab <b>Đội hình</b>, mục <b>Khu vực chơi</b> chọn Núi hoặc Phố (cả trận dùng chung).",
+      "Mở <b>⚙ Điều khiển trận</b> trên bản đồ, đưa mã/QR cho từng đội, đặt đội trưởng.",
+      "Cuối buổi: <b>KẾT THÚC TRẬN</b> để xóa dữ liệu."
      ],
      "role": "org"
     },
     {
-     "t": "tip",
-     "html": "Người tổ chức cũng là người chơi: vào đội bằng mã như mọi người và chỉ thấy đội của mình.",
+     "t": "fig",
+     "shot": "m15-team-qr",
+     "caption": "Nút QR VÀO ĐỘI",
+     "marks": [
+      {
+       "title": "QR VÀO ĐỘI",
+       "desc": "Hiện ở tiêu đề đội đã khóa. Bấm để mở thẳng thẻ mã/QR của đội đó.",
+       "role": "org",
+       "x": 8.97,
+       "y": 47.6,
+       "w": 23.33,
+       "h": 4.74
+      }
+     ],
+     "alt": "Nút QR VÀO ĐỘI",
+     "role": "org"
+    },
+    {
+     "t": "fig",
+     "shot": "m20-map-pick",
+     "caption": "Chọn khu vực chơi",
+     "marks": [
+      {
+       "title": "Khu vực chơi",
+       "desc": "Thẻ chọn khu, chỉ người tổ chức thấy.",
+       "role": "org",
+       "x": 0,
+       "y": 0,
+       "w": 0,
+       "h": 0
+      },
+      {
+       "title": "Núi",
+       "desc": "Chọn khu Núi.",
+       "role": "org",
+       "x": 0,
+       "y": 0,
+       "w": 0,
+       "h": 0
+      },
+      {
+       "title": "Phố",
+       "desc": "Chọn khu Phố. Bản đồ của mọi người đổi theo ngay.",
+       "role": "org",
+       "x": 0,
+       "y": 0,
+       "w": 0,
+       "h": 0
+      }
+     ],
+     "alt": "Chọn khu vực chơi",
+     "role": "org"
+    },
+    {
+     "t": "fig",
+     "shot": "m16-org-map",
+     "caption": "Nút ⚙ trên bản đồ",
+     "marks": [
+      {
+       "title": "⚙ Điều khiển trận",
+       "desc": "Chỉ người tổ chức thấy nút này (nằm cạnh các nút công cụ).",
+       "role": "org",
+       "x": 85.13,
+       "y": 27.73,
+       "w": 12.31,
+       "h": 5.69
+      },
+      {
+       "title": "Chip đội",
+       "desc": "Bạn cũng là người chơi nên chỉ thấy đội của mình.",
+       "role": "org",
+       "x": 2.56,
+       "y": 1.18,
+       "w": 80,
+       "h": 5.69
+      }
+     ],
+     "alt": "Nút ⚙ trên bản đồ",
+     "role": "org"
+    },
+    {
+     "t": "fig",
+     "shot": "m17-org-sheet",
+     "caption": "Điều khiển trận",
+     "marks": [
+      {
+       "title": "Khu vực chơi",
+       "desc": "Núi / Phố. Đổi là bản đồ mọi máy đổi theo.",
+       "role": "org",
+       "x": 7.44,
+       "y": 29.29,
+       "w": 85.13,
+       "h": 5.69
+      },
+      {
+       "title": "Mã đội",
+       "desc": "Mã 6 ký tự để đội viên nhập. Dòng \"4/6 đã vào\" cho biết có bao nhiêu người đã vào đội.",
+       "role": "org",
+       "x": 8.21,
+       "y": 43.27,
+       "w": 84.36,
+       "h": 7.46
+      },
+      {
+       "title": "HIỆN QR",
+       "desc": "Hiện mã QR để đội viên quét bằng camera.",
+       "role": "org",
+       "x": 8.21,
+       "y": 51.68,
+       "w": 41.15,
+       "h": 5.69
+      },
+      {
+       "title": "CHIA SẺ LINK",
+       "desc": "Gửi link vào đội qua Zalo/Messenger (hoặc SAO CHÉP LINK trên máy không có chia sẻ).",
+       "role": "org",
+       "x": 51.41,
+       "y": 51.68,
+       "w": 41.15,
+       "h": 5.69
+      },
+      {
+       "title": "Thành viên",
+       "desc": "✓ Đã vào / Chưa vào. Nút ★ đặt đội trưởng (bấm lại để bỏ), nút ✕ gỡ người đó ra khỏi đội.",
+       "role": "org",
+       "x": 8.21,
+       "y": 58.31,
+       "w": 84.36,
+       "h": 6.4
+      }
+     ],
+     "alt": "Điều khiển trận",
+     "role": "org"
+    },
+    {
+     "t": "fig",
+     "shot": "m18-org-qr",
+     "caption": "Mã QR của đội",
+     "marks": [
+      {
+       "title": "QR",
+       "desc": "Đội viên quét bằng camera điện thoại.",
+       "role": "org",
+       "x": 14.49,
+       "y": 42.32,
+       "w": 71.79,
+       "h": 33.18
+      },
+      {
+       "title": "ẨN QR",
+       "desc": "Thu QR lại.",
+       "role": "org",
+       "x": 8.21,
+       "y": 35.68,
+       "w": 41.15,
+       "h": 5.69
+      },
+      {
+       "title": "CHIA SẺ LINK",
+       "desc": "Gửi link thay vì QR.",
+       "role": "org",
+       "x": 51.41,
+       "y": 35.68,
+       "w": 41.15,
+       "h": 5.69
+      },
+      {
+       "title": "↻ Đổi mã",
+       "desc": "Tạo mã mới khi bị lộ. Mã cũ vô hiệu, người đã vào đội vẫn giữ quyền.",
+       "role": "org",
+       "x": 8.21,
+       "y": 76.21,
+       "w": 39.77,
+       "h": 5.21
+      }
+     ],
+     "alt": "Mã QR của đội",
+     "role": "org"
+    },
+    {
+     "t": "fig",
+     "shot": "m19-org-end",
+     "caption": "Kết thúc trận",
+     "marks": [
+      {
+       "title": "KẾT THÚC TRẬN · XÓA DỮ LIỆU",
+       "desc": "Bấm rồi XÁC NHẬN: xóa toàn bộ vị trí, lệnh, danh sách vào đội và mã đội. Không hoàn tác.",
+       "role": "org",
+       "x": 7.44,
+       "y": 90.66,
+       "w": 85.13,
+       "h": 6.16
+      }
+     ],
+     "alt": "Kết thúc trận",
      "role": "org"
     },
     {
      "t": "h",
-     "text": "Các nút trên bản đồ"
-    },
-    {
-     "t": "chips",
-     "items": [
-      [
-       "⌖",
-       "Căn bản đồ",
-       "Đưa bản đồ về vừa khu chơi.",
-       null
-      ],
-      [
-       "#",
-       "Lưới",
-       "Bật/tắt lưới kiểu Squad: ô lớn A1, B2…, chia nhỏ theo bàn phím số 7-8-9 / 4-5-6 / 1-2-3.",
-       null
-      ],
-      [
-       "◐",
-       "Nền vệ tinh",
-       "Đổi giữa Esri chuẩn và Clarity.",
-       null
-      ],
-      [
-       "⛶",
-       "Toàn màn hình",
-       "Phóng to và xoay ngang. Chỉ hiện khi máy hỗ trợ.",
-       null
-      ],
-      [
-       "⚙",
-       "Điều khiển trận",
-       "Chỉ người tổ chức: khu vực, mã/QR đội, đội trưởng, kết thúc trận.",
-       "org"
-      ],
-      [
-       "ĐỘI 1",
-       "Chip đội",
-       "Bấm để xem danh sách đội: ai đang hiện, mất tín hiệu hay chưa vào; bấm \"Đi tới ›\" để bay đến người đó.",
-       null
-      ],
-      [
-       "GPS",
-       "BẬT CHIA SẺ VỊ TRÍ",
-       "Nút lớn dưới bản đồ. Khi bật hiển thị \"ĐANG CHIA SẺ · BẤM ĐỂ TẮT\" kèm sai số GPS và trong/ngoài khu.",
-       null
-      ]
-     ]
-    },
-    {
-     "t": "h",
-     "text": "Thanh lệnh phía dưới"
-    },
-    {
-     "t": "chips",
-     "items": [
-      [
-       "⌖",
-       "Mục tiêu",
-       "Mọi thành viên: chạm nút rồi chạm lên bản đồ để đánh dấu, một chạm là xong.",
-       null
-      ],
-      [
-       "➚",
-       "Mũi tên",
-       "Chỉ đội trưởng: chạm ít nhất 2 điểm rồi bấm ✓ Xong.",
-       null
-      ],
-      [
-       "⬠",
-       "Vùng",
-       "Chỉ đội trưởng: chạm ít nhất 3 điểm rồi bấm ✓ Xong.",
-       null
-      ],
-      [
-       "☰",
-       "Lệnh",
-       "Danh sách lệnh của đội; ĐI TỚI hoặc XÓA từng lệnh, hoặc XÓA TẤT CẢ LỆNH.",
-       null
-      ],
-      [
-       "✕",
-       "Hủy",
-       "Khi đang vẽ: bỏ lệnh đang vẽ.",
-       null
-      ],
-      [
-       "↶",
-       "Lùi 1 điểm",
-       "Khi vẽ mũi tên/vùng: xóa điểm vừa chạm.",
-       null
-      ],
-      [
-       "✓",
-       "Xong",
-       "Lưu lệnh khi đã đủ số điểm.",
-       null
-      ]
-     ]
-    },
-    {
-     "t": "p",
-     "html": "Mỗi người đặt lệnh có một màu riêng để nhìn là biết ai đặt. Lệnh chỉ đội mình thấy."
-    },
-    {
-     "t": "h",
-     "text": "Chia sẻ vị trí và quyền riêng tư"
+     "text": "Quyền riêng tư và lưu ý"
     },
     {
      "t": "steps",
      "items": [
-      "Chỉ đồng đội trong đội bạn thấy vị trí của bạn, và chỉ khi trận đang diễn ra.",
-      "Tắt chia sẻ bất cứ lúc nào bằng nút dưới bản đồ. Dữ liệu vị trí bị xóa khi trận kết thúc.",
-      "Marker mờ khi quá 60 giây không cập nhật, ẩn sau 5 phút.",
-      "Ghi vị trí tối đa 5 giây một lần hoặc khi bạn di chuyển hơn 5 m."
+      "Chỉ đồng đội trong đội bạn thấy vị trí của bạn, và chỉ khi bạn bật chia sẻ.",
+      "Ghi vị trí tối đa 5 giây một lần hoặc khi bạn di chuyển hơn 5 m.",
+      "Tắt chia sẻ bất cứ lúc nào; dữ liệu bị xóa khi trận kết thúc."
      ]
     },
     {
      "t": "warn",
-     "html": "<b>iPhone:</b> vị trí chỉ cập nhật khi app đang mở. Hãy giữ màn hình sáng. Khóa màn hình là dừng chia sẻ. Nếu bị từ chối quyền vị trí, bật lại trong cài đặt trình duyệt."
+     "html": "<b>iPhone:</b> vị trí chỉ cập nhật khi app đang mở. Hãy giữ màn hình sáng; khóa màn hình là dừng chia sẻ. Nếu bị từ chối quyền vị trí, bật lại trong cài đặt trình duyệt. Mở link vào đội bằng Safari/Chrome, không dùng trình duyệt trong Zalo/Messenger."
     }
    ]
   },

@@ -717,13 +717,13 @@ export function initLive(ctx) {
     const body = h('div', { class: 'live-sheet-stack' });
     const paint = () => {
       const rows = orderRows(closeSheet);
-      body.replaceChildren(h('div', { class: 'pick-list' }, rows),
+      body.replaceChildren(...[h('div', { class: 'pick-list' }, rows),
         isCaptainMe() && Object.keys(orders).length > 0 && h('button', { class: 'danger-button', type: 'button', onclick: async () => {
           if (!confirmAll) { confirmAll = true; paint(); return; }
           closeSheet();
           try { const batch = writeBatch(db); Object.keys(orders).forEach(id => batch.delete(ref('teams', me.teamId, 'orders', id))); await batch.commit(); toast('Đã xóa hết lệnh của đội.'); }
           catch (error) { toast(`Không xóa được: ${error.message}`); }
-        } }, confirmAll ? 'BẤM LẠI ĐỂ XÁC NHẬN XÓA HẾT' : 'XÓA TẤT CẢ LỆNH'));
+        } }, confirmAll ? 'BẤM LẠI ĐỂ XÁC NHẬN XÓA HẾT' : 'XÓA TẤT CẢ LỆNH')].filter(Boolean));
     };
     paint();
     openSheet('Lệnh của đội', body);
