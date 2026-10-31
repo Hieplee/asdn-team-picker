@@ -119,7 +119,7 @@ async function initCloud() {
       import('https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js'),
       import('https://www.gstatic.com/firebasejs/13.0.0/firebase-auth.js'),
       import('https://www.gstatic.com/firebasejs/13.0.0/firebase-firestore.js'),
-      import('./live.js?v=mob29').catch(error => { console.error('live.js', error); return null; }),
+      import('./live.js?v=mob31').catch(error => { console.error('live.js', error); return null; }),
     ]);
     const app = initializeApp(firebaseConfig);
     cloudAuth = getAuth(app);
@@ -129,7 +129,7 @@ async function initCloud() {
     const db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
     cloudDb = db;
     cloudFs = { doc, writeBatch, collection, serverTimestamp, query, orderBy, limit, getDocs, getDoc, setDoc, deleteDoc, onSnapshot };
-    live = liveModule?.initLive({ auth: cloudAuth, db, fs: cloudFs, signInAnonymously, getState: () => state, findMember, makeAvatar, isOrganizer: () => canEdit, toast: showToast, teamColors: TEAM_COLORS });
+    live = liveModule?.initLive({ auth: cloudAuth, db, fs: cloudFs, signInAnonymously, getState: () => state, findMember, makeAvatar, isOrganizer: () => canEdit, isAdmin: () => Boolean(cloudAuth.currentUser && !cloudAuth.currentUser.isAnonymous && cloudAuth.currentUser.uid === adminUid), toast: showToast, teamColors: TEAM_COLORS });
     if (live) live.onMapChange = renderMapPick;
     cloudSession = doc(db, 'public', 'current');
     cloudAttributes = doc(db, 'public', 'attributes');

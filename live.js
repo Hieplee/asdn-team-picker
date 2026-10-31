@@ -85,6 +85,7 @@ function clock(ms) { return new Date(ms).toLocaleTimeString('vi-VN', { hour: '2-
 
 export function initLive(ctx) {
   const { auth, db, fs, signInAnonymously, getState, findMember, makeAvatar, isOrganizer, toast, teamColors } = ctx;
+  const isAdmin = ctx.isAdmin || (() => false);
   const { doc, collection, setDoc, deleteDoc, getDoc, getDocs, onSnapshot, writeBatch, serverTimestamp } = fs;
   const ref = (...path) => doc(db, 'match', 'current', ...path);
   const col = (...path) => collection(db, 'match', 'current', ...path);
@@ -110,6 +111,10 @@ export function initLive(ctx) {
   let deaths = {}; // memberId -> { lat, lng, by, ts }
   let deathsReady = false; // bỏ toast cho lần tải đầu
   const deathLayers = new Map();
+  // Admin quan sát: đọc vị trí/lệnh/báo chết của mọi đội đã chốt (rules chỉ cho adminUid). Không ghi gì.
+  let forceJoin = false; // admin chủ động vào đội để chơi
+  const spec = { subs: [], sig: '', data: {}, members: {}, hidden: new Set(), layers: { death: true, attack: true, defend: true, arrow: true, zone: true, target: true }, drawTimer: 0 };
+  const spectating = () => Boolean(isAdmin() && user && !user.isAnonymous && !me && meLoaded && !forceJoin);
 
   // ---------- Bottom sheet ----------
   function openSheet(title, body, onClose) {
@@ -187,13 +192,14 @@ export function initLive(ctx) {
 
   function watchMe(nextUser) {
     if (unsubMe) { unsubMe(); unsubMe = null; }
-    me = null; meLoaded = !nextUser;
-    stopTeamSubs(); stopSharing(false);
+    me = null; meLoaded = !nextUser; forceJoin = false;
+    stopSpec(); stopTeamSubs(); stopSharing(false);
     if (!nextUser) { render(); return; }
     unsubMe = onSnapshot(ref('memberOf', nextUser.uid), snap => {
       const next = snap.exists() ? { memberId: snap.data().memberId, teamId: snap.data().teamId } : null;
       const changed = JSON.stringify(next) !== JSON.stringify(me);
       me = next; meLoaded = true;
+      if (me) forceJoin = false;
       if (changed) {
         if (me) startTeamSubs(me.teamId);
         else { stopTeamSubs(); stopSharing(false); }
@@ -263,7 +269,8 @@ export function initLive(ctx) {
         input,
         join.error && h('p', { class: 'join-error', role: 'alert', text: join.error }),
         h('button', { class: 'primary-button join-next', type: 'button', disabled: join.busy, onclick: () => submitCode(input.value) }, h('span', { text: join.busy ? 'ĐANG KIỂM TRA…' : 'TIẾP TỤC' }), h('span', { class: 'arrow', text: '→' })),
-        h('p', { class: 'join-note', text: 'Chỉ đồng đội trong đội của bạn thấy vị trí của bạn. Bạn có thể tắt chia sẻ bất cứ lúc nào.' })));
+        isAdmin() && h('button', { class: 'secondary-button join-back', type: 'button', onclick: () => { forceJoin = false; render(); } }, '‹ QUAY LẠI CHẾ ĐỘ QUAN SÁT'),
+        h('p', { class: 'join-note', text: 'Chỉ đồng đội trong đội của bạn và admin quan sát trận thấy vị trí của bạn. Bạn có thể tắt chia sẻ bất cứ lúc nào.' })));
       return;
     }
     // Chọn tên
@@ -315,6 +322,7 @@ export function initLive(ctx) {
       map.on('zoomend', syncGridLabels);
       map.on('move zoom resize', syncEdges);
       map.on('click', event => addDrawPoint(event.latlng));
+      map.on('click', () => { if (!$('#layers-panel').hidden) toggleLayersPanel(); });
       drawPlayers(); drawMe(); drawOrders(); drawDeaths(); renderDraw();
     })();
     await mapBuilding; mapBuilding = null;
@@ -529,6 +537,7 @@ export function initLive(ctx) {
   }
   function drawPlayers() {
     if (!map) return;
+    if (spectating()) { drawSpec(); return; }
     const now = Date.now(), myUid = user && user.uid, seen = new Set();
     for (const [uid, p] of Object.entries(positions)) {
       if (uid === myUid || deaths[members[uid]]) continue; // người chết chỉ còn ghim ☠
@@ -637,7 +646,7 @@ export function initLive(ctx) {
 
   function askShare() {
     const body = h('div', { class: 'ask-share' },
-      h('p', { text: 'Vị trí của bạn chỉ hiện cho đồng đội trong đội của bạn, và chỉ khi organizer bật chia sẻ cho trận.' }),
+      h('p', { text: 'Vị trí của bạn chỉ hiện cho đồng đội trong đội của bạn và admin quan sát trận, và chỉ khi organizer bật chia sẻ cho trận.' }),
       h('ul', {}, h('li', { text: 'Tắt chia sẻ bất cứ lúc nào bằng nút ở dưới bản đồ.' }), h('li', { text: 'Dữ liệu vị trí được xóa khi trận kết thúc.' }), h('li', { text: 'iPhone chỉ cập nhật khi app đang mở và màn hình sáng. App sẽ giữ màn hình luôn sáng.' })),
       h('div', { class: 'sheet-actions' },
         h('button', { class: 'primary-button', type: 'button', onclick: () => { closeSheet(); startSharing(); } }, h('span', { text: 'CHIA SẺ VỊ TRÍ' }), h('span', { class: 'arrow', text: '→' })),
@@ -648,7 +657,13 @@ export function initLive(ctx) {
   // ---------- HUD & thanh điều khiển ----------
   function myName() { return me ? findMember(me.memberId)?.name || '' : ''; }
   function renderHud() {
-    const hud = $('#map-hud'); if (!hud || !me) return;
+    const hud = $('#map-hud'); if (!hud) return;
+    const spectate = spectating();
+    hud.classList.toggle('spec', spectate);
+    $('#btn-share').hidden = spectate; $('#btn-all').hidden = !spectate; $('#btn-layers').hidden = !spectate;
+    if (spectate) { renderSpecHud(); return; }
+    if (!me) return;
+    $('#draw-bar').dataset.sig = '';
     const now = Date.now();
     const active = Object.entries(positions).filter(([uid, p]) => uid !== (user && user.uid) && now - p.ts <= STALE_MS).length + (wantShare && myPos ? 1 : 0);
     const total = teamPlayers(Number(me.teamId)).length;
@@ -699,7 +714,25 @@ export function initLive(ctx) {
         h('span', { class: 'pick-name' }, h('i', { class: 'color-dot', style: `background:${memberColor(id)}` }), (id === captain ? '★ ' : '') + member.name, h('small', { text: status })),
         h('span', { class: 'pick-state', text: can ? 'Đi tới ›' : '' }));
     });
-    openSheet(`Đội ${team + 1}`, h('div', { class: 'pick-list' }, rows));
+    openSheet(`Đội ${team + 1}`, h('div', {}, h('div', { class: 'pick-list' }, rows),
+      isAdmin() && h('div', { class: 'sheet-actions' }, h('button', { class: 'secondary-button', type: 'button', onclick: confirmLeave }, 'RỜI ĐỘI ĐỂ QUAN SÁT'))));
+  }
+  function confirmLeave() {
+    openSheet('Rời đội?', h('div', { class: 'sheet-actions' },
+      h('p', { class: 'join-lead', text: 'Rời đội sẽ ngừng chia sẻ vị trí và nhả tên của bạn. Muốn chơi lại phải nhập mã đội lại. Bạn sẽ chuyển sang chế độ quan sát cả 2 đội.' }),
+      h('button', { class: 'danger-button', type: 'button', onclick: () => { closeSheet(); leaveTeam(); } }, 'XÁC NHẬN RỜI ĐỘI'),
+      h('button', { class: 'secondary-button', type: 'button', onclick: closeSheet }, 'HỦY')));
+  }
+  async function leaveTeam() {
+    if (!me || !user || !isAdmin()) return;
+    const mid = me.memberId;
+    try {
+      stopSharing(true);
+      const batch = writeBatch(db);
+      batch.delete(ref('memberOf', user.uid)); batch.delete(ref('members', mid));
+      await batch.commit(); // snapshot memberOf rỗng sẽ tự chuyển sang chế độ quan sát
+      toast('Đã rời đội. Đang quan sát cả hai đội.');
+    } catch (error) { toast(`Không rời được đội: ${error.message}`); }
   }
 
   // ---------- Lệnh trên bản đồ: mục tiêu / mũi tên / vùng ----------
@@ -743,14 +776,36 @@ export function initLive(ctx) {
   function orderLabel(order) { return order.num && (isPoint(order.type) || order.type === 'zone') ? `${KIND_NAME[order.type]} ${order.num}` : (KIND_NAME[order.type] || 'Lệnh'); }
   function authorName(order) { return findMember(order.mid)?.name || 'Đồng đội'; }
   function canDeleteOrder(order) { return Boolean(user && (order.by === user.uid || isCaptainMe())); }
-  function targetIcon(order) {
+  function targetIcon(order, color) {
     const fixed = FIXED_MARK[order.type];
-    const el = h('div', { class: 'tgt-pin' + (fixed ? ' fixed' : ''), style: `--c:${fixed ? fixed.color : memberColor(order.mid)}` }, h('span', { class: 'tgt-mark' }, fixed ? svgIcon(order.type) : '⌖'), order.num && h('b', { class: 'tgt-num', text: String(order.num) }));
+    const el = h('div', { class: 'tgt-pin' + (fixed ? ' fixed' : '') + (color ? ' team' : ''), style: `--c:${color || (fixed ? fixed.color : memberColor(order.mid))}` }, h('span', { class: 'tgt-mark' }, fixed ? svgIcon(order.type) : '⌖'), order.num && h('b', { class: 'tgt-num', text: String(order.num) }));
     return window.L.divIcon({ className: '', iconSize: [44, 44], iconAnchor: [22, 22], html: el });
+  }
+  // Dựng một lệnh trên bản đồ. opts: zone/arrow = màu vùng và mũi tên, pin = màu ghim (mặc định theo người đặt / màu cố định), open = hàm khi chạm.
+  function buildOrderGroup(order, ll, opts) {
+    const L = window.L, group = L.layerGroup(), open = opts.open || (() => {});
+    if (isPoint(order.type) && ll.length >= 1) {
+      group.addLayer(L.marker(ll[0], { icon: targetIcon(order, opts.pin), keyboard: false, interactive: Boolean(opts.open), zIndexOffset: 500 }).on('click', open));
+    } else if (order.type === 'arrow' && ll.length >= 2) {
+      const end = ll[ll.length - 1], head = h('div', { class: 'ah', style: `transform:rotate(${bearing(ll[ll.length - 2], end)}deg);border-bottom-color:${opts.arrow}` });
+      group.addLayer(L.polyline(ll, { color: '#000', weight: 6, opacity: .65, lineCap: 'round', lineJoin: 'round', interactive: false }));
+      group.addLayer(L.polyline(ll, { color: opts.arrow, weight: 3, opacity: 1, lineCap: 'round', lineJoin: 'round', interactive: false }));
+      group.addLayer(L.marker(end, { interactive: false, keyboard: false, icon: L.divIcon({ className: '', iconSize: [0, 0], html: head }) }));
+      if (opts.open) group.addLayer(L.polyline(ll, { color: '#000', weight: 36, opacity: 0 }).on('click', open)); // vùng chạm rộng cho ngón tay
+    } else if (order.type === 'zone' && ll.length >= 3) {
+      group.addLayer(L.polygon(ll, { color: opts.zone, weight: 2, fillColor: opts.zone, fillOpacity: .14, dashArray: '7 5', interactive: false }));
+      if (order.num) {
+        const c = ll.reduce((a, p) => [a[0] + p[0] / ll.length, a[1] + p[1] / ll.length], [0, 0]);
+        group.addLayer(L.marker(c, { interactive: false, keyboard: false, icon: L.divIcon({ className: '', iconSize: [0, 0], html: h('div', { class: 'zone-num', style: `--c:${opts.zone}`, text: String(order.num) }) }) }));
+      }
+      if (opts.open) group.addLayer(L.polyline([...ll, ll[0]], { color: '#000', weight: 36, opacity: 0 }).on('click', open)); // chỉ viền bấm được, chạm trong vùng vẫn là kéo bản đồ
+    } else return null;
+    return group;
   }
   function clearOrderLayers() { orderLayers.forEach(entry => entry.group.remove()); orderLayers.clear(); }
   function drawOrders() {
     if (!map || !window.L) return;
+    if (spectating()) return;
     const L = window.L, color = teamColor(), seen = new Set();
     for (const [id, order] of Object.entries(orders)) {
       seen.add(id);
@@ -758,24 +813,10 @@ export function initLive(ctx) {
       const existing = orderLayers.get(id);
       if (existing && existing.sig === sig) continue;
       if (existing) existing.group.remove();
-      const ll = flatToLatLngs(order.pts), group = L.layerGroup();
+      const ll = flatToLatLngs(order.pts);
       const open = () => { if (!draw) openOrderSheet(id); }; // đang vẽ thì chạm vào lệnh cũ chỉ là thêm điểm
-      if (isPoint(order.type) && ll.length >= 1) {
-        group.addLayer(L.marker(ll[0], { icon: targetIcon(order), keyboard: false, zIndexOffset: 500 }).on('click', open));
-      } else if (order.type === 'arrow' && ll.length >= 2) {
-        const end = ll[ll.length - 1], head = h('div', { class: 'ah', style: `transform:rotate(${bearing(ll[ll.length - 2], end)}deg)` });
-        group.addLayer(L.polyline(ll, { color: '#000', weight: 6, opacity: .65, lineCap: 'round', lineJoin: 'round', interactive: false }));
-        group.addLayer(L.polyline(ll, { color: '#ff7a1a', weight: 3, opacity: 1, lineCap: 'round', lineJoin: 'round', interactive: false }));
-        group.addLayer(L.marker(end, { interactive: false, keyboard: false, icon: L.divIcon({ className: '', iconSize: [0, 0], html: head }) }));
-        group.addLayer(L.polyline(ll, { color: '#000', weight: 36, opacity: 0 }).on('click', open)); // vùng chạm rộng cho ngón tay
-      } else if (order.type === 'zone' && ll.length >= 3) {
-        group.addLayer(L.polygon(ll, { color, weight: 2, fillColor: color, fillOpacity: .14, dashArray: '7 5', interactive: false }));
-        if (order.num) {
-          const c = ll.reduce((a, p) => [a[0] + p[0] / ll.length, a[1] + p[1] / ll.length], [0, 0]);
-          group.addLayer(L.marker(c, { interactive: false, keyboard: false, icon: L.divIcon({ className: '', iconSize: [0, 0], html: h('div', { class: 'zone-num', style: `--c:${color}`, text: String(order.num) }) }) }));
-        }
-        group.addLayer(L.polyline([...ll, ll[0]], { color: '#000', weight: 36, opacity: 0 }).on('click', open)); // chỉ viền bấm được, chạm trong vùng vẫn là kéo bản đồ
-      } else { orderLayers.delete(id); continue; }
+      const group = buildOrderGroup(order, ll, { zone: color, arrow: '#ff7a1a', open });
+      if (!group) { orderLayers.delete(id); continue; }
       group.addTo(map); orderLayers.set(id, { group, sig });
     }
     for (const [id, entry] of orderLayers) if (!seen.has(id)) { entry.group.remove(); orderLayers.delete(id); }
@@ -884,8 +925,8 @@ export function initLive(ctx) {
   // ---------- Báo chết ----------
   // deaths/{memberId}: ghim ☠ tại chỗ chết, chấm GPS live của người đó bị ẩn. Hồi sinh = xóa doc.
   const canRevive = mid => Boolean(me && (mid === me.memberId || isCaptainMe()));
-  function deathIcon(mid) {
-    const color = memberColor(mid);
+  function deathIcon(mid, teamColor) {
+    const color = teamColor || memberColor(mid);
     const el = h('div', { class: 'dead-pin', style: `--c:${color}` });
     el.innerHTML = `<svg viewBox="0 0 34 44" width="24" height="31"><path d="M17 2C9 2 3 8 3 16c0 11 14 26 14 26s14-15 14-26C31 8 25 2 17 2z" fill="#4a4d52" stroke="${color}" stroke-width="3"/><path d="M17 8c-5 0-8 3.500-8 7.500 0 3 1.800 4.800 3.500 5.700V24h9v-2.800c1.700-.9 3.500-2.700 3.500-5.700C25 11.500 22 8 17 8z" fill="#f2f2f2"/><circle cx="13.800" cy="15" r="2" fill="#4a4d52"/><circle cx="20.200" cy="15" r="2" fill="#4a4d52"/><path d="M17 17.500l-1.300 2.500h2.600z" fill="#4a4d52"/></svg>`;
     el.append(h('b', { text: initials(findMember(mid)?.name || '') }));
@@ -894,6 +935,7 @@ export function initLive(ctx) {
   function clearDeathLayers() { deathLayers.forEach(entry => entry.marker.remove()); deathLayers.clear(); }
   function drawDeaths() {
     if (!map || !window.L) return;
+    if (spectating()) return;
     const seen = new Set();
     for (const [mid, d] of Object.entries(deaths)) {
       if (!Number.isFinite(d.lat) || !Number.isFinite(d.lng)) continue;
@@ -960,6 +1002,7 @@ export function initLive(ctx) {
   }
   function renderDraw() {
     const bar = $('#draw-bar'), hint = $('#map-hint'); if (!bar || !hint) return;
+    if (spectating()) return;
     const count = Object.keys(orders).length;
     const sig = draw ? `d|${draw.kind}|${draw.pts.length}` : `i|${isCaptainMe()}|${count}`;
     if (bar.dataset.sig === sig) return;
@@ -985,6 +1028,182 @@ export function initLive(ctx) {
         isCaptainMe() && toolButton('⬠', 'Vùng', () => startDraw('zone')),
         toolButton('☰', count ? `Lệnh (${count})` : 'Lệnh', openOrdersList)].filter(Boolean));
     }
+  }
+
+  // ---------- Admin quan sát ----------
+  // Một bản đồ chung cho mọi đội đã chốt. Mọi mark tô màu đội; mục tiêu cá nhân chỉ hiện của đội trưởng.
+  const specTeams = () => { const s = getState(); return [...new Set(s.lockedTeams)].filter(t => t >= 0 && t < s.teamCount).sort((a, b) => a - b); };
+  const specColor = t => teamColors[t % teamColors.length];
+  const specData = t => spec.data[t] || { positions: {}, deaths: {}, orders: {}, captain: null };
+  function scheduleSpecDraw() {
+    if (spec.drawTimer) return;
+    spec.drawTimer = requestAnimationFrame(() => { spec.drawTimer = 0; if (!spectating()) return; drawSpec(); renderHud(); if (!$('#layers-panel').hidden) renderLayersPanel(); });
+  }
+  function startSpec() {
+    const teams = specTeams(), sig = teams.join(',');
+    if (spec.sig === sig && spec.subs.length) return;
+    stopSpec(); spec.sig = sig;
+    const watch = (target, onNext) => spec.subs.push(onSnapshot(target, onNext, () => {}));
+    watch(col('members'), snap => {
+      spec.members = {};
+      snap.forEach(d => { const data = d.data(); spec.members[data.uid] = { mid: d.id, team: data.teamId }; });
+      scheduleSpecDraw();
+    });
+    for (const t of teams) {
+      const data = spec.data[t] = { positions: {}, deaths: {}, orders: {}, captain: null };
+      const team = String(t), millis = ts => (ts ? ts.toMillis() : Date.now());
+      watch(col('teams', team, 'positions'), snap => {
+        data.positions = {};
+        snap.forEach(d => { const v = d.data(); data.positions[d.id] = { lat: v.lat, lng: v.lng, acc: v.acc, heading: v.heading, ts: millis(v.ts) }; });
+        scheduleSpecDraw();
+      });
+      watch(col('teams', team, 'deaths'), snap => {
+        data.deaths = {};
+        snap.forEach(d => { const v = d.data(); data.deaths[d.id] = { lat: v.lat, lng: v.lng, by: v.by, ts: millis(v.ts) }; });
+        scheduleSpecDraw();
+      });
+      watch(col('teams', team, 'orders'), snap => {
+        data.orders = {};
+        snap.forEach(d => { const v = d.data(), slot = /^(?:t_.*|atk|def)_([0-4])$|^z_([0-9])$/.exec(d.id); data.orders[d.id] = { type: v.type, pts: Array.isArray(v.pts) ? v.pts : [], by: v.by, mid: v.mid, ts: millis(v.ts), num: slot ? Number(slot[1] ?? slot[2]) + 1 : null }; });
+        scheduleSpecDraw();
+      });
+      watch(ref('teamMeta', team), snap => { data.captain = snap.exists() ? snap.data().captain : null; scheduleSpecDraw(); });
+    }
+    watch(ref('config', 'map'), snap => { applyMapId(snap.exists() ? snap.data().map : DEFAULT_MAP); });
+  }
+  function stopSpec() {
+    if (!spec.subs.length && !spec.sig) return;
+    spec.subs.forEach(fn => fn()); spec.subs = []; spec.sig = ''; spec.data = {}; spec.members = {};
+    clearMarkers(); clearOrderLayers(); clearDeathLayers();
+    $('#layers-panel').hidden = true; $('#btn-layers').setAttribute('aria-pressed', 'false');
+  }
+  const specAge = p => Date.now() - p.ts;
+  function specStats(t) {
+    const d = specData(t), ids = teamPlayers(t), now = Date.now();
+    const dead = ids.filter(id => d.deaths[id]).length;
+    const online = Object.entries(d.positions).filter(([uid, p]) => !d.deaths[spec.members[uid]?.mid] && now - p.ts <= STALE_MS).length;
+    return { total: ids.length, dead, alive: ids.length - dead, online };
+  }
+  function specPlayerIcon(t, uid, stale) {
+    const d = specData(t), mid = spec.members[uid]?.mid, color = specColor(t);
+    const name = (mid && findMember(mid)?.name) || 'Người chơi';
+    const el = h('div', { class: 'pl' + (stale ? ' stale' : ''), style: `--c:${color}` }, h('i', { style: `background:${color}` }), h('b', { text: (mid && mid === d.captain ? '★ ' : '') + initials(name) }));
+    return window.L.divIcon({ className: '', iconSize: [0, 0], html: el });
+  }
+  function drawSpec() {
+    if (!map || !window.L || !spectating()) return;
+    const L = window.L, now = Date.now(), teams = specTeams();
+    const seenP = new Set(), seenD = new Set(), seenO = new Set();
+    for (const t of teams) {
+      if (spec.hidden.has(t)) continue;
+      const d = specData(t), color = specColor(t);
+      for (const [uid, p] of Object.entries(d.positions)) {
+        const mid = spec.members[uid]?.mid;
+        if (mid && d.deaths[mid]) continue; // người chết chỉ còn ghim
+        const age = now - p.ts;
+        if (age > GONE_MS || !Number.isFinite(p.lat) || !Number.isFinite(p.lng)) continue;
+        const key = `${t}:${uid}`, stale = age > STALE_MS;
+        seenP.add(key);
+        const marker = markers.get(key);
+        if (!marker) markers.set(key, L.marker([p.lat, p.lng], { interactive: false, keyboard: false, icon: specPlayerIcon(t, uid, stale) }).addTo(map));
+        else { marker.setLatLng([p.lat, p.lng]); marker.setIcon(specPlayerIcon(t, uid, stale)); }
+      }
+      if (spec.layers.death) for (const [mid, dd] of Object.entries(d.deaths)) {
+        if (!Number.isFinite(dd.lat) || !Number.isFinite(dd.lng)) continue;
+        const key = `${t}:${mid}`, sig = JSON.stringify([dd.lat, dd.lng, color, findMember(mid)?.name]);
+        seenD.add(key);
+        const existing = deathLayers.get(key);
+        if (existing && existing.sig === sig) continue;
+        if (existing) existing.marker.remove();
+        deathLayers.set(key, { marker: L.marker([dd.lat, dd.lng], { icon: deathIcon(mid, color), interactive: false, keyboard: false, zIndexOffset: 400 }).addTo(map), sig });
+      }
+      for (const [id, order] of Object.entries(d.orders)) {
+        if (!spec.layers[order.type]) continue;
+        if (order.type === 'target' && order.mid !== d.captain) continue; // admin chỉ xem mục tiêu của đội trưởng
+        const key = `${t}:${id}`, sig = JSON.stringify([order.type, order.pts, color, order.num]);
+        seenO.add(key);
+        const existing = orderLayers.get(key);
+        if (existing && existing.sig === sig) continue;
+        if (existing) existing.group.remove();
+        const group = buildOrderGroup(order, flatToLatLngs(order.pts), { zone: color, arrow: color, pin: color });
+        if (!group) { orderLayers.delete(key); continue; }
+        group.addTo(map); orderLayers.set(key, { group, sig });
+      }
+    }
+    for (const [k, m] of markers) if (!seenP.has(k)) { m.remove(); markers.delete(k); }
+    for (const [k, e] of deathLayers) if (!seenD.has(k)) { e.marker.remove(); deathLayers.delete(k); }
+    for (const [k, e] of orderLayers) if (!seenO.has(k)) { e.group.remove(); orderLayers.delete(k); }
+  }
+  function renderSpecHud() {
+    const hud = $('#map-hud'), teams = specTeams(), stats = teams.map(specStats);
+    const sig = ['s', teams.join(','), [...spec.hidden].join(','), stats.map(s => `${s.alive}/${s.total}/${s.online}/${s.dead}`).join('|'), mapId].join(';');
+    $('#draw-bar').replaceChildren(); $('#draw-bar').dataset.sig = ''; $('#map-hint').hidden = true;
+    if (hud.dataset.sig === sig) return;
+    hud.dataset.sig = sig;
+    const chip = (t, s) => h('div', { class: 'sp-chip' + (spec.hidden.has(t) ? ' off' : ''), role: 'button', tabindex: '0', style: `--c:${specColor(t)}`, 'aria-pressed': String(!spec.hidden.has(t)), 'aria-label': `Bật tắt hiển thị Đội ${t + 1}`,
+      onclick: () => { spec.hidden.has(t) ? spec.hidden.delete(t) : spec.hidden.add(t); clearMarkers(); clearOrderLayers(); clearDeathLayers(); drawSpec(); renderHud(); },
+      onkeydown: event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.currentTarget.click(); } } },
+      h('span', { class: 'sp-eye', text: '✓' }),
+      h('span', { class: 'sp-txt' }, h('b', { text: `Đội ${t + 1}` }), h('small', {}, `${s.alive}/${s.total} sống`, h('span', { class: 'sp-on', text: ` · ${s.online} online` }), s.dead > 0 && h('span', { class: 'sp-dead', text: ` · ☠${s.dead}` }))),
+      h('button', { class: 'sp-more', type: 'button', 'aria-label': `Danh sách Đội ${t + 1}`, onclick: event => { event.stopPropagation(); openSpecTeamSheet(t); } }, '☰'));
+    hud.replaceChildren(
+      h('div', { class: 'sp-modebar' }, h('em', { class: 'hud-state spectate', text: 'QUAN SÁT · CHỈ XEM' }), h('button', { class: 'sp-join', type: 'button', onclick: startPlaying }, 'Vào đội để chơi ›')),
+      teams.length ? h('div', { class: 'sp-chips' }, teams.map((t, i) => chip(t, stats[i]))) : h('p', { class: 'sp-empty', text: 'Chưa chốt đội nào, chưa có trận.' }));
+  }
+  function startPlaying() { forceJoin = true; stopSpec(); render(); }
+  function openSpecTeamSheet(t) {
+    const d = specData(t), now = Date.now(), byMid = {};
+    for (const [uid, m] of Object.entries(spec.members)) if (m.team === String(t)) byMid[m.mid] = uid;
+    const rows = teamPlayers(t).map(id => {
+      const member = findMember(id), uid = byMid[id], p = uid && d.positions[uid], death = d.deaths[id];
+      if (!member) return null;
+      const name = h('span', { class: 'pick-name' }, h('i', { class: 'color-dot', style: `background:${specColor(t)}` }), (id === d.captain ? '★ ' : '') + member.name);
+      const go = (ll, label, state) => h('button', { class: 'team-row' + (death ? ' dead' : ''), type: 'button', disabled: !ll, onclick: () => { closeSheet(); if (map && ll) map.flyTo(ll, Math.max(map.getZoom(), 19)); } },
+        makeAvatar(member, 'pick-avatar'), (name.append(h('small', { text: label })), name), h('span', { class: 'pick-state', text: ll ? 'Đi tới ›' : '' }));
+      if (death) return go(Number.isFinite(death.lat) && Number.isFinite(death.lng) ? [death.lat, death.lng] : null, `☠ Chết ${clock(death.ts)}`);
+      const fresh = p && Number.isFinite(p.lat) && now - p.ts <= GONE_MS;
+      const status = !uid ? 'Chưa vào đội' : !fresh ? 'Chưa chia sẻ' : now - p.ts > STALE_MS ? `Mất tín hiệu ${ago(now - p.ts)}` : 'Đang hiện';
+      return go(fresh ? [p.lat, p.lng] : null, status);
+    });
+    openSheet(`Đội ${t + 1}`, h('div', { class: 'pick-list' }, rows));
+  }
+  function fitAllTeams() {
+    if (!map) return;
+    const pts = [], now = Date.now();
+    for (const t of specTeams()) {
+      if (spec.hidden.has(t)) continue;
+      const d = specData(t);
+      Object.entries(d.positions).forEach(([uid, p]) => { if (Number.isFinite(p.lat) && now - p.ts <= GONE_MS && !d.deaths[spec.members[uid]?.mid]) pts.push([p.lat, p.lng]); });
+      Object.values(d.deaths).forEach(dd => { if (Number.isFinite(dd.lat)) pts.push([dd.lat, dd.lng]); });
+    }
+    if (!pts.length) { toast('Chưa có ai chia sẻ vị trí.'); return; }
+    map.fitBounds(window.L.latLngBounds(pts), { padding: [90, 90], maxZoom: 20 });
+  }
+  // Bảng lớp mark: công tắc tổng + từng loại.
+  const LAYER_KINDS = [['death', 'Người chết'], ['attack', 'Tấn công'], ['defend', 'Phòng thủ'], ['arrow', 'Mũi tên'], ['zone', 'Vùng'], ['target', 'Mục tiêu đội trưởng']];
+  function layerCount(kind) {
+    let n = 0;
+    for (const t of specTeams()) {
+      if (spec.hidden.has(t)) continue;
+      const d = specData(t);
+      n += kind === 'death' ? Object.keys(d.deaths).length : Object.values(d.orders).filter(o => o.type === kind && (kind !== 'target' || o.mid === d.captain)).length;
+    }
+    return n;
+  }
+  function renderLayersPanel() {
+    const panel = $('#layers-panel'), on = LAYER_KINDS.filter(([k]) => spec.layers[k]).length, all = on === LAYER_KINDS.length;
+    const apply = () => { clearOrderLayers(); clearDeathLayers(); drawSpec(); renderLayersPanel(); };
+    const row = (icon, name, sub, state, onclick) => h('button', { class: 'lrow ' + state, type: 'button', 'aria-pressed': String(state === 'on'), onclick },
+      h('span', { class: 'ic' }, icon), h('span', { class: 'nm' }, name, sub && h('small', { text: sub })), h('span', { class: 'sw' }));
+    panel.replaceChildren(h('h4', { text: 'HIỆN MARK TRÊN BẢN ĐỒ' }),
+      row('◉', 'Tất cả mark', 'bật/tắt cùng lúc', all ? 'on' : on ? 'part' : '', () => { LAYER_KINDS.forEach(([k]) => { spec.layers[k] = !all; }); apply(); }),
+      h('div', { class: 'lsep' }),
+      ...LAYER_KINDS.map(([k, name]) => row(SVG_ICON[k] ? svgIcon(k) : k === 'arrow' ? '➚' : k === 'zone' ? '⬠' : '⌖', name, `${layerCount(k)} trên bản đồ`, spec.layers[k] ? 'on' : '', () => { spec.layers[k] = !spec.layers[k]; apply(); })));
+  }
+  function toggleLayersPanel() {
+    const panel = $('#layers-panel'), open = panel.hidden;
+    panel.hidden = !open; $('#btn-layers').setAttribute('aria-pressed', String(open));
+    if (open) renderLayersPanel();
   }
 
   // ---------- Organizer ----------
@@ -1157,23 +1376,28 @@ export function initLive(ctx) {
   function render() {
     const view = $('#map-view'), joinBox = $('#map-join');
     const loading = user && !meLoaded;
-    joinBox.hidden = Boolean(me) || Boolean(loading);
-    view.hidden = !me;
+    const spectate = spectating();
+    joinBox.hidden = Boolean(me) || Boolean(loading) || spectate;
+    view.hidden = !me && !spectate;
     $('#btn-org').hidden = !isOrganizer();
     $('#map-loading').hidden = !loading;
-    if (!me && !loading) renderJoin();
+    if (!me && !loading && !spectate) renderJoin();
     if (me) {
+      stopSpec();
       renderHud();
       if (mapSectionVisible()) ensureMap().then(() => { if (map) { map.invalidateSize(); fitArea(false); drawPlayers(); } });
       let asked = null; try { asked = localStorage.getItem(SHARE_KEY); } catch {}
       if (asked === '1' && !wantShare) startSharing();
       else if (asked === null && !wantShare && mapSectionVisible() && !askedThisSession()) askShare();
-    }
+    } else if (spectate) {
+      renderHud();
+      if (mapSectionVisible()) { startSpec(); ensureMap().then(() => { if (map) { map.invalidateSize(); fitArea(false); drawSpec(); } }); }
+    } else stopSpec();
     if (!me) clearMe();
   }
 
   // Khi tab Bản đồ được mở (mobile) hoặc cuộn tới (desktop) thì dựng bản đồ và tính lại kích thước.
-  new MutationObserver(() => { if (me && mapSectionVisible()) render(); }).observe(document.body, { attributes: true, attributeFilter: ['data-tab'] });
+  new MutationObserver(() => { if ((me || spectating()) && mapSectionVisible()) render(); }).observe(document.body, { attributes: true, attributeFilter: ['data-tab'] });
   addEventListener('resize', () => { if (map) { map.invalidateSize(); fitArea(false); syncEdges(); } });
   // Xoay màn hình: căn lại khu chơi vào khung mới.
   matchMedia('(orientation: landscape)').addEventListener('change', () => setTimeout(() => { if (map) { map.invalidateSize(); fitArea(false); } }, 250));
@@ -1182,12 +1406,14 @@ export function initLive(ctx) {
   $('#btn-grid').addEventListener('click', toggleGrid);
   $('#btn-sat').addEventListener('click', toggleSatellite);
   $('#btn-org').addEventListener('click', () => openOrganizer());
+  $('#btn-all').addEventListener('click', fitAllTeams);
+  $('#btn-layers').addEventListener('click', toggleLayersPanel);
   // Điện thoại: bấm tab Bản đồ (là thao tác của người dùng nên được phép) thì tự vào toàn màn hình + khóa ngang.
   // Người dùng thoát toàn màn hình thủ công thì không tự vào lại trong phiên này.
   const phone = matchMedia('(max-width: 768px), (orientation: landscape) and (max-height: 500px)');
   const mapTab = document.querySelector('#tabbar button[data-tab="map"]');
   if (mapTab) mapTab.addEventListener('click', () => {
-    if (!me || !phone.matches) return;
+    if ((!me && !spectating()) || !phone.matches) return;
     let off = false; try { off = sessionStorage.getItem(FS_OFF_KEY) === '1'; } catch {}
     if (off) return;
     if (nativeFs) { if (!document.fullscreenElement) toggleFullscreen(true); }

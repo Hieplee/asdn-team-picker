@@ -106,3 +106,11 @@ Xem đầy đủ bằng `git log --oneline` (36 commit).
 - Organizer: **VÁN MỚI** (xóa báo chết + lệnh, giữ đội) và **Hồi sinh cả đội** trong "Điều khiển trận".
 - **Cần deploy lại rules:** `firebase deploy --only firestore:rules --project asdn-team-picker`.
 - Chưa chụp lại ảnh hướng dẫn (`guide/m05, m07, m12, m21`) sau khi thêm nút Chết; phần chữ đã cập nhật.
+
+## Bản đồ: admin quan sát (2026-10-31)
+
+- Tài khoản `adminUid` (hiepbrse), chưa vào đội, mở tab Bản đồ thì vào thẳng chế độ **QUAN SÁT · CHỈ XEM**: một bản đồ chung, mọi mark tô màu đội, 2 chip đội (chạm = bật/tắt đội, ☰ = danh sách), nút ⊞ bật/tắt từng loại mark, nút "CĂN CẢ 2 ĐỘI". Mục tiêu cá nhân chỉ hiện của đội trưởng.
+- "Vào đội để chơi ›" chuyển sang nhập mã đội. Đang chơi thì app không đọc dữ liệu đội kia. Muốn quay lại quan sát phải **Rời đội** (sheet danh sách đội, nút "RỜI ĐỘI ĐỂ QUAN SÁT"): xóa `memberOf` + `members` của admin và ngừng chia sẻ.
+- Rules: thêm `isAdmin()` và cho đọc `teams/{team}/positions|orders|deaths` (`inTeam(teamId) || isAdmin()`). Chỉ đọc. Rules vẫn cho admin đọc cả 2 đội kể cả khi đang chơi; việc không xem được chỉ do app. Thêm admin khác: sửa cả `adminUid` trong `cloud-config.js` lẫn `isAdmin()` trong rules.
+- **Phải deploy lại rules:** `firebase deploy --only firestore:rules --project asdn-team-picker`.
+- Trang demo giao diện (không dùng Firebase): `demo-admin.html`, `demo-admin-flow.html`.

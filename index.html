@@ -18,10 +18,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=DM+Sans:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
   <link rel="stylesheet" href="styles.css?v=mob19">
-  <link rel="stylesheet" href="live.css?v=mob30">
+  <link rel="stylesheet" href="live.css?v=mob32">
   <link rel="stylesheet" href="guide.css?v=mob20">
   <link rel="stylesheet" href="mobile.css?v=mob19" media="(max-width:768px), (orientation:landscape) and (max-height:500px)">
-  <script type="module" src="app.js?v=mob33"></script>
+  <script type="module" src="app.js?v=mob35"></script>
   <script defer src="nav.js?v=mob19"></script>
   <script defer src="mobile.js?v=mob19"></script>
   <script defer src="guide-data.js?v=mob29"></script>
@@ -83,11 +83,13 @@
           <div class="map-tools" role="group" aria-label="Công cụ bản đồ">
             <button id="btn-fit" type="button" aria-label="Căn bản đồ vào khu chơi">⌖</button>
             <button id="btn-grid" type="button" aria-label="Bật tắt lưới" aria-pressed="false">#</button>
+            <button id="btn-layers" type="button" aria-label="Lớp mark" aria-pressed="false" hidden>⊞</button>
             <button id="btn-sat" type="button" aria-label="Đổi nền vệ tinh">◐</button>
             <button id="btn-full" type="button" aria-label="Toàn màn hình, xoay ngang" hidden>⛶</button>
             <button id="btn-org" type="button" aria-label="Điều khiển trận" hidden>⚙</button>
           </div>
-          <div class="map-bottom"><div id="draw-bar" class="draw-bar" role="toolbar" aria-label="Công cụ lệnh"></div><button id="btn-share" class="share-button" type="button">BẬT CHIA SẺ VỊ TRÍ</button></div>
+          <div id="layers-panel" class="layers-panel" hidden></div>
+          <div class="map-bottom"><div id="draw-bar" class="draw-bar" role="toolbar" aria-label="Công cụ lệnh"></div><button id="btn-all" class="share-button all-button" type="button" hidden>CĂN CẢ 2 ĐỘI</button><button id="btn-share" class="share-button" type="button">BẬT CHIA SẺ VỊ TRÍ</button></div>
         </div>
       </section>
 
